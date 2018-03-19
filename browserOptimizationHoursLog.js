@@ -36,6 +36,7 @@ const optimizedColor = 'rgb(44, 139, 246)';
 const percentageFont = '32.0pt Nirmala UI'
 const currentStateTextFont = 'bold 13.0pt Nirmala UI';
 const hoursFont = '12.0pt Nirmala UI';
+const legendFont = '12.0pt Nirmala UI';
 const currentStateHeight = 50;
 const currentStateWidth = 200;
 const paddingUnderLegend = 0;
@@ -139,7 +140,7 @@ const standardArcPaths = standardDonutGroup.selectAll('.standardPath')
     .data(standardArcsDataGenerator(modulesData))
     .enter().append('path')
         .attr('d', standardArcPathGenerator)
-        .attr('class', (d, i) => `${modulesData[i].category}ArcPath standardModulePath standardPath`)
+        .attr('class', (d, i) => `${modulesData[i].type}ArcPath standardModulePath standardPath`)
         .attr('fill', (d, i) => modulesData[i].color)
         .style('fill-opacity', (d, i) => active.standard ? 1 : 0.5);
 
@@ -167,7 +168,7 @@ const optimizedArcPaths = optimizedDonutGroup.selectAll('.optimizedPath')
     .data(optimizedArcsDataGenerator(modulesData))
     .enter().append('path')
         .attr('d', optimizedArcPathGenerator)
-        .attr('class', (d, i) => `${modulesData[i].category}ArcPath optimizedModulePath optimizedPath`)
+        .attr('class', (d, i) => `${modulesData[i].type}ArcPath optimizedModulePath optimizedPath`)
         .attr('fill', (d, i) => modulesData[i].color)
         .style('fill-opacity', (d, i) => active.optimized ? 1 : 0.5);
 
@@ -211,47 +212,7 @@ const currentStateText = currentStateGroup.append('text')
 
 
 
-// LEGEND
-
-const legendGroup = graphicGroup.append('g').attr('transform', `translate(${graphicWidth - (legendWidth + margin.right)}, ${margin.top})`);
-const legendTextPadding = 7
-const legendColorRectsSize = 15
-
-//TODO REMOVE:
-legendGroup.append('rect')
-    .attr('height', legendHeight)
-    .attr('width', legendWidth)
-    .attr('x', 0)
-    .attr('y', 0)
-    .attr('fill', 'none')
-    .attr('stroke', 'black')
-    
-const legendModuleGroups = legendGroup.selectAll('.legendModuleGroup')
-    .data(modulesData)
-    .enter().append('g')
-        .attr('class', d => `legendModuleGroup .${d.type}LegendModuleGroup`)
-        .attr('transform', (d, i) => `translate(7, ${(i * legendTextPadding) + (i * legendColorRectsSize) + 5})`)
-        .on('mouseenter', function(){
-            // TODO: highlight things
-        })
-        .on('mouseexit', function(){
-            // TODO: unhighlight things
-        })
-
-legendModuleGroups.append('rect')
-    .attr('height', legendColorRectsSize)
-    .attr('width', legendColorRectsSize)
-    .attr('fill', d => d.color)
-
-legendModuleGroups.append('text')
-    .attr('dominant-baseline', 'middle')
-    .attr('y', legendColorRectsSize / 2)
-    .attr('transform', `translate(${legendColorRectsSize + 7}, 0)`)
-    .text(d => d.type)
-        
-
-
-// TOOLTIPS AND HOVERS
+// TOOLTIPS AND ARC HOVERS
 function renderTooltip () {
 
     //make sure to change checker for Niagara:
@@ -367,6 +328,45 @@ const standardPaths = d3.selectAll('.standardPath')
 
 
 
+
+// LEGEND
+
+const legendGroup = graphicGroup.append('g').attr('transform', `translate(${graphicWidth - (legendWidth + margin.right)}, ${margin.top})`);
+const legendTextPadding = 7
+const legendColorRectsSize = 15
+    
+const legendModuleGroups = legendGroup.selectAll('.legendModuleGroup')
+    .data(modulesData)
+    .enter().append('g')
+        .attr('class', d => `legendModuleGroup .${d.type}LegendModuleGroup`)
+        .attr('transform', (d, i) => `translate(7, ${(i * legendTextPadding) + (i * legendColorRectsSize) + 5})`)
+        .on('mouseenter', function(d){
+            const that = d3.select(this);
+            that.selectAll('rect').style('stroke-opacity', '1')
+            that.selectAll('text').style('font-weight', 'bold')
+            svg.selectAll(`.${d.type}ArcPath`).style('fill-opacity', 1);
+        })
+        .on('mouseleave', function(d){
+            const that = d3.select(this);
+            that.selectAll('rect').style('stroke-opacity', '0')
+            that.selectAll('text').style('font-weight', 'normal')
+            svg.selectAll(`.${d.type}ArcPath`).style('fill-opacity', 0.5);
+        })
+
+legendModuleGroups.append('rect')
+    .attr('height', legendColorRectsSize)
+    .attr('width', legendColorRectsSize)
+    .attr('fill', d => d.color)
+    .attr('stroke', 'black')
+    .style('stroke-opacity', '0')
+
+legendModuleGroups.append('text')
+    .attr('dominant-baseline', 'middle')
+    .attr('y', legendColorRectsSize / 2)
+    .attr('transform', `translate(${legendColorRectsSize + 7}, 0)`)
+    .text(d => d.type)
+    .style('font', legendFont)
+        
 
 
 
