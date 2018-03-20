@@ -1,45 +1,26 @@
 // DEFS
 const optimizedIcon = './images/leaf_green.svg';
 const standardIcon = './images/leaf_grey.svg';
-
-const data = {};
-
-data.graphicHeight = 400;
-data.graphicWidth = 450;
-
-
-
-const widget = {};
-widget.svg = d3.select('body').append('svg')
-    .attr('class', 'log')
-    .attr('width', data.graphicWidth)
-    .attr('height', data.graphicHeight)
-
-
-
-
-
-
+const graphicHeight = 400;
+const graphicWidth = 600;
+const svg = d3.select('body').append('svg').attr('class', 'log').attr('width', graphicWidth).attr('height', graphicHeight)
 const overallArcThickness = 40;
-const overallInnerRadius = 100;
+const overallInnerRadius = 80;
 const overallOuterRadius = overallInnerRadius + overallArcThickness;
 
-const normalArcOpacity = 0.9
-const theUnhoveredArcOpacity = 0.5
+const arcOpacity = 0.9
 
 const tooltipHeaderFont = '12pt Nirmala UI';
 const tooltipFont = '10pt Nirmala UI'
 
-const legendWidth = 80;
+const legendWidth = 100;
 const legendHeight = 120;
 
-const tooltipDiameter = 180;
+const tooltipHeight = 130;
+const tooltipWidth = 150;
 const tooltipPadding = 20;
+const tooltipFillOpacity = 0.95
 
-const currentStateHeight = 40;
-const currentStateWidth = 200;
-const paddingUnderCurrentState = 0;
-const paddingLeftOfLegend = 10;
 
 const paddingBetweenOverallAndModuleArcs = 7;
 const paddingBetweenStandardAndOptimizedArcs = 0.08;
@@ -47,34 +28,24 @@ const paddingBetweenStandardAndOptimizedArcs = 0.08;
 const moduleArcThickness = 10;
 const moduleInnerRadius = overallOuterRadius + paddingBetweenOverallAndModuleArcs;
 const moduleOuterRadius = moduleInnerRadius + moduleArcThickness;
-const hoveredOuterRadius = moduleOuterRadius + moduleArcThickness;
 
-
-const CHS = {type: 'CHs', optimizedHours: 80, standardHours: 20, color: '#0ece2b', displayName: 'Chillers'};
-const PCP = {type: 'PCPs', optimizedHours: 60, standardHours: 40, color: '#060084', displayName: 'Pri Pumps'};
-const SCP = {type: 'SCPs', optimizedHours: 90, standardHours: 10, color: '#5fdaef', displayName: 'Sec Pumps'};
-const CDP = {type: 'CDPs', optimizedHours: 75, standardHours: 25, color: '#e26302', displayName: 'Cdp Pumps'};
-const CT = {type: 'CTFs', optimizedHours: 95, standardHours: 5, color: '#f92f2f', displayName: 'Towers'};
-
-const modulesData = [];
-modulesData.push(CHS, PCP, SCP, CDP, CT);
-
-
-const standardHours = modulesData.reduce((accum, curr) => accum + curr.standardHours, 0) || 1;
-const optimizedHours = modulesData.reduce((accum, curr) => accum + curr.optimizedHours, 0) || 8;
+const standardHours = 1;
+const optimizedHours = 8;
 const overallData = [{category: 'standard', hours: standardHours}, {category: 'optimized', hours: optimizedHours}];
 const percent = d3.format('.0%')(overallData[1].hours / (overallData[0].hours + overallData[1].hours));
 const standardColor = '#ff8600';
 const optimizedColor = 'rgb(44, 139, 246)';
-const percentageFont = '38.0pt Nirmala UI'
+const percentageFont = '32.0pt Nirmala UI'
 const currentStateTextFont = 'bold 13.0pt Nirmala UI';
 const hoursFont = '12.0pt Nirmala UI';
 const legendFont = '12.0pt Nirmala UI';
-
+const currentStateHeight = 50;
+const currentStateWidth = 200;
+const paddingUnderLegend = 0;
 const currentlyIsOptimized = true;
-const hovered = {optimized: false, standard: false, current: 'neither'};
+const active = {optimized: false, standard: false, current: 'optimized'};
 
-const margin = {top: 5, left: 5, right: 5};
+const margin = {top: 20, left: 50, right: 20};
 
 const getStartingCoordinatesOfPath = path => {
     return {
@@ -83,17 +54,24 @@ const getStartingCoordinatesOfPath = path => {
     }
 };
 
+const CHS = {type: 'CHS', optimizedHours: 80, standardHours: 20, color: '#0ece2b'};
+const PCP = {type: 'PCP', optimizedHours: 60, standardHours: 40, color: '#060084'};
+const SCP = {type: 'SCP', optimizedHours: 90, standardHours: 10, color: '#5fdaef'};
+const CDP = {type: 'CDP', optimizedHours: 75, standardHours: 25, color: '#e26302'};
+const CT = {type: 'CT', optimizedHours: 95, standardHours: 5, color: '#f92f2f'};
 
+const modulesData = [];
+modulesData.push(CHS, PCP, SCP, CDP, CT);
 
 
 // APPENDING
 
-const graphicGroup = widget.svg.append('g').attr('class', 'graphicGroup')
+const graphicGroup = svg.append('g').attr('class', 'graphicGroup')
 const graphicRectForTestingOnly = graphicGroup.append('rect')
     .attr('fill', 'none')
     .attr('stroke', 'black')
-    .attr('height', data.graphicHeight)
-    .attr('width', data.graphicWidth)
+    .attr('height', graphicHeight)
+    .attr('width', graphicWidth)
 
 const currentStateGroup = graphicGroup.append('g')
     .attr('class', 'currentStateGroup')
@@ -101,7 +79,7 @@ const currentStateGroup = graphicGroup.append('g')
 
 const allDonutGroupsGroup = graphicGroup.append('g')
     .attr('class', 'allDonutGroupsGroup')
-    .attr('transform', `translate(${margin.left + hoveredOuterRadius}, ${margin.top + currentStateHeight + paddingUnderCurrentState + hoveredOuterRadius})`)
+    .attr('transform', `translate(${margin.left + tooltipWidth + (moduleOuterRadius)}, ${margin.top + legendHeight + paddingUnderLegend + moduleOuterRadius})`)
 
 
 // ARCS
@@ -128,7 +106,7 @@ const overallArcPaths = overallDonutGroup.selectAll('.overallPath')
         .attr('d', overallArcPathGenerator)
         .attr('class', (d, i) => overallData[i].category === 'standard' ? 'standardArcPath overallPath standardPath' : 'optimizedArcPath overallPath optimizedPath')
         .attr('fill', (d, i) => overallData[i].category === 'optimized' ? optimizedColor : standardColor)
-        .style('fill-opacity', (d, i) => hovered[overallData[i].category] ? 1 : normalArcOpacity);
+        .style('fill-opacity', (d, i) => active[overallData[i].category] ? 1 : arcOpacity);
 
 
     // get start and end angles of overall arc paths
@@ -138,63 +116,63 @@ overallArcPaths.filter((d, i) => {
     angles[overallData[i].category].end = d.endAngle;
 })
 
+    //get centroids of overall arc paths
+const [standardCentroidXCoord, optimizedCentroidXCoord] = overallArcsDataGenerator(overallData).map((d, i) => overallArcPathGenerator.centroid(d)[0])
+    //centroids on left or right of chart (for tooltip placement)
+const isCentroidOnLeft = {standard: standardCentroidXCoord < 0, optimized: optimizedCentroidXCoord < 0};
 
-
-// module arcs
-const moduleArcPathGenerator = d3.arc()
-    .innerRadius(moduleInnerRadius)
-    .outerRadius(moduleOuterRadius);
-
-const hoveredModuleArcPathGenerator = d3.arc()
-    .innerRadius(moduleOuterRadius && moduleInnerRadius) // ASK DREW IF HE PREFERS MOVE (moduleOuterRadius) OR GROW (moduleInnerRadius)
-    .outerRadius(hoveredOuterRadius);
-
-    //standard module arcs
-        //group
+//standard module arcs
+    //group
 const standardDonutGroup = allDonutGroupsGroup.append('g')
     .attr('class', 'standardDonutGroup')
 
-      // generator
+    // generators
 const standardArcsDataGenerator = d3.pie()
     .value(d => d.standardHours)
     .sort((a, b) => -1)
     .startAngle(angles.standard.start + (paddingBetweenStandardAndOptimizedArcs / 2))
     .endAngle(angles.standard.end - (paddingBetweenStandardAndOptimizedArcs / 2));
 
+const standardArcPathGenerator = d3.arc()
+    .innerRadius(moduleInnerRadius)
+    .outerRadius(moduleOuterRadius);
     
-     //paths
+    //paths
 const standardArcPaths = standardDonutGroup.selectAll('.standardPath')
     .data(standardArcsDataGenerator(modulesData))
     .enter().append('path')
-        .attr('d', moduleArcPathGenerator)
-        .attr('class', (d, i) => `${modulesData[i].type}ArcPath modulePath standardModulePath standardPath`)
+        .attr('d', standardArcPathGenerator)
+        .attr('class', (d, i) => `${modulesData[i].type}ArcPath standardModulePath standardPath`)
         .attr('fill', (d, i) => modulesData[i].color)
-        .style('fill-opacity', (d, i) => hovered.standard ? 1 : normalArcOpacity);
+        .style('fill-opacity', (d, i) => active.standard ? 1 : 0.5);
 
 
 
 
-    //optimized module arcs
-     //group
+//optimized module arcs
+    //group
 const optimizedDonutGroup = allDonutGroupsGroup.append('g')
     .attr('class', 'optimizedDonutGroup')
 
-     // generator
+    // generators
 const optimizedArcsDataGenerator = d3.pie()
     .value(d => d.optimizedHours)
     .sort((a, b) => -1)
     .startAngle(angles.optimized.start + (paddingBetweenStandardAndOptimizedArcs / 2))
     .endAngle(angles.optimized.end - (paddingBetweenStandardAndOptimizedArcs / 2));
 
-
-        //paths
+const optimizedArcPathGenerator = d3.arc()
+    .innerRadius(moduleInnerRadius)
+    .outerRadius(moduleOuterRadius);
+    
+    //paths
 const optimizedArcPaths = optimizedDonutGroup.selectAll('.optimizedPath')
     .data(optimizedArcsDataGenerator(modulesData))
     .enter().append('path')
-        .attr('d', moduleArcPathGenerator)
-        .attr('class', (d, i) => `${modulesData[i].type}ArcPath modulePath optimizedModulePath optimizedPath`)
+        .attr('d', optimizedArcPathGenerator)
+        .attr('class', (d, i) => `${modulesData[i].type}ArcPath optimizedModulePath optimizedPath`)
         .attr('fill', (d, i) => modulesData[i].color)
-        .style('fill-opacity', (d, i) => hovered.optimized ? 1 : normalArcOpacity);
+        .style('fill-opacity', (d, i) => active.optimized ? 1 : arcOpacity);
 
 
 
@@ -223,7 +201,7 @@ const currentStateImage = currentStateGroup.append('svg:image')
     .attr('xlink:href', currentlyIsOptimized ? optimizedIcon : standardIcon)
     .attr('x', 0)
     .attr('y', currentStateHeight * 0.125)
-    .attr('height', currentStateHeight * 0.85)
+    .attr('height', currentStateHeight * .75)
     .attr('width', currentStateWidth / 4)
 
 
@@ -240,69 +218,76 @@ const currentStateText = currentStateGroup.append('text')
 function renderTooltip () {
 
     //make sure to change checker for Niagara:
-    const selectionForCheck = widget.svg.select('.tooltipGroup')
+    const selectionForCheck = d3.select('.tooltipGroup')
     if (!selectionForCheck.empty()) selectionForCheck.remove();
-
     const tooltipGroup = allDonutGroupsGroup.append('g')
         .attr('class', 'tooltipGroup')
-        .style('opacity', hovered.optimized || hovered.standard ? 1 : 0)
+        .style('opacity', active.optimized || active.standard ? 1 : 0)
+        .attr('transform', `translate(${isCentroidOnLeft[active.current] ? -(moduleOuterRadius + tooltipWidth + 10): moduleOuterRadius + 10}, ${-(tooltipHeight / 2)})`)
 
 
-    const tooltipCircle = tooltipGroup.append('circle')
-        .attr('cx', 0)
-        .attr('cy', 0)
-        .attr('r', tooltipDiameter / 2)
+    tooltipGroup.append("polygon")
+        .attr('points', active.optimized ? `${tooltipWidth - 10},0 ${tooltipWidth + 15},0, ${tooltipWidth - 10},40` : `-15,0 10,0, 10,40`)
         .attr('fill', '#f2f2f2')
-        .style('opacity', hovered.optimized || hovered.standard ? 1 : 0)
+        .attr("rx", 10)
+        .attr("ry", 10)
+
+    const tooltipRect = tooltipGroup.append('rect')
+        .attr('height', tooltipHeight)
+        .attr('width', tooltipWidth)
+        .attr('fill', '#f2f2f2')
+        .style('opacity', active.optimized || active.standard ? tooltipFillOpacity : 0)
+        // .attr('stroke', 'black')
+        .attr("rx", 10)
+        .attr("ry", 10);
 
 
 
-    const tooltipTextGroup = tooltipGroup.append('g')
-        .attr('text-anchor', 'middle')
-        .attr('dominant-baseline', 'middle')
-        .attr('x', 0)
+
+
+    const tooltipText = tooltipGroup.append('text')
+        .attr('dominant-baseline', 'hanging')
+        .attr('x', 10)
         .attr('y', 0)
-        .style('font', tooltipFont)
-        .attr('transform', `translate(0, -${tooltipDiameter / 4})`);
+        .style('font', tooltipFont);
 
 
-        //text
-            //either current or optimized
-    tooltipTextGroup.append('text')
+        //tspans
+    tooltipText.append('tspan')
         .attr('class', 'category')
-        .text(`${hovered.current.toUpperCase()}:`)
-        .attr('fill', hovered.optimized ? optimizedColor : standardColor)
+        .text(`${active.current.toUpperCase()}:`)
+        .attr('x', 10)
+        .attr('y', 0)
+        .attr('fill', active.optimized ? optimizedColor : standardColor)
         .style('font', tooltipHeaderFont)
         .style('font-weight', 'bold')
         .style('text-decoration', 'underline');
 
-    const tooltipModuleGroups = tooltipTextGroup.selectAll('g')
+    const typeTspans = tooltipText.selectAll('.type')
         .data(modulesData)
-        .enter().append('g')
-            .attr('class', d => `${d.type}tooltipTextGroup`)
-            .attr('transform', `translate(-${tooltipDiameter / 4}, 0)`);
-
-            
-
-    const typeTexts = tooltipModuleGroups.append('text')
+        .enter().append('tspan')
             .attr('class', '.data .type')
             .text(d => `${d.type}:`)
-            .attr('x', 0)
+            .attr('x', 10)
             .attr('y', (d, i) => 3 + tooltipPadding * (i + 1))
             .style('font-weight', 'bold')
-    const typeTextsBBoxes = typeTexts.nodes().map(text => text.getBoundingClientRect());
+    const typeTspansBBoxes = typeTspans.nodes().map(tspan => tspan.getBoundingClientRect());
 
-    const hoursTtexts = tooltipModuleGroups.append('text')
+    const hoursTspans = tooltipText.selectAll('.hours')
+        .data(modulesData)
+        .enter().append('tspan')
             .attr('class', '.data .hours')
-            .text(d => `${d[`${hovered.current}Hours`]} HRS`)
-            .attr('x', (d, i) => 20 + typeTextsBBoxes[0].width)
+            .text(d => `${d[`${active.current}Hours`]} HRS`)
+            .attr('x', (d, i) => 20 + typeTspansBBoxes[0].width)
             .attr('y', (d, i) => 3 + tooltipPadding * (i + 1))
-    const hoursTtextsBBoxes = hoursTtexts.nodes().map(text => text.getBoundingClientRect());
+    const hoursTspansBBoxes = hoursTspans.nodes().map(tspan => tspan.getBoundingClientRect());
 
-    tooltipModuleGroups.append('text')
+    tooltipText.selectAll('.percents')
+        .data(modulesData)
+        .enter().append('tspan')
             .attr('class', '.data .percents')
-            .text(d => `${100 * (d[`${hovered.current}Hours`] / (d.standardHours + d.optimizedHours))}%`)
-            .attr('x', (d, i) => 25 + typeTextsBBoxes[0].width + hoursTtextsBBoxes[0].width)
+            .text(d => `${100 * (d[`${active.current}Hours`] / (d.standardHours + d.optimizedHours))}%`)
+            .attr('x', (d, i) => 35 + typeTspansBBoxes[0].width + hoursTspansBBoxes[0].width)
             .attr('y', (d, i) => 3 + tooltipPadding * (i + 1))
 }
 renderTooltip();
@@ -310,53 +295,32 @@ renderTooltip();
     // events
 
 
-const optimizedPaths = widget.svg.selectAll('.optimizedPath')
-const standardPaths = widget.svg.selectAll('.standardPath')
-
-optimizedPaths
+const optimizedPaths = d3.selectAll('.optimizedPath')
     .on('mouseenter', function(){
-        hovered.optimized = true;
-        hovered.current = 'optimized'
+        active.optimized = true;
+        active.current = 'optimized'
 
         optimizedPaths.style('fill-opacity', 1);
-        standardPaths.style('fill-opacity', theUnhoveredArcOpacity)
-        widget.svg.selectAll('.optimizedModulePath')
-            .transition()
-                .attr('d', hoveredModuleArcPathGenerator)
         renderTooltip()
     })
     .on('mouseleave', function(){
-        hovered.optimized = false;
-        hovered.current = 'neither'
+        active.optimized = false;
 
-        standardPaths.style('fill-opacity', normalArcOpacity)
-        optimizedPaths.style('fill-opacity', normalArcOpacity);
-        widget.svg.selectAll('.optimizedModulePath')
-            .transition()
-                .attr('d', moduleArcPathGenerator)
+        optimizedPaths.style('fill-opacity', arcOpacity);
         renderTooltip()
     });
-standardPaths
+const standardPaths = d3.selectAll('.standardPath')
     .on('mouseenter', function(){
-        hovered.standard = true;
-        hovered.current = 'standard'
+        active.standard = true;
+        active.current = 'standard'
 
         standardPaths.style('fill-opacity', 1);
-        optimizedPaths.style('fill-opacity', theUnhoveredArcOpacity)
-        widget.svg.selectAll('.standardModulePath')
-            .transition()
-                .attr('d', hoveredModuleArcPathGenerator)
         renderTooltip()
     })
     .on('mouseleave', function(){
-        hovered.standard = false;
-        hovered.current = 'neither'
+        active.standard = false;
 
-        standardPaths.style('fill-opacity', normalArcOpacity);
-        optimizedPaths.style('fill-opacity', normalArcOpacity);
-        widget.svg.selectAll('.standardModulePath')
-            .transition()
-                .attr('d', moduleArcPathGenerator)
+        standardPaths.style('fill-opacity', arcOpacity);
         renderTooltip()
     });
 
@@ -370,12 +334,10 @@ standardPaths
 
 // LEGEND
 
-const legendGroup = graphicGroup.append('g').attr('transform', `translate(${margin.left + (hoveredOuterRadius * 2) + paddingLeftOfLegend}, ${margin.top + currentStateHeight + paddingUnderCurrentState + moduleArcThickness})`);
-
-
+const legendGroup = graphicGroup.append('g').attr('transform', `translate(${graphicWidth - (legendWidth + margin.right)}, ${margin.top})`);
 const legendTextPadding = 7
 const legendColorRectsSize = 15
-    // legendGroup.append('rect').attr('height', legendHeight).attr('width', legendWidth)
+    
 const legendModuleGroups = legendGroup.selectAll('.legendModuleGroup')
     .data(modulesData)
     .enter().append('g')
@@ -385,22 +347,13 @@ const legendModuleGroups = legendGroup.selectAll('.legendModuleGroup')
             const that = d3.select(this);
             that.selectAll('rect').style('stroke-opacity', '1')
             that.selectAll('text').style('font-weight', 'bold')
-            widget.svg.selectAll('.modulePath').style('fill-opacity', theUnhoveredArcOpacity)
-            widget.svg.selectAll('.arcPath').style('fill-opacity', theUnhoveredArcOpacity)
-            widget.svg.selectAll(`.${d.type}ArcPath`)
-                .style('fill-opacity', 1)
-                .transition()
-                    .attr('d', hoveredModuleArcPathGenerator)
+            svg.selectAll(`.${d.type}ArcPath`).style('fill-opacity', 1);
         })
         .on('mouseleave', function(d){
             const that = d3.select(this);
             that.selectAll('rect').style('stroke-opacity', '0')
             that.selectAll('text').style('font-weight', 'normal')
-            widget.svg.selectAll('.modulePath').style('fill-opacity', normalArcOpacity)
-            widget.svg.selectAll('.arcPath').style('fill-opacity', normalArcOpacity)
-            widget.svg.selectAll(`.${d.type}ArcPath`)
-                .transition()
-                    .attr('d', moduleArcPathGenerator)
+            svg.selectAll(`.${d.type}ArcPath`).style('fill-opacity', 0.5);
         })
 
 legendModuleGroups.append('rect')
