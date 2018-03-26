@@ -428,7 +428,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		optimizedDonutGroup.selectAll('.optimizedPath')
 			.data(optimizedArcsDataGenerator(data.modulesData))
 			.enter().append('path')
-			.attr('d', widget.hovered.optimized || widget.activeModule === data.modulesData[i].type ? hoveredModuleArcPathGenerator : moduleArcPathGenerator)
+			.attr('d', (d, i) => widget.hovered.optimized || widget.activeModule === data.modulesData[i].type ? hoveredModuleArcPathGenerator : moduleArcPathGenerator)
 			.attr('class', (d, i) => `${data.modulesData[i].type}ArcPath modulePath optimizedModulePath optimizedPath`)
 			.attr('fill', (d, i) => data.modulesData[i].color)
 			.style('fill-opacity', (d, i) => {
