@@ -139,7 +139,7 @@ data.overallData = [{category: 'standard', hours: standardHours}, {category: 'op
 data.percent = formatIntoPercentage(data.overallData[1].hours / (data.overallData[0].hours + data.overallData[1].hours));
 
 
-data.legendWidth = (data.graphicWidth - (margin.left + margin.right))
+data.legendWidth = data.moduleOuterRadius * 2;
 data.legendColorRectsWidth = data.legendWidth / data.modulesData.length;
 
 
@@ -181,7 +181,7 @@ const graphicRectForTestingOnly = graphicGroup.append('rect')	//TODO: Remove
 
 const allDonutGroupsGroup = graphicGroup.append('g')
     .attr('class', 'allDonutGroupsGroup')
-    .attr('transform', `translate(${margin.left + data.hoveredOuterRadius}, ${margin.top + data.hoveredOuterRadius})`)
+    .attr('transform', `translate(${(data.graphicWidth - (margin.left + margin.right)) / 2}, ${margin.top + data.hoveredOuterRadius})`)
 
 
 //overall arcs
@@ -229,6 +229,10 @@ const hoveredModuleArcPathGenerator = d3.arc()
     .innerRadius(data.moduleInnerRadius) 
     .outerRadius(data.hoveredOuterRadius);
 
+	// func determines whether individual module is hovered and calls corresponding path generator for module arc paths accordingly 
+const determinePathGenerator = lineData => data.activeModule === data.modulesData[lineData.index].type ? hoveredModuleArcPathGenerator(lineData) : moduleArcPathGenerator(lineData)
+
+
     //standard module arcs
       //group
 const standardDonutGroup = allDonutGroupsGroup.append('g')
@@ -244,16 +248,16 @@ const standardArcsDataGenerator = d3.pie()
     
       //standard module arc paths
 standardDonutGroup.selectAll('.standardPath')
-    .data(standardArcsDataGenerator(data.modulesData))
-    .enter().append('path')
-        .attr('d', moduleArcPathGenerator)
-        .attr('class', (d, i) => `${data.modulesData[i].type}ArcPath modulePath standardModulePath standardPath`)
-        .attr('fill', (d, i) => data.modulesData[i].color)
-        .style('fill-opacity', (d, i) => {
-            if (data.hovered.standard || data.activeModule === data.modulesData[i].type) return 1;
-            if (data.activeModule === 'none' && data.hovered.current === 'neither') return normalArcOpacity;
-            return theUnhoveredArcOpacity;
-        });
+	.data(standardArcsDataGenerator(data.modulesData))
+	.enter().append('path')
+		.attr('d', data.hovered.standard ? hoveredModuleArcPathGenerator : determinePathGenerator)
+		.attr('class', (d, i) => `${data.modulesData[i].type}ArcPath modulePath standardModulePath standardPath`)
+		.attr('fill', (d, i) => data.modulesData[i].color)
+		.style('fill-opacity', (d, i) => {
+				if (data.hovered.standard || data.activeModule === data.modulesData[i].type) return 1;
+				if (data.activeModule === 'none' && data.hovered.current === 'neither') return normalArcOpacity;
+				return theUnhoveredArcOpacity;
+		});
 
 
 
@@ -275,7 +279,7 @@ const optimizedArcsDataGenerator = d3.pie()
 optimizedDonutGroup.selectAll('.optimizedPath')
     .data(optimizedArcsDataGenerator(data.modulesData))
     .enter().append('path')
-        .attr('d', moduleArcPathGenerator)
+        .attr('d', data.hovered.optimized ? hoveredModuleArcPathGenerator : determinePathGenerator)
         .attr('class', (d, i) => `${data.modulesData[i].type}ArcPath modulePath optimizedModulePath optimizedPath`)
         .attr('fill', (d, i) => data.modulesData[i].color)
         .style('fill-opacity', (d, i) => {
@@ -491,7 +495,7 @@ standardPathsHoverArc
 
 /*** LEGEND ***/
 
-const legendGroup = graphicGroup.append('g').attr('transform', `translate(${margin.left}, ${margin.top + (data.hoveredOuterRadius * 2) + data.paddingAboveLegendBars})`);
+const legendGroup = graphicGroup.append('g').attr('transform', `translate(${((data.graphicWidth - (margin.left + margin.right)) / 2) - (data.legendWidth / 2)}, ${margin.top + (data.hoveredOuterRadius * 2) + data.paddingAboveLegendBars})`);
 
 const legendModuleGroups = legendGroup.selectAll('.legendModuleGroup')
     .data(data.modulesData)

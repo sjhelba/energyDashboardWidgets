@@ -16,6 +16,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	const formatIntoPercentage = d3.format('.0%');
 	const percentageDescription = '% of System Run Hours Logged in Optimization Mode';
 	const percentDescriptionRectOpacity = 0.8
+	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 
 
 
@@ -204,7 +205,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 	const setupDefinitions = widget => {
 		// FROM USER // 
-		const data = widget.properties().toValueMap();
+		const data = widget.properties().toValueMap();	//obj with all exposed properties as key/value pairs
 
 		// FROM JQ //
 		const jq = widget.jq();
@@ -223,49 +224,83 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		data.modulesData = [
 			// TODO: MAKE THIS AN EMPTY ARRAY AND PUSH MODULE OBJs from data resolves
 			//Chillers
-			{ type: 'CHs', optimizedHours: 1199, standardHours: 1200, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CHs },
+			{ type: 'CHs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CHs },
 			//Primary Pumps
-			{ type: 'PCPs', optimizedHours: 1500, standardHours: 1500, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_PCPs },
+			{ type: 'PCPs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_PCPs },
 			//Secondary Pumps
-			{ type: 'SCPs', optimizedHours: 2250, standardHours: 2750, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_SCPs },
+			{ type: 'SCPs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_SCPs },
 			//Condenser Pumps
-			{ type: 'CDPs', optimizedHours: 2450, standardHours: 250, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CDPs },
+			{ type: 'CDPs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CDPs },
 			//Chiller Towers
-			{ type: 'CTFs', optimizedHours: 1800, standardHours: 1200, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CTFs }
+			{ type: 'CTFs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CTFs }
 
 		];
-		const resolveOrd = function (dataType, thatFolderName) {
-			// TODO: try to get history from file/folder/whatever with that dataType
-			return widget.resolve(`history:^${data.systemName}.${thatFolderName}.OptHrs`)
-				.then((historyTable) => {
-					/*
-						TODO: check to see if a module obj with this type is already in data.modulesData,
-						if so, add optimized hours to that object,
-						else create new moduleObj with that type and add to data.modulesData
-					*/
-					const module = { dataType: 'chs', type: 'CHs', optimizedHours: 1199, standardHours: 1200, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CHs };
+		
+		// iterate through system folders looking for specific data types, use those folder names to get hours' histories, then add to data.modulesData
+		return widget.resolve(`station:|slot:/tekWorxCEO/${data.systemName}`)	// get system folder
+			.then(system => system.getNavChildren())	// get children folders of system folder
+			.then(folders => {
+				const folderNames = {chillers: [], pcwps: [], scwps: [], twps: [], ctfs: []};	// TODO: CHANGE INFO FOR CTFs ONCE LARRY ADDS THESE
+				folders.forEach(folder => {
+					const folderType = folder.getNavTypeSpec();
+					if (data.includeCHs && folderType === 'ceoCore:CeoChillersFolder') {
+						folderNames.chillers.push(folder.getNavName());
+					} else if (data.includePCPs && folderType === 'ceoCore:CeoPcwpsFolder') {
+						folderNames.pcwps.push(folder.getNavName());
+					} else if (data.includeSCPs && folderType === 'ceoCore:CeoScwpsFolder') {
+						folderNames.scwps.push(folder.getNavName());
+					} else if (data.includeCDPs && folderType === 'ceoCore:CeoTwpsFolder') {
+						folderNames.twps.push(folder.getNavName());
+					} else if (data.includeCTFs && folderType === 'ceoCore:CeoCtfsFolder') {		//TODO: Change this for whatever Larry calls CTFs once Larry adds
+						folderNames.ctfs.push(folder.getNavName());
+					}
 				})
-				.catch(() => {/* Just need to have a catch so that the next .then runs regardless of whether this promise fulfilled */ })
-				.then(() => widget.resolve(`history:^${data.systemName}.${thatFolderName}.StdHrs`))
-				.then((historyTable) => {
-					/*
-						TODO: find module obj with this type already in data.modulesData,
-						then add standard hours to that object
-					*/
-					const module = { dataType: 'chs', type: 'CHs', optimizedHours: 1199, standardHours: 1200, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CHs };
-				})
-				.catch(() => {/* Just need to have a catch so that the next .then runs regardless of whether this promise fulfilled */ })
-		}
 
-		// TODO: iterate through folders looking for these data types and then adding the info from those data's histories to data.modulesData
-		return Promise.resolve(null)
-			// .then(() => data.includeCHs ? resolveOrd('chillersDataType') : null)
-			// .then(() => data.includePCPs ? resolveOrd('primaryPumpsDataType') : null)
-			// .then(() => data.includeSCPs ? resolveOrd('secondaryPumpsDataType') : null)
-			// .then(() => data.includeCDPs ? resolveOrd('condenserPumpsDataType') : null)
-			// .then(() => data.includeCTFs ? resolveOrd('chillerTowersDataType') : null)
+				return folderNames;
+			})
+			.then(folderNames => {
+				const today = new Date();
+				const currentFullYear = today.getFullYear();
+				// const currentMonthIndex = today.getMonth();
+				
+				function resolveHistoriesAndAddDataToModulesData(folderName, moduleTypeIndex){
+
+					function resolveHistoryDataUtil (isStd){
+					  let thisYearHrs = 0;
+					  return widget.resolve(`history:^${data.systemName}_${folderName}_${isStd ? 'StdHrs' : 'OptHrs'}`)
+						.then(hoursHistory => {
+						  return hoursHistory.cursor({
+							limit: 5000000,
+							each: function(row, index){
+							  const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+							  const rowYear = timestamp.getFullYear();
+							  if(rowYear === currentFullYear){
+								thisYearHrs = row.get('value');
+							  }
+							}
+						  });
+						})
+						.then(() => {
+							// due to corresponding index being used here, important that ordering of modules is consistent btwn modulesData and folderNames being iterated below in outer forEach
+						  data.modulesData[moduleTypeIndex][isStd ? 'standardHours' : 'optimizedHours'] += thisYearHrs;	// adds hrs from each folder matching the data type
+						  thisYearHrs = 0;
+						})
+						.catch(err => { logMyErrors('Likely no properly named optimized/standard hrs history for ' + folderName + ':\n' + err)});
+					}
+
+					return resolveHistoryDataUtil(true)
+					  .then(() => resolveHistoryDataUtil(false));
+				}
+
+				const promisesForEachFolder = [];
+				// hard coded array of folder names used here rather than Object.keys(folderNames) to ensure index order remains consistent
+				['chillers', 'pcwps', 'scwps', 'twps', 'ctfs'].forEach((moduleType, moduleTypeIndex) => {		// TODO: CORRECT element FOR CTFs ONCE LARRY ADDS THESE]
+					folderNames[moduleType].forEach(folderName => promisesForEachFolder.push(resolveHistoriesAndAddDataToModulesData(folderName, moduleTypeIndex)));
+				});
+				return Promise.all(promisesForEachFolder);
+			})
+			.catch(() => {})
 			.then(() => {
-
 				// calculated without ords
 				data.percentDescriptionRectWidth = getTextWidth(percentageDescription, data.percentDescriptionFont) + 5;
 				data.margin = { top: 5, left: 5, right: 5, bottom: (data.graphicHeight * 0.02) + 5 };
@@ -286,9 +321,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				data.tooltipDiameter = (data.overallInnerRadius * 2) - data.tooltipPadding || 180;
 
 				// calculated with ords
-				//set totalHours
+					//set totalHours
 				data.modulesData.forEach(mod => mod.totalHours = mod.optimizedHours + mod.standardHours)
-				//set normalized hours
+					// remove unwanted or unfilled modulesData
+				data.modulesData = data.modulesData.filter(mod => mod.totalHours)
+					//set normalized hours
 				const minTotalHours = data.modulesData.reduce((accum, curr) => !accum || (accum && curr.totalHours < accum) ? curr.totalHours : accum, 0)
 				data.modulesData.forEach(mod => {
 					const normalizedTotal = mod.totalHours / minTotalHours;
@@ -304,7 +341,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				data.percent = formatIntoPercentage(data.overallData[1].hours / (data.overallData[0].hours + data.overallData[1].hours));
 
 
-				data.legendWidth = (data.graphicWidth - (data.margin.left + data.margin.right))
+				data.legendWidth = data.moduleOuterRadius * 2;
 				data.legendColorRectsWidth = data.legendWidth / data.modulesData.length;
 
 				return data;
@@ -336,7 +373,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		const allDonutGroupsGroup = graphicGroup.append('g')
 			.attr('class', 'allDonutGroupsGroup')
-			.attr('transform', `translate(${data.legendWidth / 2}, ${data.margin.top + data.hoveredOuterRadius})`)
+			.attr('transform', `translate(${(data.graphicWidth - (data.margin.left + data.margin.right)) / 2}, ${data.margin.top + data.hoveredOuterRadius})`)
 
 
 		//overall arcs
@@ -382,6 +419,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.innerRadius(data.moduleInnerRadius)
 			.outerRadius(data.hoveredOuterRadius);
 
+			// func determines whether individual module is hovered and calls corresponding path generator for module arc paths accordingly 
+		const determinePathGenerator = lineData => data.activeModule === data.modulesData[lineData.index].type ? hoveredModuleArcPathGenerator(lineData) : moduleArcPathGenerator(lineData)
+
+
 		//standard module arcs
 		//group
 		const standardDonutGroup = allDonutGroupsGroup.append('g')
@@ -399,7 +440,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		standardDonutGroup.selectAll('.standardPath')
 			.data(standardArcsDataGenerator(data.modulesData))
 			.enter().append('path')
-			.attr('d', (d, i) => widget.hovered.standard || widget.activeModule === data.modulesData[i].type ? hoveredModuleArcPathGenerator : moduleArcPathGenerator)
+			.attr('d', data.hovered.standard ? hoveredModuleArcPathGenerator : determinePathGenerator)
 			.attr('class', (d, i) => `${data.modulesData[i].type}ArcPath modulePath standardModulePath standardPath`)
 			.attr('fill', (d, i) => data.modulesData[i].color)
 			.style('fill-opacity', (d, i) => {
@@ -428,7 +469,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		optimizedDonutGroup.selectAll('.optimizedPath')
 			.data(optimizedArcsDataGenerator(data.modulesData))
 			.enter().append('path')
-			.attr('d', (d, i) => widget.hovered.optimized || widget.activeModule === data.modulesData[i].type ? hoveredModuleArcPathGenerator : moduleArcPathGenerator)
+			.attr('d', data.hovered.optimized ? hoveredModuleArcPathGenerator : determinePathGenerator)
 			.attr('class', (d, i) => `${data.modulesData[i].type}ArcPath modulePath optimizedModulePath optimizedPath`)
 			.attr('fill', (d, i) => data.modulesData[i].color)
 			.style('fill-opacity', (d, i) => {
@@ -693,7 +734,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		/*** LEGEND ***/
 
-		const legendGroup = graphicGroup.append('g').attr('transform', `translate(${data.margin.left}, ${data.margin.top + (data.hoveredOuterRadius * 2) + data.paddingAboveLegendBars})`);
+		const legendGroup = graphicGroup.append('g').attr('transform', `translate(${((data.graphicWidth - (data.margin.left + data.margin.right)) / 2) - (data.legendWidth / 2)}, ${data.margin.top + (data.hoveredOuterRadius * 2) + data.paddingAboveLegendBars})`);
 
 		const legendModuleGroups = legendGroup.selectAll('.legendModuleGroup')
 			.data(data.modulesData)
