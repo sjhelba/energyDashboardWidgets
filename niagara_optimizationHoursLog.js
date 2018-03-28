@@ -285,7 +285,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 						  data.modulesData[moduleTypeIndex][isStd ? 'standardHours' : 'optimizedHours'] += thisYearHrs;	// adds hrs from each folder matching the data type
 						  thisYearHrs = 0;
 						})
-						.catch(err => { logMyErrors('Likely no properly named optimized/standard hrs history for ' + folderName + ':\n' + err)});
+						.catch(err => { console.error('Likely no properly named optimized/standard hrs history for ' + folderName + ':\n' + err)});
 					}
 
 					return resolveHistoryDataUtil(true)
@@ -420,7 +420,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.outerRadius(data.hoveredOuterRadius);
 
 			// func determines whether individual module is hovered and calls corresponding path generator for module arc paths accordingly 
-		const determinePathGenerator = lineData => data.activeModule === data.modulesData[lineData.index].type ? hoveredModuleArcPathGenerator(lineData) : moduleArcPathGenerator(lineData)
+		const determinePathGenerator = lineData => widget.activeModule === data.modulesData[lineData.index].type ? hoveredModuleArcPathGenerator(lineData) : moduleArcPathGenerator(lineData)
 
 
 		//standard module arcs
@@ -440,7 +440,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		standardDonutGroup.selectAll('.standardPath')
 			.data(standardArcsDataGenerator(data.modulesData))
 			.enter().append('path')
-			.attr('d', data.hovered.standard ? hoveredModuleArcPathGenerator : determinePathGenerator)
+			.attr('d', widget.hovered.standard ? hoveredModuleArcPathGenerator : determinePathGenerator)
 			.attr('class', (d, i) => `${data.modulesData[i].type}ArcPath modulePath standardModulePath standardPath`)
 			.attr('fill', (d, i) => data.modulesData[i].color)
 			.style('fill-opacity', (d, i) => {
@@ -469,7 +469,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		optimizedDonutGroup.selectAll('.optimizedPath')
 			.data(optimizedArcsDataGenerator(data.modulesData))
 			.enter().append('path')
-			.attr('d', data.hovered.optimized ? hoveredModuleArcPathGenerator : determinePathGenerator)
+			.attr('d', widget.hovered.optimized ? hoveredModuleArcPathGenerator : determinePathGenerator)
 			.attr('class', (d, i) => `${data.modulesData[i].type}ArcPath modulePath optimizedModulePath optimizedPath`)
 			.attr('fill', (d, i) => data.modulesData[i].color)
 			.style('fill-opacity', (d, i) => {
@@ -813,7 +813,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		return setupDefinitions(widget)
 			.then(data => {
 				renderWidget(widget, data);
-			});
+			})
+			.catch(err => console.error('render did not run properly: ' + err));
 	}
 
 
