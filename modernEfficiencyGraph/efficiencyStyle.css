@@ -1,0 +1,10 @@
+body {
+    margin: 0;
+    position: absolute;
+    height: 100%;
+  }
+
+
+.category:hover > rect{
+  stroke: #444444;
+}

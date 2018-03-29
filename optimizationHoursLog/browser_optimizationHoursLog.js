@@ -13,7 +13,7 @@ const getTextWidth = (text, font) => {
     d3.select(canvas).remove()
     return width;
 };
-const margin = {top: 5, left: 5, right: (width * 0.05) + 5, bottom: (height * 0.05) + 5};
+const margin = {top: 5, left: 5, right: 5, bottom: (height * 0.02) + 5};
 const normalArcOpacity = 0.9;
 const theUnhoveredArcOpacity = 0.5;
 const formatIntoPercentage = d3.format('.0%');
@@ -279,14 +279,14 @@ const optimizedArcsDataGenerator = d3.pie()
 optimizedDonutGroup.selectAll('.optimizedPath')
     .data(optimizedArcsDataGenerator(data.modulesData))
     .enter().append('path')
-        .attr('d', data.hovered.optimized ? hoveredModuleArcPathGenerator : determinePathGenerator)
-        .attr('class', (d, i) => `${data.modulesData[i].type}ArcPath modulePath optimizedModulePath optimizedPath`)
-        .attr('fill', (d, i) => data.modulesData[i].color)
-        .style('fill-opacity', (d, i) => {
-            if (data.hovered.optimized || data.activeModule === data.modulesData[i].type) return 1;
-            if (data.activeModule === 'none' && data.hovered.current === 'neither') return normalArcOpacity;
-            return theUnhoveredArcOpacity;
-        });
+			.attr('d', data.hovered.optimized ? hoveredModuleArcPathGenerator : determinePathGenerator)
+			.attr('class', (d, i) => `${data.modulesData[i].type}ArcPath modulePath optimizedModulePath optimizedPath`)
+			.attr('fill', (d, i) => data.modulesData[i].color)
+			.style('fill-opacity', (d, i) => {
+					if (data.hovered.optimized || data.activeModule === data.modulesData[i].type) return 1;
+					if (data.activeModule === 'none' && data.hovered.current === 'neither') return normalArcOpacity;
+					return theUnhoveredArcOpacity;
+			});
 
 
 // hoverable invisible arcs
