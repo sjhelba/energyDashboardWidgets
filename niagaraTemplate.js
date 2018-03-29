@@ -1,7 +1,7 @@
 define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/d3/d3.min'], function (Widget, subscriberMixIn, d3) {
 	"use strict";
 
-	////////// Hard Coded Defs //////////
+////////// Hard Coded Defs //////////
 
 	const getTextWidth = (text, font) => {
 		const canvas = document.createElement('canvas');
@@ -16,9 +16,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-	////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 	// Define Widget Constructor & Exposed Properties
-	////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
 	var MyWidget = function () {
 		var that = this;
@@ -26,32 +26,32 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		that.properties().addAll([
 			{
-        name: 'backgroundColor',
-        value: 'white',
-        typeSpec: 'gx:Color'
-      },
-      {
-        name: 'includeCTFs',
-        value: true
-      },
-      {
-        name: 'paddingUnderLegendText',
-        value: 5
-      },
-      {
-        name: 'systemName',
-        value: 'systemName'
-      },
-      {
-        name: 'tooltipFillColor',
-        value: '#f2f2f2',
-        typeSpec: 'gx:Color'
-      },
-      {
-        name: 'modulePercentFont',
-        value: 'bold 26.0pt Nirmala UI',
-        typeSpec: 'gx:Font'
-      }
+				name: 'backgroundColor',
+				value: 'white',
+				typeSpec: 'gx:Color'
+			},
+			{
+				name: 'includeCTFs',
+				value: true
+			},
+			{
+				name: 'paddingUnderLegendText',
+				value: 5
+			},
+			{
+				name: 'systemName',
+				value: 'systemName'
+			},
+			{
+				name: 'tooltipFillColor',
+				value: '#f2f2f2',
+				typeSpec: 'gx:Color'
+			},
+			{
+				name: 'modulePercentFont',
+				value: 'bold 26.0pt Nirmala UI',
+				typeSpec: 'gx:Font'
+			}
 		]);
 
 
@@ -64,9 +64,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-	////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 	// /* SETUP DEFINITIONS AND DATA */
-	////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
 
 	const setupDefinitions = widget => {
@@ -89,7 +89,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		return widget.resolve(`station:|slot:/tekWorxCEO/${data.systemName}`)	
 			.then(system => system.getNavChildren())	// get children folders of system folder
 			.then(folders => {
-
 				// calculated without ords
         
         
@@ -110,9 +109,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-	////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 	// Render Widget (invoke setupDefinitions() and, using returned data, append D3 elements into SVG)
-	////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
 	const renderWidget = (widget, data) => {
     d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
@@ -143,9 +142,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	}
 
 
-	////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 	// Initialize Widget
-	////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
 	MyWidget.prototype.doInitialize = function (element) {
 		var that = this;
@@ -162,9 +161,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	};
 
 
-	////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 	// Extra Widget Methods
-	////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
 	MyWidget.prototype.doLayout = MyWidget.prototype.doChanged = MyWidget.prototype.doLoad = function () { render(this); };
 
