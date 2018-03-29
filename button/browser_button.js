@@ -1,11 +1,51 @@
 ////ONLY FOR BROWSER /////
 
+
+
+
 const widget = {};
 
 
 
 ////////// Hard Coded Defs //////////
-  
+
+function confirmModal(message){
+	var start = new Date().getTime();
+	var result = confirm(message);
+	var dt = new Date().getTime() - start;
+	// dt < 50ms means probable computer
+	// the quickest a human tester got to while expecting the popup was 100ms
+	// slowest tester got from computer suppression was 20ms
+	for(let i = 0; i < 10 && !result && dt < 50; i++){
+			start = new Date().getTime();
+			result = confirm(message);
+			dt = new Date().getTime() - start;
+	}
+	if(dt < 50) return true;
+	return result;
+}
+
+
+
+const toggleOnOff = () => {
+
+	if(confirmModal('Are You Sure?')) {
+		widget.on = !widget.on
+		// TODO: In Niagara, change actual bool in tree
+		graphicGroup.select('.knob')
+			.transition()
+				.duration(666)	// 2/3 of sec (nothing satanical intended)
+				.attr('cx', widget.on ? rectRightX: rectLeftX);
+		graphicGroup.selectAll('.buttonBackground')
+			.transition()
+				.duration(666)	// 2/3 of sec (nothing satanical intended)
+				.attr('fill', buttonBackgroundFill());
+		renderStatusText(true)
+		}
+}
+
+
+
 
 
 ////////////////////////////////////////////////////////////////
@@ -22,17 +62,8 @@ const properties = [
 		value: 'default/ord/path'
 	},
 	{
-		name: 'tooltipFillColor',
-		value: '#f2f2f2',
-		typeSpec: 'gx:Color'
-	},
-	{
-		name: 'paddingUnderLegendText',
-		value: 5
-	},
-	{
-		name: 'modulePercentFont',
-		value: '26.0pt Nirmala UI',
+		name: 'statusFont',
+		value: 'bold 16.0pt Nirmala UI',
 		typeSpec: 'gx:Font'
 	}
 ];
@@ -59,7 +90,7 @@ data.graphicWidth = jqWidth - (data.margin.left + data.margin.right);
 
 
   // FAKE DATA //
-	data.targetBool = true;
+	data.targetBool = false;
 
 
 
@@ -87,11 +118,6 @@ d3.select(widget.svg.node().parentNode).style('background-color', data.backgroun
 
 // GRAPHIC GROUP //
 const graphicGroup = widget.svg.append('g').attr('class', 'graphicGroup');
-const graphicRectForTestingOnly = graphicGroup.append('rect')	//TODO: Remove
-	.attr('fill', 'none')
-	.attr('stroke', 'black')
-	.attr('height', data.graphicHeight)
-	.attr('width', data.graphicWidth);
 
 const centeredGroup = graphicGroup.append('g')
 	.attr('class', 'centeredGroup')
@@ -102,7 +128,7 @@ const buttonMargin = 5;
 const buttonWidth = data.graphicWidth - (buttonMargin * 2)
 const endCircleRadius = buttonWidth / 6
 const rectHeight = endCircleRadius * 2
-const rectWidth = endCircleRadius * 4
+const rectWidth = endCircleRadius * 3.5
 const buttonBackgroundFill = () => widget.on ? '#66FF00' : '#D3D3D3';
 const cy = ((data.graphicHeight / 2) + (rectHeight / 2)) - buttonMargin
 const rectLeftX = buttonMargin + endCircleRadius;
@@ -131,7 +157,7 @@ graphicGroup.append('circle')
 	.attr('fill', buttonBackgroundFill())
 
 
-// BUTTON KNOB
+// BUTTON KNOB //
 const knobRadius = endCircleRadius - (endCircleRadius * 0.13)
 
 graphicGroup.append('circle')
@@ -143,33 +169,51 @@ graphicGroup.append('circle')
 
 
 
-// CLICKABLE SPACE
+// STATUS TEXT //
+const offX = buttonMargin + (endCircleRadius * 2) + ((buttonWidth - (endCircleRadius * 3)) / 2);
+const onX = buttonMargin + ((buttonWidth - (endCircleRadius * 2)) / 2);
+
+
+const renderStatusText = (changed) => {
+	const selectionForCheck = graphicGroup.selectAll('.statusText')
+	if (!selectionForCheck.empty()) selectionForCheck.remove();
+
+	graphicGroup.append('text')
+				.attr('class', 'statusText')
+				.attr('text-anchor', 'middle')
+				.attr('dominant-baseline', 'middle')
+				.attr('y', cy)
+				.attr('x', widget.on ? onX : offX)
+				.style('font', data.statusFont)
+				.text(changed ? (widget.on ? 'OFF' : 'ON') : (widget.on ? 'ON' : 'OFF'))
+				.attr('fill', changed ? (widget.on ? 'gray' : 'white') : (widget.on ? 'white' : 'gray'))
+				.attr('opacity', changed ? 0 : 1)
+				.on('click', toggleOnOff)
+				.transition()
+					.duration(666)
+					.text(widget.on ? 'ON' : 'OFF')
+					.attr('fill', widget.on ? 'white' : 'gray')
+					.attr('opacity', 1);
+}
+renderStatusText()
+
+
+
+
+// CLICKABLE SPACE //
 graphicGroup.append('rect')
 	.attr('x', buttonMargin)
 	.attr('y', cy - (rectHeight / 2))
 	.attr('width', rectWidth + (endCircleRadius * 2))
 	.attr('height', rectHeight)
 	.attr('opacity', 0)
-	.on('click', function(){
-		widget.on = !widget.on
-		// TODO: In Niagara, change actual bool in tree
-		graphicGroup.select('.knob')
-			.transition()
-				.attr('cx', widget.on ? rectRightX: rectLeftX);
-		graphicGroup.selectAll('.buttonBackground')
-			.transition()
-				.attr('fill', buttonBackgroundFill());
-	})
+	.on('click', toggleOnOff)
 
 
 
 /*
 
 TODO STILL:
-- Make popup window give Are you sure options
-- Attach off and on texts
-- Fix properties
 - Make sizes dynamic
-
 
 */
