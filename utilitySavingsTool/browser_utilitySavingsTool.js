@@ -35,7 +35,7 @@ const dropdownMonthChanged = () => {
 
 const resetElements = elementsToReset => {
 	const selectionForCheck = widget.svg.selectAll(elementsToReset)
-			if (!selectionForCheck.empty()) selectionForCheck.remove();
+  if (!selectionForCheck.empty()) selectionForCheck.remove();
 };
 
 
@@ -63,15 +63,18 @@ const getDataForDate = (month, year, categoriesData = [kwH_baselineData, kwH_pro
 			kwh: [
 				{
 					category: 'baseline',
-					value: 0
+          value: 0,
+          accumulated: 0
 				},
 				{
 					category: 'projected',
-					value: 0
+					value: 0,
+          accumulated: 0
 				},
 				{
 					category: 'measured',
-					value: 0
+					value: 0,
+          accumulated: 0
 				}
 			]
 		},
@@ -80,15 +83,18 @@ const getDataForDate = (month, year, categoriesData = [kwH_baselineData, kwH_pro
 			kwh: [
 				{
 					category: 'baseline',
-					value: 0
+					value: 0,
+          accumulated: 0
 				},
 				{
 					category: 'projected',
-					value: 0
+					value: 0,
+          accumulated: 0
 				},
 				{
 					category: 'measured',
-					value: 0
+					value: 0,
+          accumulated: 0
 				}
 			]
 		},
@@ -97,15 +103,18 @@ const getDataForDate = (month, year, categoriesData = [kwH_baselineData, kwH_pro
 			kwh: [
 				{
 					category: 'baseline',
-					value: 0
+					value: 0,
+          accumulated: 0
 				},
 				{
 					category: 'projected',
-					value: 0
+					value: 0,
+          accumulated: 0
 				},
 				{
 					category: 'measured',
-					value: 0
+					value: 0,
+          accumulated: 0
 				}
 			]
 		},
@@ -114,15 +123,18 @@ const getDataForDate = (month, year, categoriesData = [kwH_baselineData, kwH_pro
 			kwh: [
 				{
 					category: 'baseline',
-					value: 0
+					value: 0,
+          accumulated: 0
 				},
 				{
 					category: 'projected',
-					value: 0
+					value: 0,
+          accumulated: 0
 				},
 				{
 					category: 'measured',
-					value: 0
+					value: 0,
+          accumulated: 0
 				}
 			]
 		},
@@ -131,15 +143,18 @@ const getDataForDate = (month, year, categoriesData = [kwH_baselineData, kwH_pro
 			kwh: [
 				{
 					category: 'baseline',
-					value: 0
+					value: 0,
+          accumulated: 0
 				},
 				{
 					category: 'projected',
-					value: 0
+					value: 0,
+          accumulated: 0
 				},
 				{
 					category: 'measured',
-					value: 0
+					value: 0,
+          accumulated: 0
 				}
 			]
 		}
@@ -156,7 +171,15 @@ const getDataForDate = (month, year, categoriesData = [kwH_baselineData, kwH_pro
 				categoryDataForDate[categoryIndex].kwh = monthlyDatum.total;
 			}
 		})
-	})
+  })
+  equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
+    equipmentGroup.kwh.forEach((category, catIndex) => {
+      category.accumulated += category.value;
+      if (egIndex > 0) {
+        category.accumulated += equipmentDataForDate[egIndex - 1].kwh[catIndex].accumulated;
+      }
+    })
+  })
 	return {categoryDataForDate, equipmentDataForDate};
 };
 console.log(getDataForDate('All', 2018))
@@ -184,7 +207,37 @@ const properties = [
 		name: 'projectedColor',
 		value: 'rgb(246, 159, 44)',
 		typeSpec: 'gx:Color'
-	},
+  },
+	{
+		name: 'unitsColor',
+		value: 'black',
+		typeSpec: 'gx:Color'
+  },
+  {
+		name: 'unitsFont',
+		value: '11pt Nirmala UI',
+		typeSpec: 'gx:Font'
+  },
+  {
+		name: 'dropdownLabelColor',
+		value: '#444444',
+		typeSpec: 'gx:Color'
+  },
+  {
+		name: 'dropdownLabelFont',
+		value: '9pt Nirmala UI',
+		typeSpec: 'gx:Font'
+  },
+  {
+		name: 'dropdownTextColor',
+		value: 'black',
+		typeSpec: 'gx:Color'
+  },
+  {
+		name: 'dropdownFont',
+		value: '10pt Nirmala UI',
+		typeSpec: 'gx:Font'
+  },
 ];
 
 
@@ -216,8 +269,7 @@ if (!widget.month) widget.month = 'All';
 // if (!widget.percentIsHovered) widget.percentIsHovered = false;
 if (!widget.monthDropDownSelected) widget.monthDropDownSelected = 'All';
 if (!widget.yearDropDownSelected) widget.yearDropDownSelected = thisYear;
-if (!widget.activeKwhChart) widget.activeKwhChart = 'grouped' || 'stacked';
-if (!widget.kwhClicked) widget.kwhClicked = false;
+if (!widget.activeKwhChart) widget.activeKwhChart = 'stacked';
 
   // FAKE DATA //
 data.kwH_baselineData = kwH_baselineData;
@@ -262,39 +314,40 @@ const renderWidget = () => {
 	if (!outerDiv.empty()) outerDiv.selectAll('*').remove();
 
 	// DROPDOWNS //
-	const paddingLeftOfDropdown = 50;
+	const paddingLeftOfDropdown = 20;
 	const dateDropdownWidth = 100;
-	const dateDropdownStartHeight = 50;
 	const paddingBetweenDropdowns = 20;
-	const paddingAboveDropdowns = 25;
+  const paddingAboveDropdowns = 30;
+  const dropdownBorderRadius = '100px'
 
 	const dropdownDiv = outerDiv.append('div')
 		.attr('class', 'dropdownDiv')
-		.style('margin', 0)
+    // .style('margin-top', data.margin.top + 'px')
 
 		//Year Dropdown
 	dropdownDiv.append('h4')
 		.attr('dominant-baseline', 'hanging')
-		.style('left', paddingLeftOfDropdown + 'px')
-		.text('YEAR')
-		.style('position', 'absolute')
-		.style('margin', 0)
+		.style('left', data.margin.left + paddingLeftOfDropdown + 'px')
+		.text('Year')
+    .style('position', 'absolute')
+    .style('top', data.margin.top)
+    .style('color', data.dropdownLabelColor)
+    .style('font', data.dropdownLabelFont)
 
 	const yearSelect = dropdownDiv.append('select')
-		.attr('height', dateDropdownStartHeight)
-		.attr('width', dateDropdownWidth)
-		.attr('class', 'yearSelect')
-		.style('border-radius', '5px')
-		.style('margin', 0)
+    .style('width', dateDropdownWidth + 'px')
+    .attr('class', 'yearSelect')
+		.style('border-radius', dropdownBorderRadius)
+		.style('margin', '0px')
 		.style('border', '1px solid black')
 		.style('position', 'absolute')
-		.style('left', paddingLeftOfDropdown + 'px')
-		.style('top', data.margin.top + paddingAboveDropdowns + 'px')
+		.style('left', data.margin.left + paddingLeftOfDropdown + 'px')
+    .style('top', data.margin.top + paddingAboveDropdowns + 'px')
 		.on('change', dropdownYearChanged)
 		.selectAll('option')
 			.data(data.availableYears).enter()
 				.append('option')
-					.property('selected', d => d === widget.yearDropDownSelected)
+          .property('selected', d => d === widget.yearDropDownSelected)
 					.text(d => d);
 
 
@@ -302,20 +355,21 @@ const renderWidget = () => {
 	//Month Dropdown
 	dropdownDiv.append('h4')
 		.attr('dominant-baseline', 'hanging')
-		.style('margin', 0)
+		.style('top', data.margin.top)
 		.style('position', 'absolute')
-		.style('left', paddingLeftOfDropdown + dateDropdownWidth + paddingBetweenDropdowns + 'px')
-		.text('MONTH');
+		.style('left', data.margin.left + paddingLeftOfDropdown + dateDropdownWidth + paddingBetweenDropdowns + 'px')
+    .text('Month')
+    .style('color', data.dropdownLabelColor)
+    .style('font', data.dropdownLabelFont);
 
 	const monthSelect = dropdownDiv.append('select')
-		.attr('height', dateDropdownStartHeight)
-		.attr('width', dateDropdownWidth)
+    .style('width', dateDropdownWidth + 'px')
 		.attr('class', 'monthSelect')
-		.style('border-radius', '5px')
+		.style('border-radius', dropdownBorderRadius)
 		.style('margin', 0)
 		.style('border', '1px solid black')
 		.style('position', 'absolute')
-		.style('left', paddingLeftOfDropdown + dateDropdownWidth + paddingBetweenDropdowns + 'px')
+		.style('left', data.margin.left + paddingLeftOfDropdown + dateDropdownWidth + paddingBetweenDropdowns + 'px')
 		.style('top', data.margin.top + paddingAboveDropdowns + 'px')
 		.on('change', dropdownMonthChanged)
 		.selectAll('option')
@@ -341,7 +395,8 @@ const renderWidget = () => {
 		.attr('transform', `translate(${data.margin.left}, ${data.margin.top})`);
 
 
-	const dropdownGroupHeight = data.graphicHeight / 4;
+  const dropdownGroupHeight = data.graphicHeight / 4;
+  const paddingBetweenDropdownsAndCharts = 40
 	const dropdownGroup = graphicGroup.append('g')
 		.attr('class', 'dropdownGroup')
 
@@ -349,18 +404,15 @@ const renderWidget = () => {
 
 	const chartsGroup = graphicGroup.append('g')
 		.attr('class', 'chartsGroup')
-		.attr('transform', `translate(0, ${dropdownGroupHeight})`);
+		.attr('transform', `translate(0, ${dropdownGroupHeight + paddingBetweenDropdownsAndCharts})`);
 
 	const chartWidth = (data.graphicWidth - (paddingBetweenCharts * 2)) / 3;
-	const chartHeight = data.graphicHeight - (dropdownGroupHeight);
+	const chartHeight = data.graphicHeight - (dropdownGroupHeight + paddingBetweenDropdownsAndCharts);
 	const yAxisWidth = 45;
 	const xAxisHeight = 25;
 
 	const barSectionWidth = chartWidth - yAxisWidth;
 	const barSectionHeight = chartHeight - xAxisHeight;
-
-	const kwhChart = chartsGroup.append('g')
-		.attr('class', 'kwhChart')
 
 
 	const currencyChart = chartsGroup.append('g')
@@ -379,263 +431,186 @@ const renderWidget = () => {
 	projectedKwhVals = [],
 	measuredKwhVals = [];
 
-	const getYTickValues = groupedOrStacked => {
-		let allKwhVals;
+	// const getYTickValues = groupedOrStacked => {
+  //   let allKwhVals;
+  //   const dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected)
+	// 	if(groupedOrStacked === 'grouped'){
+	// 		arraysOfKwhVals = dataForDate.equipmentDataForDate.map(modObj => modObj.kwh.map(cat => cat.value));
+	// 		allKwhVals = [].concat(...arraysOfKwhVals)
+	// 	} else {
+	// 		allKwhVals = dataForDate.categoryDataForDate.map(cat => cat.kwh);
+	// 	}
+	// 	const maxKwhVal = allKwhVals.reduce((accum, curr) => curr > accum ? curr : accum);
+	// 	const maxYTick = maxKwhVal  + (0.1 * maxKwhVal);
+	// 	const yTickInterval = maxYTick / 4;
+	// 	const yTickValues = [0, yTickInterval, yTickInterval * 2, yTickInterval * 3, maxYTick];
+
+	// 	return yTickValues;
+	// }
+
+	// let yTicks = getYTickValues(widget.activeKwhChart);
+  // let maxYtick = yTicks[yTicks.length - 1];
+  
+
+  const getMaxYTick = groupedOrStacked => {
+    let allKwhVals;
+    const dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected)
 		if(groupedOrStacked === 'grouped'){
-			const dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected).equipmentDataForDate;
-			arraysOfKwhVals = dataForDate.map(modObj => modObj.kwh.map(cat => cat.value));
+			arraysOfKwhVals = dataForDate.equipmentDataForDate.map(modObj => modObj.kwh.map(cat => cat.value));
 			allKwhVals = [].concat(...arraysOfKwhVals)
 		} else {
-			const dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected).categoryDataForDate;
-			allKwhVals = dataForDate.map(cat => cat.kwh);
+			allKwhVals = dataForDate.categoryDataForDate.map(cat => cat.kwh);
 		}
 		const maxKwhVal = allKwhVals.reduce((accum, curr) => curr > accum ? curr : accum);
-		const maxGroupedYTick = maxKwhVal  + (0.1 * maxKwhVal);
-		const yTickInterval = maxGroupedYTick / 4;
-		const yTickValues = [0, yTickInterval, yTickInterval * 2, yTickInterval * 3, maxGroupedYTick];
-
-		return yTickValues;
+		return maxKwhVal  + (0.1 * maxKwhVal);
 	}
 
-	let yTicks = getYTickValues(widget.activeKwhChart);
-	let maxYtick = yTicks[yTicks.length - 1];
+  
 
-	var x0Scale = d3.scaleBand()
+
+	const x0Scale = d3.scaleBand()
 		.paddingInner(.4)
-		.domain(widget.activeKwhChart === 'grouped' ? types : categories)	//equipmentTypes or categories
+    .domain(widget.activeKwhChart === 'grouped' ? types : categories)	//equipmentTypes or categories
 		.rangeRound([0, barSectionWidth])
 		
-
-	var x1Scale = d3.scaleBand()
+	const x1Scale = d3.scaleBand()
 		.padding(0.1)
 		.domain(categories)
-		.rangeRound([0, x0Scale.bandwidth()]);
+    .rangeRound([0, x0Scale.bandwidth()]);
 
-	var yScale = d3.scaleLinear()
+	const yScale = d3.scaleLinear()
 		.range([barSectionHeight, 0])
-		.domain([0, maxYtick]);
-		// .nice()
+		.domain([0, getMaxYTick(widget.activeKwhChart)])
+		.nice()
 
-	var xAxisGenerator = d3.axisBottom()
+	const xAxisGenerator = d3.axisBottom()
 		.scale(x0Scale)
 		.tickSizeOuter(0);
 		
 
-	var yAxisGenerator = d3.axisLeft()
+	const yAxisGenerator = d3.axisLeft()
 		.scale(yScale)
-		.tickValues(yTicks)
-		// .ticks(5)
-
-	var stackGenerator = d3.stack()
-		.keys(categories)
+		// .tickValues(yTicks)
+		// .ticks(4)
 
 
 
 
-	// KWH CHART //
+  // KWH CHART //
+  //Kwh Chart Transition Func:
+  const transitionKwhChart = stackedOrGrouped => {
+
+    // change background click handler
+    widget.svg.select('.groupedClickHandlingRect')
+      .on('click', stackedOrGrouped === 'grouped' ? kwhClickFunction : null)
+
+    //x axis changes
+    x0Scale.domain(widget.activeKwhChart === 'grouped' ? types : categories);	//equipmentTypes or categories
+    x1Scale.rangeRound([0, x0Scale.bandwidth()]); // running to account for changes to x0Scale
+
+    //y axis changes
+    // yTicks = getYTickValues(widget.activeKwhChart);
+    // maxYtick = yTicks[yTicks.length - 1];
+    yScale.domain([0, getMaxYTick(widget.activeKwhChart)]).nice();
+    // yAxisGenerator.tickValues(yTicks);
+
+    //transition axes
+    widget.svg.select('.xAxis')
+      .transition()
+        .duration(duration)
+        .call(xAxisGenerator);
+
+    widget.svg.select('.yAxis')
+      .transition()
+        .duration(duration)
+        .call(yAxisGenerator);
+
+    // transition bars
+    widget.svg.selectAll('.equipmentGroups')
+      .transition()
+        .duration(duration)
+        .attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
+    
+    widget.svg.selectAll('.categoryRects')	// .data(d => d.kwh)
+      .on('click', stackedOrGrouped === 'grouped' ? null : kwhClickFunction)
+      .transition()
+        .duration(duration)
+        .attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category): x0Scale(d.category))
+        .attr("y", d => yScale(stackedOrGrouped === 'grouped' ? d.value : d.accumulated))
+        .attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+        .attr("height", d => barSectionHeight - yScale(d.value))   // run this to use changed yScale
+
+  }
+
+  //click handler for kwh chart transition
+  const kwhClickFunction = () => {
+    widget.activeKwhChart === 'stacked' ?	widget.activeKwhChart = 'grouped' :	widget.activeKwhChart = 'stacked';
+    transitionKwhChart(widget.activeKwhChart)
+  };
 
 
-const changeKwhChart = stackedOrGrouped => {
+  // KWH CHART INITIALIZATION
+  const dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected);
+  const kwhChart = chartsGroup.append('g')
+    .attr('class', 'kwhChart')
 
-	const kwhClickFunction = () => {
-		widget.activeKwhChart === 'stacked' ?	widget.activeKwhChart = 'grouped' :	widget.activeKwhChart = 'stacked';
-		widget.kwhClicked = true;
-		changeKwhChart(widget.activeKwhChart)// TODO: REMOVE AFTER TESTING
-		// renderKwhChart(widget.activeKwhChart); //TODO: PUT BACK AFTER TESTING
-	};
+  // chart group and background click handler
+  kwhChart.append('rect')
+    .attr('class', 'groupedClickHandlingRect')
+    .attr('height', chartHeight)
+    .attr('width', chartWidth)
+    .attr('opacity', 0)
+    .on('click', widget.activeKwhChart === 'grouped' ? kwhClickFunction : null)
 
-	const dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected);
+  const kwhBarSection = kwhChart.append('g')
+    .attr('class', 'kwhBarSection')
+    .attr('transform', `translate(${yAxisWidth}, 0)`)
 
-	// overall
-	widget.svg.select('.groupedClickHandlingRect')
-		.on('click', stackedOrGrouped === 'grouped' ? kwhClickFunction : null)
+  // x axis
+  kwhBarSection.append('g')
+    .attr("class", "axis xAxis")
+    .attr("transform", `translate(0, ${barSectionHeight})`)
+    .call(xAxisGenerator);
 
-
-	//x axis changes
-	x0Scale.domain(widget.activeKwhChart === 'grouped' ? types : categories);	//equipmentTypes or categories
-	x1Scale.rangeRound([0, x0Scale.bandwidth()]);
-
-	//y axis changes
-	yTicks = getYTickValues(widget.activeKwhChart);
-	maxYtick = yTicks[yTicks.length - 1];
-	yScale.domain([0, maxYtick]);
-	yAxisGenerator.tickValues(yTicks);
-
-	//transition axes
-	widget.svg.select('.xAxis')
-		.transition()
-		.duration(duration)
-		.call(xAxisGenerator);
-
-	widget.svg.select('.yAxis')
-		.transition()
-		.duration(duration)
-		.call(yAxisGenerator);
+  // y axis
+  kwhBarSection.append("g")
+    .attr("class", "axis yAxis")
+    .call(yAxisGenerator)
 
 
+  // bars
+  const equipmentGroups = kwhBarSection.selectAll('.equipmentGroups')
+    .data(dataForDate.equipmentDataForDate)
+    .enter().append("g")
+      .attr('class', d => `equipmentGroups ${d.type}EquipmentGroup`)
+      .attr('transform', d => `translate(${widget.activeKwhChart === 'grouped' ? x0Scale(d.type) : 0},0)`)
+  
+  equipmentGroups.selectAll('.categoryRects')
+    .data(d => d.kwh)
+    .enter().append("rect")
+      .attr('class', d => `categoryRects ${d.category}CategoryRect`)
+      .attr("x", d => widget.activeKwhChart === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
+      .attr("y", d => widget.activeKwhChart === 'grouped' ? yScale(d.value) : yScale(d.accumulated))
+      .attr("width", widget.activeKwhChart === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+      .attr("height", d => barSectionHeight - yScale(d.value) )
+      .attr("fill", d => data[`${d.category}Color`])
+      .on('click', widget.activeKwhChart === 'grouped' ? null : kwhClickFunction);
 
-	// bars
-	let categoryRects;
-	if (stackedOrGrouped === 'grouped') {
-		renderKwhChart(stackedOrGrouped)
-		//TODO: CHANGED STACKED TO GROUPED
-
-	} else {
-		//TODO: CHANGED GROUPED TO STACKED
-		const arrayForStackGenerator = dataForDate.equipmentDataForDate.map(mod => {return {module: mod.type, baseline: mod.kwh[0].value, projected: mod.kwh[1].value, measured: mod.kwh[2].value} })
-		const stackedSeries = stackGenerator(arrayForStackGenerator);
-		console.log(stackedSeries)
-
-		widget.svg.selectAll('.equipmentGroups')
-		.transition()
-			.duration(duration)
-			.attr('transform', d => `translate(0,0)`)
-		
-		widget.svg.selectAll('.categoryRects')	// .data(d => d.kwh)
-			.data(stackedSeries)
-			.transition()
-			.duration(duration)
-				.attr("x", d => {
-					console.log('d: ', d)
-					return x0Scale(d.key)
-				})
-				.attr("y", (d, i) => barSectionHeight - yScale(d[d.length - 1][1]))
-				.attr("width", x0Scale.bandwidth())
-				.attr("height", d => yScale(d[d.length - 1][1]) )
-				// .attr('fill', (d, i) => ['yellow', 'black', 'purple', 'gray', 'red'][i])
-	}
-
-
-
-	//reset
-	widget.kwhClicked = false;
-}
-
-
-
-
-
-
-
-
-
-
-
-	const renderKwhChart = stackedOrGrouped => {
-		resetElements('.kwhBarSection');
-		resetElements('.groupedClickHandlingRect');
-
-
-		const kwhClickFunction = () => {
-			widget.activeKwhChart === 'stacked' ? 	widget.activeKwhChart = 'grouped' : 	widget.activeKwhChart = 'stacked';
-			widget.kwhClicked = true;
-			changeKwhChart(widget.activeKwhChart)// TODO: REMOVE AFTER TESTING
-			// renderKwhChart(widget.activeKwhChart); //TODO: PUT BACK AFTER TESTING
-		};
-
-		const dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected);
-
-		// overall appends
-		kwhChart.append('rect')
-			.attr('class', 'groupedClickHandlingRect')
-			.attr('height', chartHeight)
-			.attr('width', chartWidth)
-			.attr('opacity', 0)
-			.on('click', stackedOrGrouped === 'grouped' ? kwhClickFunction : null)
-
-		const kwhBarSection = kwhChart.append('g')
-			.attr('class', 'kwhBarSection')
-			.attr('transform', `translate(${yAxisWidth}, 0)`)
-
-	
-		//x axis
-		const appendedXAxis = kwhBarSection.append('g')
-			.attr("class", "axis xAxis")
-			.attr("transform", `translate(0, ${barSectionHeight})`)
-			.call(xAxisGenerator);
-
-		x0Scale.domain(widget.activeKwhChart === 'grouped' ? types : categories);	//equipmentTypes or categories
-		x1Scale.rangeRound([0, x0Scale.bandwidth()]);
-
-		//y axis
-		yTicks = getYTickValues(widget.activeKwhChart);
-		maxYtick = yTicks[yTicks.length - 1];
-		const appendedYAxis = kwhBarSection.append("g")
-			.attr("class", "axis yAxis")
-			.call(yAxisGenerator)
-
-		yScale.domain([0, maxYtick]);
-		yAxisGenerator.tickValues(yTicks);
-
-		//transition axes
-		appendedXAxis.transition()
-			.duration(duration)
-			.call(xAxisGenerator);
-
-		appendedYAxis.transition()
-			.duration(duration)
-			.call(yAxisGenerator);
+// y axis units label
+kwhBarSection.append('text')
+  .text('kWh')
+  .attr('transform', 'rotate(-90)')
+  .attr("text-anchor", "middle")
+  .attr('dominant-baseline', 'hanging')
+  .attr('fill', data.unitsColor)
+  .style('font', data.unitsFont)
 
 
 
-		// bars
-		let categoryRects;
-		if (stackedOrGrouped === 'grouped') {
 
 
-			const equipmentGroups = kwhBarSection.selectAll('.equipmentGroups')
-				.data(dataForDate.equipmentDataForDate)
-				.enter().append("g")
-					.attr('class', d => `equipmentGroups ${d.type}EquipmentGroup`)
-					.attr('transform', d => `translate(${x0Scale(d.type)},0)`)
-				
-			categoryRects = equipmentGroups.selectAll('categoryRects')
-				.data(d => d.kwh)
-				.enter().append("rect")
-					.attr('class', d => `categoryRects ${d.category}CategoryRect`)
-					.attr("x", d => x1Scale(d.category) )
-					.attr("y", d => yScale(d.value) )
-					.attr("width", x1Scale.bandwidth())
-					.attr("height", d => barSectionHeight - yScale(d.value) )
-					.attr("fill", d => data[`${d.category}Color`]);
-
-		} else {
-
-			if (widget.kwhClicked){
-				kwhBarSection.selectAll('.categoryRects')
-					.data(dataForDate.categoryDataForDate)
-					.enter().append("rect")
-						.attr('class', d => `categoryRects ${d.category}CategoryRect`)
-						.attr("x", d => x0Scale(d.category) )
-						.attr("y", d => yScale(d.kwh) )
-						.attr("width", x0Scale.bandwidth())
-						.attr("height", d => barSectionHeight - yScale(d.kwh) )
-						.attr("fill", d => data[`${d.category}Color`])
-						.on('click', kwhClickFunction)
-						.transition()
-
-			}
-
-			if (!widget.kwhClicked) {
-				kwhBarSection.selectAll('.categoryRects')
-					.data(dataForDate.categoryDataForDate)
-					.enter().append("rect")
-						.attr('class', d => `categoryRects ${d.category}CategoryRect`)
-						.attr("x", d => x0Scale(d.category) )
-						.attr("y", d => yScale(d.kwh) )
-						.attr("width", x0Scale.bandwidth())
-						.attr("height", d => barSectionHeight - yScale(d.kwh) )
-						.attr("fill", d => data[`${d.category}Color`])
-						.on('click', kwhClickFunction)
-			}
-		}
 
 
-		//reset
-		widget.kwhClicked = false;
-	}
-
-	renderKwhChart(widget.activeKwhChart)
 
 
 
