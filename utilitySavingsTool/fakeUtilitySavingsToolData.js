@@ -8,7 +8,7 @@ const minForMeasured = 800;
 const maxForMeasured = 5000;
 
 kwH_baselineData = [
-  {month: 'Jan', year: 2016, total: 0, equipment: [
+  {month: 'Jan', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -35,7 +35,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Feb', year: 2016, total: 0, equipment: [
+  {month: 'Feb', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -62,7 +62,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Mar', year: 2016, total: 0, equipment: [
+  {month: 'Mar', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -89,7 +89,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Apr', year: 2016, total: 0, equipment: [
+  {month: 'Apr', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -116,7 +116,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'May', year: 2016, total: 0, equipment: [
+  {month: 'May', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -143,7 +143,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Jun', year: 2016, total: 0, equipment: [
+  {month: 'Jun', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -170,7 +170,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Jul', year: 2016, total: 0, equipment: [
+  {month: 'Jul', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -197,7 +197,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Aug', year: 2016, total: 0, equipment: [
+  {month: 'Aug', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -224,7 +224,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Sep', year: 2016, total: 0, equipment: [
+  {month: 'Sep', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -251,7 +251,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Oct', year: 2016, total: 0, equipment: [
+  {month: 'Oct', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -278,7 +278,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Nov', year: 2016, total: 0, equipment: [
+  {month: 'Nov', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -305,7 +305,7 @@ kwH_baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Dec', year: 2016, total: 0, equipment: [
+  {month: 'Dec', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -348,7 +348,7 @@ kwH_baselineData = [
 
 
 kwH_projectedData = [
-  {month: 'Jan', year: 2016, total: 0, equipment: [
+  {month: 'Jan', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -375,7 +375,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'Feb', year: 2016, total: 0, equipment: [
+  {month: 'Feb', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -402,7 +402,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'Mar', year: 2016, total: 0, equipment: [
+  {month: 'Mar', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -429,7 +429,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'Apr', year: 2016, total: 0, equipment: [
+  {month: 'Apr', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -456,7 +456,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'May', year: 2016, total: 0, equipment: [
+  {month: 'May', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -483,7 +483,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'Jun', year: 2016, total: 0, equipment: [
+  {month: 'Jun', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -510,7 +510,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'Jul', year: 2016, total: 0, equipment: [
+  {month: 'Jul', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -537,7 +537,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'Aug', year: 2016, total: 0, equipment: [
+  {month: 'Aug', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -564,7 +564,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'Sep', year: 2016, total: 0, equipment: [
+  {month: 'Sep', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -591,7 +591,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'Oct', year: 2016, total: 0, equipment: [
+  {month: 'Oct', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -618,7 +618,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'Nov', year: 2016, total: 0, equipment: [
+  {month: 'Nov', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -645,7 +645,7 @@ kwH_projectedData = [
       rendered: true
     }
   ]},
-  {month: 'Dec', year: 2016, total: 0, equipment: [
+  {month: 'Dec', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForProjected, maxForProjected),
@@ -714,7 +714,7 @@ kwH_projectedData = [
 
 
 kwH_measuredData = [
-  {month: 'Jan', year: 2016, total: 0, equipment: [
+  {month: 'Jan', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -741,7 +741,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Feb', year: 2016, total: 0, equipment: [
+  {month: 'Feb', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -768,7 +768,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Mar', year: 2016, total: 0, equipment: [
+  {month: 'Mar', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -795,7 +795,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Apr', year: 2016, total: 0, equipment: [
+  {month: 'Apr', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -822,7 +822,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'May', year: 2016, total: 0, equipment: [
+  {month: 'May', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -849,7 +849,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Jun', year: 2016, total: 0, equipment: [
+  {month: 'Jun', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -876,7 +876,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Jul', year: 2016, total: 0, equipment: [
+  {month: 'Jul', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -903,7 +903,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Aug', year: 2016, total: 0, equipment: [
+  {month: 'Aug', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -930,7 +930,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Sep', year: 2016, total: 0, equipment: [
+  {month: 'Sep', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -957,7 +957,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Oct', year: 2016, total: 0, equipment: [
+  {month: 'Oct', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -984,7 +984,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Nov', year: 2016, total: 0, equipment: [
+  {month: 'Nov', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1011,7 +1011,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Dec', year: 2016, total: 0, equipment: [
+  {month: 'Dec', year: 2016, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1113,7 +1113,7 @@ kwH_measuredData = [
 
 
 
-    {month: 'Jan', year: 2017, total: 0, equipment: [
+    {month: 'Jan', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1140,7 +1140,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'Feb', year: 2017, total: 0, equipment: [
+    {month: 'Feb', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1167,7 +1167,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'Mar', year: 2017, total: 0, equipment: [
+    {month: 'Mar', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1194,7 +1194,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'Apr', year: 2017, total: 0, equipment: [
+    {month: 'Apr', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1221,7 +1221,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'May', year: 2017, total: 0, equipment: [
+    {month: 'May', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1248,7 +1248,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'Jun', year: 2017, total: 0, equipment: [
+    {month: 'Jun', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1275,7 +1275,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'Jul', year: 2017, total: 0, equipment: [
+    {month: 'Jul', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1302,7 +1302,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'Aug', year: 2017, total: 0, equipment: [
+    {month: 'Aug', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1329,7 +1329,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'Sep', year: 2017, total: 0, equipment: [
+    {month: 'Sep', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1356,7 +1356,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'Oct', year: 2017, total: 0, equipment: [
+    {month: 'Oct', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1383,7 +1383,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'Nov', year: 2017, total: 0, equipment: [
+    {month: 'Nov', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1410,7 +1410,7 @@ kwH_measuredData = [
         rendered: true
       }
     ]},
-    {month: 'Dec', year: 2017, total: 0, equipment: [
+    {month: 'Dec', year: 2017, equipment: [
       {
         type: 'CHs',
         value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1498,7 +1498,7 @@ kwH_measuredData = [
 
 
 
-  {month: 'Jan', year: 2018, total: 0, equipment: [
+  {month: 'Jan', year: 2018, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1525,7 +1525,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Feb', year: 2018, total: 0, equipment: [
+  {month: 'Feb', year: 2018, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1552,7 +1552,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Mar', year: 2018, total: 0, equipment: [
+  {month: 'Mar', year: 2018, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
@@ -1579,7 +1579,7 @@ kwH_measuredData = [
       rendered: true
     }
   ]},
-  {month: 'Apr', year: 2018, total: 0, equipment: [
+  {month: 'Apr', year: 2018, equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),

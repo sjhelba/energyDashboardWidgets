@@ -10,3 +10,7 @@ select {
 h4 {
   padding-left: 5px;
 }
+
+.axis path {
+  stroke-width: 2;
+}
