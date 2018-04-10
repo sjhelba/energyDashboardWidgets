@@ -448,9 +448,7 @@ data.paddingAfterLegendCat = 5;
 if (!widget.year) widget.year = thisYear;
 if (!widget.month) widget.month = 'All';
 
-// if (!widget.hovered) widget.hovered = { optimized: false, standard: false, current: 'neither' };
-// if (!widget.activeModule) widget.activeModule = 'none';
-// if (!widget.percentIsHovered) widget.percentIsHovered = false;
+
 if (!widget.equipmentHovered) widget.equipmentHovered = 'none';	//alternative selections are equipment group names
 if (!widget.systemIsHovered) widget.systemIsHovered = false; 	//alternative selection is true
 
@@ -1449,14 +1447,42 @@ costBarSection.append('text')
 	const imgCircleRadius = 22;
 	const paddingBetweenChangeTools = imgCircleRadius + 5;
 
+	// if (!widget.lastKwhPercent) widget.lastKwhPercent = [];
+	// if (!widget.lastCostPercent) widget.lastCostPercent = [];
+	// if (!widget.lastTrhPercent) widget.lastTrhPercent = [];
+
+
 	function getSystemOrHoveredData () {
 		let kwh, cost, trh;
+		let kwhPercent = {last: [], current: []};
+		let costPercent = {last: [], current: []};
+		let trhPercent = {last: [], current: []};
 		if (widget.equipmentHovered !== 'none') {
 			const hoveredEquipmentDataForDate = widget.dataForDate.equipmentDataForDate.filter(equip => equip.type === widget.equipmentHovered)[0];
+
+			// set percentage arrays
+				//kwh
+			kwhPercent.current = getNiceChangePercent(hoveredEquipmentDataForDate.kwh[0].value, hoveredEquipmentDataForDate.kwh[2].value).toString().split('').map(digit => +digit);
+			if (kwhPercent.current.length > 2) kwhPercent.current = [1, 9, 9];
+			if (kwhPercent.current.length === 1) kwhPercent.current.unshift(0, 0);
+			if (kwhPercent.current.length === 2) kwhPercent.current.unshift(0);
+			kwhPercent.last = widget.lastKwhPercent ? widget.lastKwhPercent : kwhPercent.current;
+			widget.lastKwhPercent = kwhPercent.current;
+
+				//cost
+			costPercent.current = getNiceChangePercent(hoveredEquipmentDataForDate.utilityRate[0].cost, hoveredEquipmentDataForDate.utilityRate[2].cost).toString().split('').map(digit => +digit);
+			if (costPercent.current.length > 2) costPercent.current = [1, 9, 9];
+			if (costPercent.current.length === 1) costPercent.current.unshift(0, 0);
+			if (costPercent.current.length === 2) costPercent.current.unshift(0);
+			costPercent.last = widget.lastCostPercent ? widget.lastCostPercent : costPercent.current;
+			widget.lastCostPercent = costPercent.current;
+
+
+			//create objects to iterate over
 			kwh = {
 				category: 'kwh',
 				value: Math.abs(hoveredEquipmentDataForDate.kwh[2].value - hoveredEquipmentDataForDate.kwh[0].value),
-				percent: getNiceChangePercent(hoveredEquipmentDataForDate.kwh[0].value, hoveredEquipmentDataForDate.kwh[2].value),
+				percent: kwhPercent,
 				arrowPath: getArrowPath(hoveredEquipmentDataForDate.kwh[2].value <= hoveredEquipmentDataForDate.kwh[0].value),
 				imgPath: './images/Electricity Badge.svg',
 				label: ' kWh'
@@ -1464,16 +1490,37 @@ costBarSection.append('text')
 			cost = {
 				category: 'cost',
 				value: data.formatCurrency(Math.abs(hoveredEquipmentDataForDate.utilityRate[2].cost - hoveredEquipmentDataForDate.utilityRate[0].cost)),
-				percent: getNiceChangePercent(hoveredEquipmentDataForDate.utilityRate[0].cost, hoveredEquipmentDataForDate.utilityRate[2].cost),
+				percent: costPercent,
 				arrowPath: getArrowPath(hoveredEquipmentDataForDate.utilityRate[2].cost <= hoveredEquipmentDataForDate.utilityRate[0].cost),
 				imgPath: './images/Monetary Badge.svg',
 				label: data.currencySymbol
 			};
 		} else {
+			
+			// set percentage arrays
+				//kwh
+				kwhPercent.current = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[2].kwh).toString().split('').map(digit => +digit);
+				if (kwhPercent.current.length > 2) kwhPercent.current = [1, 9, 9];
+				if (kwhPercent.current.length === 1) kwhPercent.current.unshift(0, 0);
+				if (kwhPercent.current.length === 2) kwhPercent.current.unshift(0);
+				kwhPercent.last = widget.lastKwhPercent ? widget.lastKwhPercent : kwhPercent.current;
+				widget.lastKwhPercent = kwhPercent.current;
+	
+					//cost
+				costPercent.current = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].cost, widget.dataForDate.categoryDataForDate[2].cost).toString().split('').map(digit => +digit);
+				if (costPercent.current.length > 2) costPercent.current = [1, 9, 9];
+				if (costPercent.current.length === 1) costPercent.current.unshift(0, 0);
+				if (costPercent.current.length === 2) costPercent.current.unshift(0);
+				costPercent.last = widget.lastCostPercent ? widget.lastCostPercent : costPercent.current;
+				widget.lastCostPercent = costPercent.current;
+	
+	
+	
+				//create objects to iterate over
 			kwh = {
 				category: 'kwh',
 				value: Math.abs(widget.dataForDate.categoryDataForDate[2].kwh - widget.dataForDate.categoryDataForDate[0].kwh),
-				percent: getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[2].kwh),
+				percent: kwhPercent,
 				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].kwh <= widget.dataForDate.categoryDataForDate[0].kwh),
 				imgPath: './images/Electricity Badge.svg',
 				label: ' kWh'
@@ -1481,17 +1528,26 @@ costBarSection.append('text')
 			cost = {
 				category: 'cost',
 				value: data.formatCurrency(Math.abs(widget.dataForDate.categoryDataForDate[2].cost - widget.dataForDate.categoryDataForDate[0].cost)),
-				percent: getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].cost, widget.dataForDate.categoryDataForDate[2].cost),
+				percent: costPercent,
 				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].cost <= widget.dataForDate.categoryDataForDate[0].cost),
 				imgPath: './images/Monetary Badge.svg',
 				label: data.currencySymbol
 			};
 		}
+	// set percentage arrays
+		//trh
+		trhPercent.current = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].trh, widget.dataForDate.categoryDataForDate[2].trh).toString().split('').map(digit => +digit);
+		if (trhPercent.current.length > 2) trhPercent.current = [1, 9, 9];
+		if (trhPercent.current.length === 1) trhPercent.current.unshift(0, 0);
+		if (trhPercent.current.length === 2) trhPercent.current.unshift(0);
+		trhPercent.last = widget.lastTrhPercent ? widget.lastTrhPercent : trhPercent.current;
+		widget.lastTrhPercent = trhPercent.current;
 
+	//create object to iterate over
 		trh = {
 			category: 'trh',
 			value: Math.abs(widget.dataForDate.categoryDataForDate[2].trh - widget.dataForDate.categoryDataForDate[0].trh),
-			percent: getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].trh, widget.dataForDate.categoryDataForDate[2].trh),
+			percent: trhPercent,
 			arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].trh <= widget.dataForDate.categoryDataForDate[0].trh),
 			imgPath: './images/Production Badge.svg',
 			label: ' tRh'
@@ -1504,7 +1560,7 @@ costBarSection.append('text')
 
 		const changeTools = toolsGroup.append('g')
 			.attr('class', 'changeTools')
-			.attr('transform', 	`translate(${300}, ${25})`)
+			.attr('transform', 	`translate(${300}, ${32})`)
 
 		const systemOrHoveredData = getSystemOrHoveredData()
 		
@@ -1532,8 +1588,8 @@ costBarSection.append('text')
 			.attr('width', imgCircleRadius * 2)
 
 		const percentChangeGroups = changeToolGroups.append('g')
-			.attr('class', 'percentChangeGroup')
-			.attr('transform', d => `translate(${(changeToolWidth / 2) - (getWidthOfPercentArrowAndText(d.percent) / 2)},${changeToolsPaddingTop})`)
+			.attr('class', 'percentChangeGroups')
+			.attr('transform', d => `translate(${(changeToolWidth / 2) - (getWidthOfPercentArrowAndText('>88') / 2)},${changeToolsPaddingTop})`)
 		
 		//append arrows
 		percentChangeGroups.append('svg:image')
@@ -1552,53 +1608,74 @@ costBarSection.append('text')
 			.attr('y', 5)
 			.attr('x', (getTextWidth('W', data.changePercentFont) + paddingBetweenArrowAndPercent) - 5)
 			.attr('height', (getTextHeight(data.changePercentFont)))
-			.attr('width', d => (getTextWidth(d.percent, data.changePercentFont)) + 10)
+			.attr('width', changeToolWidth - (getTextWidth('W', data.changePercentFont) + paddingBetweenArrowAndPercent) - 5)
 
 		// changeToolSvg.append('rect')
 		// 	.attr('height', 800)
 		// 	.attr('width', 500)
 		// 	.attr('fill', 'blue')
 
+		const displayForIndex = [
+			[' ', '>'],
+			[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+			[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+		]
 
 		//append percent change
-		const percentChangeText = changeToolSvg.append('text')
-			.text(d => d.percent)
-			.attr('y', 0)
-			.attr('y', (getTextHeight(data.changePercentFont) - 5))
-			.attr('x', 5)
-			.attr('fill', data.changePercentColor)
-			.style('font', data.changePercentFont)
+		const percentChangeTextGroup = changeToolSvg.append('g')
+			.attr('transform', `translate(5,${(getTextHeight(data.changePercentFont) - 5)})`)
+					
+		const percentChangeText = percentChangeTextGroup.selectAll('text')
+			.data(d => d.percent.last)
+				.enter().append('text')
+					.text((d, i) => {
+						return displayForIndex[i][d]
+					})
+					.attr('x', (d, i, parentNode) => {
+						if(i === 1 && parentNode[0].__data__ === 0) {
+							return getTextWidth('0', data.changePercentFont) / 2
+						} else if (i === 2 && parentNode[0].__data__ === 0) {
+							return getTextWidth('0', data.changePercentFont) * 1.5;
+						} else {
+							return i * getTextWidth('0', data.changePercentFont);
+						}
+					})
+					.attr('y', 0)
+					.attr('fill', data.changePercentColor)
+					.style('font', data.changePercentFont)
 
-		percentChangeText
-			.transition()
-				.delay(2000)
-				.duration(1000)
-				.attr('y', -(getTextHeight(data.changePercentFont) - 5))
 
-		percentChangeText
-			.transition()
-				.delay(4000)
-				.duration(1000)
-				.attr('y', (getTextHeight(data.changePercentFont) - 5))
+		// percentChangeText
+		// 	.transition()
+		// 		.delay(2000)
+		// 		.duration(1000)
+		// 		.attr('y', -30)
 
-		percentChangeText
-			.transition()
-				.delay(6000)
-				.duration(1000)
-				.attr('y', (getTextHeight(data.changePercentFont) - 5) * 3)
+		// percentChangeText
+		// 	.transition()
+		// 		.delay(4000)
+		// 		.duration(1000)
+		// 		.attr('y', 0)
 
-		percentChangeText
-			.transition()
-				.delay(8000)
-				.duration(1000)
-				.attr('y', (getTextHeight(data.changePercentFont) - 5))
+		// percentChangeText
+		// 	.transition()
+		// 		.delay(6000)
+		// 		.duration(1000)
+		// 		.attr('y', 30)
+
+		// percentChangeText
+		// 	.transition()
+		// 		.delay(8000)
+		// 		.duration(1000)
+		// 		.attr('y', 0)
+
+
 
 
 		//append percent sign
-		percentChangeGroups.append('text')
+		percentChangeTextGroup.append('text')
 			.text('%')
-			.attr('y', getTextHeight(data.changePercentFont))
-			.attr('x', d => getTextWidth('W' + d.percent, data.changePercentFont) + paddingBetweenArrowAndPercent)
+			.attr('x', d => d.percent.last[0] === 1 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
 			.attr('fill', data.changePercentColor)
 			.style('font', data.changePercentFont)
 			.style('font-size', (getTextHeight(data.changePercentFont) / 2) + 'pt')
