@@ -1,0 +1,5 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="43" height="43" viewBox="0 0 43 43">
+  <title>Production Badge</title>
+  <circle cx="21.5" cy="21.5" r="20" fill="#fff" stroke="#4d4d4d" stroke-miterlimit="10" stroke-width="3"/>
+  <path d="M24,20.87V5a2,2,0,0,0-2-2H19a2,2,0,0,0-2,2V6h3V7H17V9h3v1H17v2h3v1H17v2h3v1H17v4.87A7.5,7.5,0,1,0,24,20.87Z" transform="translate(1.5 1.5)" fill="#4d4d4d"/>
+</svg>

@@ -17,3 +17,7 @@ h4 {
 .axis path {
   stroke-width: 2;
 }
+
+.changeToolSvg {
+  overflow: hidden;
+}
