@@ -1648,23 +1648,23 @@ costBarSection.append('text')
 					.attr('fill', data.changePercentColor)
 					.style('font', data.changePercentFont)
 
-		const percentChangeText2 = percentChangeTextGroup.selectAll('.digitBox2')
-			.data(d => d.percent.last)
-				.enter().append('text')
-					.attr('class', (d, i, parentNode) => `digitBox2 g2DigitIndex${i}For${parentNode[i].parentNode.__data__.category}`)
-					.text((d, i) => displayForIndex[i][d])
-					.attr('x', (d, i, parentNode) => {
-						if(i === 1 && parentNode[0].__data__ === 0) {
-							return getTextWidth('0', data.changePercentFont) / 2
-						} else if (i === 2 && parentNode[0].__data__ === 0) {
-							return getTextWidth('0', data.changePercentFont) * 1.5;
-						} else {
-							return i * getTextWidth('0', data.changePercentFont);
-						}
-					})
-					.attr('y', 30)
-					.attr('fill', data.changePercentColor)
-					.style('font', data.changePercentFont)
+		// const percentChangeText2 = percentChangeTextGroup.selectAll('.digitBox2')
+		// 	.data(d => d.percent.last)
+		// 		.enter().append('text')
+		// 			.attr('class', (d, i) => `digitBox2 g2DigitIndex${i}`)
+		// 			.text((d, i) => displayForIndex[i][d])
+		// 			.attr('x', (d, i, parentNode) => {
+		// 				if(i === 1 && parentNode[0].__data__ === 0) {
+		// 					return getTextWidth('0', data.changePercentFont) / 2
+		// 				} else if (i === 2 && parentNode[0].__data__ === 0) {
+		// 					return getTextWidth('0', data.changePercentFont) * 1.5;
+		// 				} else {
+		// 					return i * getTextWidth('0', data.changePercentFont);
+		// 				}
+		// 			})
+		// 			.attr('y', 30)
+		// 			.attr('fill', data.changePercentColor)
+		// 			.style('font', data.changePercentFont)
 				
 
 /*
@@ -1678,107 +1678,52 @@ costBarSection.append('text')
 */
 
 
-	const changeDuration = 4000;
+	const changeDuration = 2000;
 
 	// const digitObjToChange1 = widget.svg.selectAll(`.g1DigitIndex${1}Forkwh`)
 	// digitObjToChange1.transition().delay(1000).duration(1000).attr('fill', 'blue')
-	function switchObjPlaces (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal) {
-		const digitObjToChange1 = widget.svg.selectAll(`.g1DigitIndex${digitIndex}For${category}`);
-		const digitObjToChange2 = widget.svg.selectAll(`.g2DigitIndex${digitIndex}For${category}`);
-		const thisDuration = changeDuration / numbersToGetThrough;
-			console.log('switching places!')
+let counter = 0;
 
-			digitObjToChange1
-				.transition()
-					.duration(0)
-					.delay(thisDuration * (delayMultiplier + 1))
-					.text(() => displayForIndex[digitIndex][currentVal])
-					.attr('y', 0);
+	function increaseDigit (category, digitIndex, differenceBtwOldAndNewVal, currentVal) {
+		const thisDuration = changeDuration / differenceBtwOldAndNewVal;
+		const digitObjToChange1 = widget.svg.selectAll(`.g1DigitIndex${digitIndex}For${category}`)
+		const digitObjToChange2 = widget.svg.selectAll(`.g2DigitIndex${digitIndex}For${category}`)
 
-			digitObjToChange2
-				.transition()
-					.duration(0)
-					.delay(thisDuration * (delayMultiplier + 1))
-					.attr('y', 30);
+		// console.log('increasing digit from currentVal: ', currentVal)
+		// console.log('Here is what we are trying to affect: ', digitObjToChange1)
+		counter++;
+		digitObjToChange1
+			.transition()
+				.delay(1000 * counter)
+				.duration(thisDuration)
+				.text(() => {
+					console.log('here is the text: ', displayForIndex[digitIndex][currentVal + 1], 'here is the digit index: ', digitIndex, 'here is the currentVal + 1: ', +currentVal + 1)
+					return displayForIndex[digitIndex][+currentVal + 1]
+				})
+				// .attr('y', -30)
+			// .transition()
+			// 	.delay(thisDuration)
+			// 	.duration(thisDuration)
+				// .text((d, i) => i)
+				// .attr('y', -30)
+				// .on('end', () => {
+				// 	changeDigits(currentArr, newArr, category)
+				// })
+
+				
 	}
 
-
-
-	function increaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal) {
-		const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
-		const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
-		const thisDuration = changeDuration / numbersToGetThrough;
-
+	function decreaseDigit (category, digitIndex, differenceBtwOldAndNewVal, currentVal) {
+		const thisDuration = changeDuration / differenceBtwOldAndNewVal;
+		const catObjToChange = changeToolSvg.selectAll(`textGroupIndex${category}`)
+		const digitObjToChange1 = catObjToChange.selectAll(`g1DigitIndex${digitIndex}`)
+		const digitObjToChange2 = catObjToChange.selectAll(`g2DigitIndex${digitIndex}`)
+		// console.log('decreasing digit from currentVal: ', currentVal)
 		digitObjToChange1
-			.attr('y', 0)
 			.transition()
-				.delay(thisDuration * delayMultiplier)
+				.delay(1000)
 				.duration(thisDuration)
-				.attr('y', -30)
-				// .on('end', function() {
-				// 	d3.select(this)
-				// 		.transition()
-				// 			.duration(0)
-				// 			.text(() => displayForIndex[digitIndex][+currentVal + 1])
-				// 			.attr('y', 0);
-				// })
-
-
-		digitObjToChange2
-			.text(() => displayForIndex[digitIndex][currentVal + 1])
-			.attr('y', 30)
-			.transition()
-				.delay(thisDuration * delayMultiplier)
-				.duration(thisDuration)
-				.attr('y', 0)
-				// .on('end', function() {
-				// 	d3.select(this)
-				// 		.transition()
-				// 			.duration(0)
-				// 			.attr('y', 30);
-				// })
-			// .transition()
-			// 	.delay(thisDuration * (delayMultiplier + 0.5))
-			// 	.duration(thisDuration)
-			// 	.attr('y', 0)
-	}
-
-	function decreaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal) {
-		const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
-		const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
-		const thisDuration = changeDuration / numbersToGetThrough;
-		digitObjToChange1
-			.attr('y', 0)
-			.transition()
-				.delay(thisDuration * delayMultiplier)
-				.duration(thisDuration)
-				.attr('y', 30)
-				// .on('end', function() {
-				// 	d3.select(this)
-				// 		.transition()
-				// 			.duration(0)
-				// 			.text(() => displayForIndex[digitIndex][+currentVal - 1])
-				// 			.attr('y', 0);
-				// })
-
-		digitObjToChange2
-			.text(() => displayForIndex[digitIndex][currentVal - 1])
-			.attr('y', -30)
-			.transition()
-				.delay(thisDuration * delayMultiplier)
-				.duration(thisDuration)
-				.attr('y', 0)
-				// .on('end', function() {
-				// 	d3.select(this)
-				// 		.transition()
-				// 		.duration(0)
-				// 		.attr('y', 30);
-				// })
-			// .transition()
-			// 	.delay(thisDuration * (delayMultiplier + 0.5))
-			// 	.duration(thisDuration)
-			// 	.attr('y', 0)
-
+				.text((d, i) => displayForIndex[i][currentVal - 1])
 	}
 
 
@@ -1790,7 +1735,7 @@ costBarSection.append('text')
 	let trhPercentObj = JSON.parse(JSON.stringify(systemOrHoveredData[2].percent));
 	trhPercentObj.current = trhPercentObj.last.slice();
 
-	console.log('data:\nkwh: old: ', kwhPercentObj.current.join(''), '. new: ', kwhPercentObj.new.join(''), '\ncost: old: ', costPercentObj.current.join(''), '. new: ', costPercentObj.new.join(''), '\ntrh: old: ', trhPercentObj.current.join(''), '. new: ', trhPercentObj.new.join(''));
+	console.log('data:\nkwh: ', kwhPercentObj, '\ncost: ', costPercentObj, '\ntrh: ', trhPercentObj);
 
 	function loopFromTo(category, digitIndex, from, to) {
 		// console.log('loopingFromTo: ', from, to)
@@ -1800,14 +1745,12 @@ costBarSection.append('text')
 		if (from < to) {
 			differenceBtwOldAndNewVal = to - from;
 			for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
-				increaseDigit (category, digitIndex, i + 1, differenceBtwOldAndNewVal, from + i);
-				switchObjPlaces (category, digitIndex, i + 1, differenceBtwOldAndNewVal, (from + i) + 1);
+				increaseDigit (category, digitIndex, differenceBtwOldAndNewVal, from + i);
 			}
 		} else {
 			differenceBtwOldAndNewVal = from - to;
 			for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
-				decreaseDigit (category, digitIndex, i + 1, differenceBtwOldAndNewVal, from - i);
-				switchObjPlaces (category, digitIndex, i + 1, differenceBtwOldAndNewVal, (from - i) - 1);
+				decreaseDigit (category, digitIndex, differenceBtwOldAndNewVal, from - i);
 			}
 		}
 	}
@@ -1815,48 +1758,40 @@ costBarSection.append('text')
 	function changeDigits (currentArr, newArr, category) {
 		currentArr = currentArr.slice();
 		newArr = newArr.slice();
-		// if (+currentArr.slice(1).join('') < +newArr.slice(1).join('')) {
+		if (+currentArr.slice(1).join('') < +newArr.slice(1).join('')) {
+			if (currentArr[0] == 0) {
 
-			if(+newArr[2] !== +currentArr[2]) {
-				loopFromTo(category, 2, +currentArr[2], +newArr[2])
+				if (currentArr[2] == 9) {
+
+					if (currentArr[1] == 9) {
+						// increase 1st digit to 1
+						loopFromTo(category, 0, 0, 1)
+					} else {
+						// lower 3rd digit by 1 (to 0)
+						loopFromTo(category, 2, 9, 0)
+						// increase 2nd digit by 1
+						loopFromTo(category, 1, currentArr[1], +currentArr[1] + 1)
+						//change currentArr to reflect changes
+						currentArr[2] = 0;
+						currentArr[1] = +currentArr[1] + 1;
+						// recurse in case currentArr still not up to newArr
+						changeDigits (currentArr, newArr, category);
+					}
+
+				} else {
+					//increase 3rd digit by 1 (to new digit at index)
+					loopFromTo(category, 2, currentArr[2], +currentArr[2] + 1);
+					//change currentArr to reflect changes
+					currentArr[2] = +currentArr[2] + 1;
+					// recurse in case currentArr still not up to newArr
+					changeDigits (currentArr, newArr, category);
+				}
+
 			}
-			if(+newArr[1] !== +currentArr[1]) {
-				loopFromTo(category, 1, +currentArr[1], +newArr[1])
-			}
-			if(+newArr[0] !== +currentArr[0]) {
-				loopFromTo(category, 0, +currentArr[0], +newArr[0])
-			}
-
-				// if (currentArr[2] == 9) {
-
-				// 	if (currentArr[1] == 9) {
-				// 		// increase 1st digit to 1
-				// 		loopFromTo(category, 0, 0, 1)
-				// 	} else {
-				// 		// lower 3rd digit by 1 (to 0)
-				// 		loopFromTo(category, 2, 9, 0)
-				// 		// increase 2nd digit by 1
-				// 		loopFromTo(category, 1, currentArr[1], +currentArr[1] + 1)
-				// 		//change currentArr to reflect changes
-				// 		currentArr[2] = 0;
-				// 		currentArr[1] = +currentArr[1] + 1;
-				// 		// recurse in case currentArr still not up to newArr
-				// 		changeDigits (currentArr, newArr, category);
-				// 	}
-
-				// } else {
-				// 	//increase 3rd digit by 1 (to new digit at index)
-				// 	loopFromTo(category, 2, currentArr[2], +currentArr[2] + 1);
-				// 	//change currentArr to reflect changes
-				// 	currentArr[2] = +currentArr[2] + 1;
-				// 	// recurse in case currentArr still not up to newArr
-				// 	changeDigits (currentArr, newArr, category);
-				// }
-
-		// } else if (+currentArr.slice(1).join('') > +newArr.slice(1).join('')) {
-		// 	console.log('smaller!')
+		} else if (+currentArr.slice(1).join('') > +newArr.slice(1).join('')) {
+			console.log('smaller!')
 	
-		// }
+		}
 	}
 	
 changeDigits(kwhPercentObj.last, kwhPercentObj.new, 'kwh');

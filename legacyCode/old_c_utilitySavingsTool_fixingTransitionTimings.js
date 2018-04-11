@@ -1651,7 +1651,7 @@ costBarSection.append('text')
 		const percentChangeText2 = percentChangeTextGroup.selectAll('.digitBox2')
 			.data(d => d.percent.last)
 				.enter().append('text')
-					.attr('class', (d, i, parentNode) => `digitBox2 g2DigitIndex${i}For${parentNode[i].parentNode.__data__.category}`)
+					.attr('class', (d, i, parentNode) => `digitBox1 g1DigitIndex${i}For${parentNode[i].parentNode.__data__.category}`)
 					.text((d, i) => displayForIndex[i][d])
 					.attr('x', (d, i, parentNode) => {
 						if(i === 1 && parentNode[0].__data__ === 0) {
@@ -1702,82 +1702,53 @@ costBarSection.append('text')
 					.attr('y', 30);
 	}
 
-
-
 	function increaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal) {
-		const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
-		const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
+		const digitObjToChange1 = widget.svg.selectAll(`.g1DigitIndex${digitIndex}For${category}`);
+		const digitObjToChange2 = widget.svg.selectAll(`.g2DigitIndex${digitIndex}For${category}`);
 		const thisDuration = changeDuration / numbersToGetThrough;
 
 		digitObjToChange1
-			.attr('y', 0)
 			.transition()
 				.delay(thisDuration * delayMultiplier)
 				.duration(thisDuration)
 				.attr('y', -30)
-				// .on('end', function() {
-				// 	d3.select(this)
-				// 		.transition()
-				// 			.duration(0)
-				// 			.text(() => displayForIndex[digitIndex][+currentVal + 1])
-				// 			.attr('y', 0);
-				// })
 
 
 		digitObjToChange2
-			.text(() => displayForIndex[digitIndex][currentVal + 1])
-			.attr('y', 30)
+			.transition()
+					.delay(thisDuration * delayMultiplier)
+					.duration(0)
+					.text(() => displayForIndex[digitIndex][+currentVal + 1])
+					.attr('y', 30)
 			.transition()
 				.delay(thisDuration * delayMultiplier)
 				.duration(thisDuration)
 				.attr('y', 0)
-				// .on('end', function() {
-				// 	d3.select(this)
-				// 		.transition()
-				// 			.duration(0)
-				// 			.attr('y', 30);
-				// })
-			// .transition()
-			// 	.delay(thisDuration * (delayMultiplier + 0.5))
-			// 	.duration(thisDuration)
-			// 	.attr('y', 0)
+
+				
 	}
 
 	function decreaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal) {
-		const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
-		const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
+		const digitObjToChange1 = widget.svg.selectAll(`.g1DigitIndex${digitIndex}For${category}`);
+		const digitObjToChange2 = widget.svg.selectAll(`.g2DigitIndex${digitIndex}For${category}`);
 		const thisDuration = changeDuration / numbersToGetThrough;
+		
 		digitObjToChange1
-			.attr('y', 0)
 			.transition()
 				.delay(thisDuration * delayMultiplier)
 				.duration(thisDuration)
 				.attr('y', 30)
-				// .on('end', function() {
-				// 	d3.select(this)
-				// 		.transition()
-				// 			.duration(0)
-				// 			.text(() => displayForIndex[digitIndex][+currentVal - 1])
-				// 			.attr('y', 0);
-				// })
 
 		digitObjToChange2
-			.text(() => displayForIndex[digitIndex][currentVal - 1])
-			.attr('y', -30)
+			.transition()
+				.delay(thisDuration * delayMultiplier)
+				.duration(0)
+				.text(() => displayForIndex[digitIndex][+currentVal - 1])
+				.attr('y', -30)
 			.transition()
 				.delay(thisDuration * delayMultiplier)
 				.duration(thisDuration)
 				.attr('y', 0)
-				// .on('end', function() {
-				// 	d3.select(this)
-				// 		.transition()
-				// 		.duration(0)
-				// 		.attr('y', 30);
-				// })
-			// .transition()
-			// 	.delay(thisDuration * (delayMultiplier + 0.5))
-			// 	.duration(thisDuration)
-			// 	.attr('y', 0)
 
 	}
 
@@ -1799,16 +1770,116 @@ costBarSection.append('text')
 		to = +to;
 		if (from < to) {
 			differenceBtwOldAndNewVal = to - from;
-			for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
-				increaseDigit (category, digitIndex, i + 1, differenceBtwOldAndNewVal, from + i);
-				switchObjPlaces (category, digitIndex, i + 1, differenceBtwOldAndNewVal, (from + i) + 1);
+			let counter = 0;
+			function increaseRecursively () {
+				counter++;
+				const delayMultiplier = counter + 1;
+				const numbersToGetThrough = differenceBtwOldAndNewVal;
+				const currentVal = from + counter;
+				const digitObjToChange1 = widget.svg.selectAll(`.g1DigitIndex${digitIndex}For${category}`);
+				const digitObjToChange2 = widget.svg.selectAll(`.g2DigitIndex${digitIndex}For${category}`);
+				const thisDuration = changeDuration / numbersToGetThrough;
+		
+				digitObjToChange1
+					.transition()
+						.delay(thisDuration * delayMultiplier)
+						.duration(thisDuration)
+						// .attr('y', -30)
+						.text(() => displayForIndex[digitIndex][+currentVal + 1])
+						.on('end', () => {
+							counter++;
+							if (counter < differenceBtwOldAndNewVal) increaseRecursively()
+						})
+		
+		
+				// digitObjToChange2
+				// 	.transition()
+				// 			.delay(thisDuration * delayMultiplier)
+				// 			.duration(0)
+				// 			.text(() => displayForIndex[digitIndex][+currentVal + 1])
+				// 			.attr('y', 30)
+				// 	.transition()
+				// 		.delay(thisDuration * delayMultiplier)
+				// 		.duration(thisDuration)
+				// 		.attr('y', 0)
+				// 		.on('end', () => {
+				// 			digitObjToChange1
+				// 				.transition()
+				// 					.duration(0)
+				// 					.delay(thisDuration * (delayMultiplier + 0.5))
+				// 					.text(() => displayForIndex[digitIndex][+currentVal + 1])
+				// 					.attr('y', 0);
+
+				// 			digitObjToChange2
+				// 				.transition()
+				// 					.duration(0)
+				// 					.delay(thisDuration * (delayMultiplier + 0.5))
+				// 					.attr('y', 30)
+				// 					.on('end', () => {
+											// counter++;
+				// 						if (counter < differenceBtwOldAndNewVal) increaseRecursively()
+				// 					})
+				// 		})
+
 			}
+			increaseRecursively();
+			// for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
+			// 	increaseDigit (category, digitIndex, i + 1, differenceBtwOldAndNewVal, from + i);
+			// 	switchObjPlaces (category, digitIndex, i + 1, differenceBtwOldAndNewVal, (from + i) + 1);
+			// }
 		} else {
 			differenceBtwOldAndNewVal = from - to;
-			for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
-				decreaseDigit (category, digitIndex, i + 1, differenceBtwOldAndNewVal, from - i);
-				switchObjPlaces (category, digitIndex, i + 1, differenceBtwOldAndNewVal, (from - i) - 1);
+			let counter = 0;
+			function decreaseRecursively () {
+				const delayMultiplier = counter + 1;
+				const numbersToGetThrough = differenceBtwOldAndNewVal;
+				const currentVal = from + counter;
+				const digitObjToChange1 = widget.svg.selectAll(`.g1DigitIndex${digitIndex}For${category}`);
+				const digitObjToChange2 = widget.svg.selectAll(`.g2DigitIndex${digitIndex}For${category}`);
+				const thisDuration = changeDuration / numbersToGetThrough;
+		
+				digitObjToChange1
+					.transition()
+						.delay(thisDuration * delayMultiplier)
+						.duration(thisDuration)
+						// .attr('y', 30)
+						.text(() => displayForIndex[digitIndex][+currentVal - 1])
+						.on('end', () => {
+							counter++;
+							if (counter < differenceBtwOldAndNewVal) decreaseRecursively()
+						})
+		
+		
+				// digitObjToChange2
+				// 	.transition()
+				// 			.delay(thisDuration * delayMultiplier)
+				// 			.duration(0)
+				// 			.text(() => displayForIndex[digitIndex][+currentVal - 1])
+				// 			.attr('y', -30)
+				// 	.transition()
+				// 		.delay(thisDuration * delayMultiplier)
+				// 		.duration(thisDuration)
+				// 		.attr('y', 0)
+				// 		.on('end', () => {
+				// 			digitObjToChange1
+				// 				.transition()
+				// 					.duration(0)
+				// 					.delay(thisDuration * (delayMultiplier + 0.5))
+				// 					.text(() => displayForIndex[digitIndex][+currentVal - 1])
+				// 					.attr('y', 0);
+
+				// 			digitObjToChange2
+				// 				.transition()
+				// 					.duration(0)
+				// 					.delay(thisDuration * (delayMultiplier + 0.5))
+				// 					.attr('y', 30)
+				// 					.on('end', () => {
+											// counter++;
+				// 						if (counter < differenceBtwOldAndNewVal) decreaseRecursively()
+				// 					})
+				// 		})
 			}
+			decreaseRecursively();
 		}
 	}
 
