@@ -5,8 +5,8 @@ const widget = {};
 
 ////////// Hard Coded Defs //////////
 const small = {width: 880, height: 440};
-const medium = {width: 880, height: 440};	//TODO: change to actual dimensions
-const large = {width: 880, height: 440};	//TODO: change to actual dimensions
+const medium = {width: 1200, height: 700};
+const large = {width: 1600, height: 850};	
 const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 const getTextWidth = (text, font) => {
 	const canvas = document.createElement('canvas');
@@ -419,17 +419,17 @@ const data = {};
 properties.forEach(prop => data[prop.name] = prop.value);
 
   // FROM JQ //
-const jqHeight = 450;
-const jqWidth = 890;
+const jqHeight = 800;
+const jqWidth = 1300;
 
 
 function chooseSize (jqH, jqW) {
-	if(jqH < 700 || jqW < 1200) {
+	if(jqW < 1200 || jqH < 700) {
 		return small;		//880, 440
-	} else if (jqH < 1700 || jqW < 2200) {		//TODO: change to actual range
-		return medium;		//880, 440
+	} else if (jqW < 850 || jqH < 1600) {
+		return medium;		// 1200, 700
 	} else {
-		return large;		//880, 440
+		return large;		//1600, 850 
 	}
 }
 const widgetDimensions = chooseSize(jqHeight, jqWidth);
@@ -546,7 +546,7 @@ const renderWidget = () => {
 		.style('top', data.margin.top + getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles + 'px')
 		.style('font', data.dropdownFont)
 		.style('color', data.dropdownTextColor)
-		.on('click', unhover)
+		// .on('click', unhover)
 		.on('change', dropdownYearChanged)
 		.selectAll('option')
 			.data(data.availableYears).enter()
@@ -589,6 +589,7 @@ const renderWidget = () => {
 		.attr('class', 'log')
 		.attr('width', '100%')
 		.attr('height', '98%')
+		.on('click', unhover);
 	d3.select(widget.svg.node().parentNode)
 		.style('background-color', data.backgroundColor)
 		// .on('click', unhover);
@@ -603,8 +604,7 @@ const renderWidget = () => {
 		.attr('height', data.graphicHeight)
 		.attr('width', data.graphicWidth)
 		.attr('fill', data.backgroundColor)
-		// .attr('stroke', 'black')
-		.on('click', unhover);
+		.attr('stroke', 'black')
 
 	const toolsGroupHeight = data.graphicHeight / 4;
 	const paddingBetweenToolsAndCharts = 30
@@ -815,6 +815,10 @@ const renderWidget = () => {
 					.duration(duration)
 					.call(kwhYAxisGenerator);
 
+			kwhChart.select('.kwhYAxisTitle')
+				.style('opacity', (widget.activeChartType === 'grouped' && widget.equipmentHovered === 'none') || (widget.activeChartType === 'stacked' && !widget.systemIsHovered) ? 1 : 0)
+	
+
 			// transition bars
 			kwhChart.selectAll('.equipmentGroups')
 				.transition()
@@ -858,6 +862,10 @@ const renderWidget = () => {
 				.transition()
 					.duration(duration)
 					.call(costYAxisGenerator);
+
+			costChart.select('.costYAxisTitle')
+				.style('opacity', (widget.activeChartType === 'grouped' && widget.equipmentHovered === 'none') || (widget.activeChartType === 'stacked' && !widget.systemIsHovered) ? 1 : 0)
+
 
 			// transition bars
 			costChart.selectAll('.equipmentGroups')
@@ -922,7 +930,24 @@ const renderWidget = () => {
       .attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
       .attr("height", d => barSectionHeight - kwhYScale(d.value) )
 			.attr("fill", d => data[`${d.category}Color`])
-			.style('opacity', (d, i, nodes) => nodes[i].parentNode.__data__.type === widget.equipmentHovered || widget.equipmentHovered === 'none'|| widget.legendHovered === 'none' || widget.legendHovered === d.category ? 1 : unhoveredOpacity)
+			.style('fill-opacity', (innerD, innerI, innerNodes) => {
+				const myCat = innerD.category
+				const myEq = innerNodes[innerI].parentNode.__data__.type
+				if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+					return 1;
+				} else {
+					return unhoveredOpacity;
+				}
+			})
+			.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+				const myCat = innerD.category
+				const myEq = innerNodes[innerI].parentNode.__data__.type
+				if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+					return 1;
+				} else {
+					return 0;
+				}
+			})
 			.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 			.on('mouseover', function (d, i, nodes) {
 				if (widget.activeChartType === 'stacked'){
@@ -935,10 +960,26 @@ const renderWidget = () => {
 					//change for this hover
 					widget.equipmentHovered = this.parentNode.__data__.type;
 					renderChangeTools();
-					const thisType = nodes[i].parentNode.__data__.type;
 					widget.svg.selectAll('.dynamicCategoryRects')
-						.style('opacity', (thatD, thatI, thatNodes) => thatNodes[thatI].parentNode.__data__.type === thisType ? 1 : unhoveredOpacity)
-				}
+						.style('fill-opacity', (innerD, innerI, innerNodes) => {
+							const myCat = innerD.category
+							const myEq = innerNodes[innerI].parentNode.__data__.type
+							if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+								return 1;
+							} else {
+								return unhoveredOpacity;
+							}
+						})
+						.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+							const myCat = innerD.category
+							const myEq = innerNodes[innerI].parentNode.__data__.type
+							if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+								return 1;
+							} else {
+								return 0;
+							}
+						})
+					}
 				appendCostTooltip();
 				appendKwhTooltip();
 				kwhChart.selectAll('.kwhYAxisTitle')
@@ -976,7 +1017,7 @@ const renderWidget = () => {
 		.attr('dominant-baseline', 'hanging')
 		.attr('fill', data.unitsColor)
 		.style('font', data.unitsFont)
-		.style('opacity', widget.hoveredEquipmentDataForDate !== 'none' || widget.systemIsHovered ? 1 : 0)
+		.style('opacity', (widget.activeChartType === 'grouped' && widget.equipmentHovered === 'none') || (widget.activeChartType === 'stacked' && !widget.systemIsHovered) ? 1 : 0)
 
 	//x axis systemName
 	kwhBarSection.append('text')
@@ -1070,7 +1111,24 @@ costEquipmentGroups.selectAll('.categoryRects')
 		.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
 		.attr("height", d => barSectionHeight - costYScale(d.cost) )
 		.attr("fill", d => data[`${d.category}Color`])
-		.style('opacity', (d, i, nodes) => nodes[i].parentNode.__data__.type === widget.equipmentHovered || widget.equipmentHovered === 'none'|| widget.legendHovered === 'none' || widget.legendHovered === d.category ? 1 : unhoveredOpacity)
+		.style('fill-opacity', (innerD, innerI, innerNodes) => {
+			const myCat = innerD.category
+			const myEq = innerNodes[innerI].parentNode.__data__.type
+			if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+				return 1;
+			} else {
+				return unhoveredOpacity;
+			}
+		})
+		.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+			const myCat = innerD.category
+			const myEq = innerNodes[innerI].parentNode.__data__.type
+			if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+				return 1;
+			} else {
+				return 0;
+			}
+		})
 		.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 		.on('mouseover', function (d, i, nodes) {
 			if (widget.activeChartType === 'stacked'){
@@ -1085,7 +1143,24 @@ costEquipmentGroups.selectAll('.categoryRects')
 				renderChangeTools();
 				const thisType = nodes[i].parentNode.__data__.type;
 				widget.svg.selectAll('.dynamicCategoryRects')
-					.style('opacity', (thatD, thatI, thatNodes) => thatNodes[thatI].parentNode.__data__.type === thisType ? 1 : unhoveredOpacity)
+					.style('fill-opacity', (innerD, innerI, innerNodes) => {
+						const myCat = innerD.category
+						const myEq = innerNodes[innerI].parentNode.__data__.type
+						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+							return 1;
+						} else {
+							return unhoveredOpacity;
+						}
+					})
+					.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+						const myCat = innerD.category
+						const myEq = innerNodes[innerI].parentNode.__data__.type
+						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+							return 1;
+						} else {
+							return 0;
+						}
+					})
 			}
 			appendCostTooltip();
 			appendKwhTooltip();
@@ -1124,7 +1199,8 @@ costBarSection.append('text')
 	.attr('dominant-baseline', 'hanging')
 	.attr('fill', data.unitsColor)
 	.style('font', data.unitsFont)
-	.style('opacity', widget.hoveredEquipmentDataForDate !== 'none' || widget.systemIsHovered ? 1 : 0)
+	.style('opacity', (widget.activeChartType === 'grouped' && widget.equipmentHovered === 'none') || (widget.activeChartType === 'stacked' && !widget.systemIsHovered) ? 1 : 0)
+
 
 
 // x axis systemName
@@ -1360,9 +1436,29 @@ costBarSection.append('text')
 				widget.svg.selectAll(`.${d.name}LegendCircle`)
 					.attr('r', hoveredCircleRadius)
 
-				widget.svg.selectAll(`.categoryRects`)
-					.filter(innerD => innerD.category !== d.name)
-					.style('opacity', unhoveredOpacity)
+				widget.svg.selectAll(`.dynamicCategoryRects`)
+					.style('fill-opacity', (innerD, innerI, innerNodes) => {
+						const myCat = innerD.category
+						const myEq = innerNodes[innerI].parentNode.__data__.type
+						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+							return 1;
+						} else {
+							return unhoveredOpacity;
+						}
+					})
+					.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+						const myCat = innerD.category
+						const myEq = innerNodes[innerI].parentNode.__data__.type
+						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+							return 1;
+						} else {
+							return 0;
+						}
+					})
+
+				widget.svg.selectAll('.trhCategoryRects')
+					.style('opacity', innerD => widget.legendHovered === 'none' || widget.legendHovered === innerD.category ? 1 : unhoveredOpacity)
+
 			})
 			.on('mouseout', function (d) {
 				widget.legendHovered = 'none';
@@ -1373,9 +1469,28 @@ costBarSection.append('text')
 				widget.svg.selectAll(`.${d.name}LegendCircle`)
 					.attr('r', circleRadius)
 
-				widget.svg.selectAll(`.categoryRects`)
-					.filter(innerD => innerD.category !== d.name)
-					.style('opacity', 1)
+				widget.svg.selectAll(`.dynamicCategoryRects`)
+					.style('fill-opacity', (innerD, innerI, innerNodes) => {
+						const myCat = innerD.category
+						const myEq = innerNodes[innerI].parentNode.__data__.type
+						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+							return 1;
+						} else {
+							return unhoveredOpacity;
+						}
+					})
+					.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+						const myCat = innerD.category
+						const myEq = innerNodes[innerI].parentNode.__data__.type
+						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+							return 1;
+						} else {
+							return 0;
+						}
+					})
+
+				widget.svg.selectAll('.trhCategoryRects')
+					.style('opacity', innerD => widget.legendHovered === 'none' || widget.legendHovered === innerD.category ? 1 : unhoveredOpacity)
 			})
 
 	legendCategories.append('circle')
@@ -1611,14 +1726,14 @@ costBarSection.append('text')
 		const percentChangeText1 = percentChangeTextGroup.selectAll('.digitBox1')
 			.data(d => d.percent.last)
 				.enter().append('text')
-					.attr('class', (d, i, parentNode) => `digitBox1 g1DigitIndex${i}For${parentNode[i].parentNode.__data__.category}`)
+					.attr('class', (d, i, nodes) => `digitBox1 g1DigitIndex${i}For${nodes[i].parentNode.__data__.category}`)
 					.text((d, i) => {
 						return displayForIndex[i][d]
 					})
-					.attr('x', (d, i, parentNode) => {
-						if(i === 1 && parentNode[0].__data__ === 0) {
+					.attr('x', (d, i, nodes) => {
+						if(i === 1 && nodes[0].__data__ === 0) {
 							return getTextWidth('0', data.changePercentFont) / 2
-						} else if (i === 2 && parentNode[0].__data__ === 0) {
+						} else if (i === 2 && nodes[0].__data__ === 0) {
 							return getTextWidth('0', data.changePercentFont) * 1.5;
 						} else {
 							return i * getTextWidth('0', data.changePercentFont);
@@ -1631,12 +1746,12 @@ costBarSection.append('text')
 		const percentChangeText2 = percentChangeTextGroup.selectAll('.digitBox2')
 			.data(d => d.percent.last)
 				.enter().append('text')
-					.attr('class', (d, i, parentNode) => `digitBox2 g2DigitIndex${i}For${parentNode[i].parentNode.__data__.category}`)
+					.attr('class', (d, i, nodes) => `digitBox2 g2DigitIndex${i}For${nodes[i].parentNode.__data__.category}`)
 					.text((d, i) => displayForIndex[i][d])
-					.attr('x', (d, i, parentNode) => {
-						if(i === 1 && parentNode[0].__data__ === 0) {
+					.attr('x', (d, i, nodes) => {
+						if(i === 1 && nodes[0].__data__ === 0) {
 							return getTextWidth('0', data.changePercentFont) / 2
-						} else if (i === 2 && parentNode[0].__data__ === 0) {
+						} else if (i === 2 && nodes[0].__data__ === 0) {
 							return getTextWidth('0', data.changePercentFont) * 1.5;
 						} else {
 							return i * getTextWidth('0', data.changePercentFont);
@@ -1920,7 +2035,8 @@ const rectRightX = rectLeftX + rectWidth
 			widget.systemIsHovered = false;
 			widget.trhIsHovered = false;
 			widget.svg.selectAll('.dynamicCategoryRects')
-				.style('opacity', 1)
+				.style('fill-opacity', 1)
+				.style('stroke-opacity', 1)
 			widget.svg.selectAll('.trhYAxisTitle')
 				.style('opacity', 1)
 			widget.svg.selectAll('.kwhYAxisTitle')
