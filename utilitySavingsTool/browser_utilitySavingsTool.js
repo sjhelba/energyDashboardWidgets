@@ -937,7 +937,7 @@ const renderWidget = () => {
 
   //click handler for chart transitions
   const transitionChartsClickFunction = () => {
-		unhover();
+		unhoverAll();
 		widget.activeChartType === 'stacked' ?	widget.activeChartType = 'grouped' :	widget.activeChartType = 'stacked';
 		transitionCharts(widget.activeChartType)
 		toggleButton();
@@ -2139,34 +2139,42 @@ const rectRightX = rectLeftX + rectWidth
 		//************************ UNHOVER & UNPIN FUNCTIONS *************************//
 		function tryUnhover (d, i, nodes) {
 			if ((widget.activeChartType === 'stacked' && !widget.systemIsPinned) || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')){
-				unhover();
+				unhoverDynamic();
+			}
+			if (!widget.trhIsPinned){
+				unhoverTrh();
 			}
 		}
-
-		function unhover () {
+		function unhoverDynamic () {
 			d3.event.stopPropagation()
 			widget.equipmentHovered = 'none';
 			widget.systemIsHovered = false;
-			widget.trhIsHovered = false;
 			widget.svg.selectAll('.dynamicCategoryRects')
 				.style('fill-opacity', 1)
 				.style('stroke-opacity', 1)
-			widget.svg.selectAll('.trhYAxisTitle')
-				.style('opacity', 1)
 			widget.svg.selectAll('.kwhYAxisTitle')
 				.style('opacity', 1);
 			widget.svg.selectAll('.costYAxisTitle')
 				.style('opacity', 1);
-			resetElements('.trhTooltip');
 			resetElements('.costTooltip');
 			resetElements('.kwhTooltip');
 			renderChangeTools();
+		}
+		function unhoverTrh () {
+			widget.trhIsHovered = false;
+			widget.svg.selectAll('.trhYAxisTitle')
+				.style('opacity', 1)
+			resetElements('.trhTooltip');
+		}
+		function unhoverAll () {
+			unhoverDynamic();
+			unhoverTrh();
 		}
 		function unpin () {
 			widget.equipmentPinned = 'none';
 			widget.systemIsPinned = false;
 			widget.trhIsPinned = false;
-			unhover();
+			unhoverAll();
 		}
 
 		//************************ DYNAMIC BAR HOVER/PIN FUNCTIONS *************************//
