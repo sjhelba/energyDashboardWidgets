@@ -186,7 +186,6 @@ const getDataForDate = (month, year, categoriesData = [data.baselineData, data.p
 						} else {
 							equipmentGroup.utilityRate[categoryIndex].rate = monthlyDatum.rate;
 						}
-
 					}
 				})
 				// set system level trh vals for baseline and measured
@@ -291,39 +290,19 @@ const properties = [
 		typeSpec: 'gx:Color'
   },
   {
-		name: 'unitsFont',
-		value: '9pt Nirmala UI',
-		typeSpec: 'gx:Font'
-  },
-  {
 		name: 'toolTitleColor',
 		value: '#333333',
 		typeSpec: 'gx:Color'
-  },
-  {
-		name: 'toolTitleFont',
-		value: '8.5pt Nirmala UI',
-		typeSpec: 'gx:Font'
   },
   {
 		name: 'dropdownTextColor',
 		value: 'black',
 		typeSpec: 'gx:Color'
   },
-  {
-		name: 'dropdownFont',
-		value: '10.5pt Nirmala UI',
-		typeSpec: 'gx:Font'
-	},
 	{
 		name: 'tickTextColor',
 		value: 'black',
 		typeSpec: 'gx:Color'
-	},
-	{
-		name: 'tickFont',
-		value: '8.5pt Nirmala UI',
-		typeSpec: 'gx:Font'
 	},
 	{
 		name: 'systemNameColor',
@@ -331,19 +310,9 @@ const properties = [
 		typeSpec: 'gx:Color'
 	},
 	{
-		name: 'systemNameFont',
-		value: '9.5pt Nirmala UI',
-		typeSpec: 'gx:Font'
-	},
-	{
 		name: 'legendTextColor',
 		value: 'black',
 		typeSpec: 'gx:Color'
-	},
-	{
-		name: 'legendFont',
-		value: '8.5pt Nirmala UI',
-		typeSpec: 'gx:Font'
 	},
 	{
 		name: 'currencySymbolColor',
@@ -351,19 +320,9 @@ const properties = [
 		typeSpec: 'gx:Color'
 	},
 	{
-		name: 'currencySymbolFont',
-		value: 'bold 10.5pt Nirmala UI',
-		typeSpec: 'gx:Font'
-	},
-	{
 		name: 'utilityRateColor',
 		value: 'black',
 		typeSpec: 'gx:Color'
-	},
-	{
-		name: 'utilityRateFont',
-		value: 'bold 15pt Nirmala UI',
-		typeSpec: 'gx:Font'
 	},
 	{
 		name: 'changePercentColor',
@@ -371,19 +330,9 @@ const properties = [
 		typeSpec: 'gx:Color'
 	},
 	{
-		name: 'changePercentFont',
-		value: 'bold 24pt Nirmala UI',
-		typeSpec: 'gx:Font'
-	},
-	{
 		name: 'changeValueColor',
 		value: 'white',
 		typeSpec: 'gx:Color'
-	},
-	{
-		name: 'changeValueFont',
-		value: '10.5pt Nirmala UI',
-		typeSpec: 'gx:Font'
 	},
 	{
 		name: 'tooltipColor',
@@ -391,9 +340,9 @@ const properties = [
 		typeSpec: 'gx:Color'
 	},
 	{
-		name: 'tooltipFont',
-		value: '10pt Nirmala UI',
-		typeSpec: 'gx:Font'
+		name: 'tooltipBackgroundColor',
+		value: '#bababa',
+		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'changeToolRectColor',
@@ -401,9 +350,28 @@ const properties = [
 		typeSpec: 'gx:Color'
 	},
 	{
-		name: 'buttonFont',
-		value: 'bold 12pt Nirmala UI',
-		typeSpec: 'gx:Font'
+		name: 'sysBtnBackgroundColor',
+		value: '#7663F2',
+		typeSpec: 'gx:Color'
+	},
+	{
+		name: 'eqBtnTextColor',
+		value: 'white',
+		typeSpec: 'gx:Color'
+	},
+	{
+		name: 'eqBtnBackgroundColor',
+		value: '#8EF056',
+		typeSpec: 'gx:Color'
+	},
+	{
+		name: 'sysBtnTextColor',
+		value: 'white',
+		typeSpec: 'gx:Color'
+	},
+	{
+		name: 'tooltipOpacity',
+		value: 0.9,
 	}
 ];
 
@@ -418,21 +386,17 @@ const thisYear = today.getFullYear();
 const data = {};
 properties.forEach(prop => data[prop.name] = prop.value);
 
-  // FROM JQ //
-const jqHeight = 800;
-const jqWidth = 1300;
+	// FROM JQ //
+// //small
+// const jqWidth = 881;
+// const jqHeight = 441;
+//med
+const jqWidth = 1201;
+const jqHeight = 701;
+// //lrg
+// const jqWidth = 1601;
+// const jqHeight = 851;
 
-
-function chooseSize (jqH, jqW) {
-	if(jqW < 1200 || jqH < 700) {
-		return small;		//880, 440
-	} else if (jqW < 850 || jqH < 1600) {
-		return medium;		// 1200, 700
-	} else {
-		return large;		//1600, 850 
-	}
-}
-const widgetDimensions = chooseSize(jqHeight, jqWidth);
 data.activeEquipmentGroups = [
 	'CHs',
 	'PCPs',
@@ -450,14 +414,73 @@ if (!data.includePCPs) {data.activeEquipmentGroups.splice(1, 1)}
 
 
 
-  // SIZING //
+	// SIZING //
+function chooseSize (jqH, jqW) {
+	if(jqW < 1200 || jqH < 700) {
+		return [small, 'small'];		//880, 440
+	} else if (jqW < 1600 || jqH < 850) {
+		return [medium, 'medium'];		// 1200, 700
+	} else {
+		return [large, 'large'];		//1600, 850 
+	}
+}
+const widgetDimensions = chooseSize(jqHeight, jqWidth)[0];
+data.widgetSize = chooseSize(jqHeight, jqWidth)[1];
+
 data.margin = {top: 5, left: 5, right: 0, bottom: 0};
 data.graphicHeight = widgetDimensions.height - (data.margin.top + data.margin.bottom);
 data.graphicWidth = widgetDimensions.width - (data.margin.left + data.margin.right);
+//fonts
+if (data.widgetSize === 'small') {
+	data.unitsFont = '9pt Nirmala UI';
+	data.buttonFont = 'bold 12pt Nirmala UI';
+	data.tooltipFont = '10pt Nirmala UI';
+	data.changeValueFont = '12pt Nirmala UI';
+	data.changePercentFont = 'bold 24pt Nirmala UI';
+	data.toolTitleFont = 'bold 12pt Nirmala UI';
+	data.dropdownFont = '10.5pt Nirmala UI';
+	data.tickFont = '8.5pt Nirmala UI';
+	data.systemNameFont = '9.5pt Nirmala UI';
+	data.legendFont = '9pt Nirmala UI';
+	data.currencySymbolFont = 'bold 10.5pt Nirmala UI';
+	data.utilityRateFont = 'bold 15pt Nirmala UI';
+} else if (data.widgetSize === 'medium') {
+	data.unitsFont = '11pt Nirmala UI';
+	data.buttonFont = 'bold 13.5pt Nirmala UI';
+	data.tooltipFont = '11pt Nirmala UI';
+	data.changeValueFont = '14.5pt Nirmala UI';
+	data.changePercentFont = 'bold 28pt Nirmala UI';
+	data.toolTitleFont = 'bold 14pt Nirmala UI';
+	data.dropdownFont = '12pt Nirmala UI';
+	data.tickFont = '12pt Nirmala UI';
+	data.systemNameFont = '12pt Nirmala UI';
+	data.legendFont = '12pt Nirmala UI';
+	data.currencySymbolFont = 'bold 13pt Nirmala UI';
+	data.utilityRateFont = 'bold 20pt Nirmala UI';
+} else {
+	data.unitsFont = '13pt Nirmala UI';
+	data.buttonFont = 'bold 15pt Nirmala UI';
+	data.tooltipFont = '12.5pt Nirmala UI';
+	data.changeValueFont = '17pt Nirmala UI';
+	data.changePercentFont = 'bold 32pt Nirmala UI';
+	data.toolTitleFont = 'bold 16pt Nirmala UI';
+	data.dropdownFont = '13.5pt Nirmala UI';
+	data.tickFont = '15pt Nirmala UI';
+	data.systemNameFont = '15pt Nirmala UI';
+	data.legendFont = '15pt Nirmala UI';
+	data.currencySymbolFont = 'bold 15.5pt Nirmala UI';
+	data.utilityRateFont = 'bold 25pt Nirmala UI';
+}
+
+
+
+
+
+
 
 	// GLOBALS PER INSTANCE //
-data.paddingBetweenTooltipText = 3;
-data.tooltipPadding = 2
+data.paddingBetweenTooltipText = data.widgetSize === 'large' ? 5 : (data.widgetSize === 'medium' ? 4 : 3);
+data.tooltipPadding = data.widgetSize === 'large' ? 12 : (data.widgetSize === 'medium' ? 7 : 5);
 data.paddingAfterLegendCat = 5;
 
 if (!widget.year) widget.year = thisYear;
@@ -465,9 +488,14 @@ if (!widget.month) widget.month = 'All';
 
 
 if (!widget.equipmentHovered) widget.equipmentHovered = 'none';	//alternative selections are equipment group names
+if (!widget.equipmentPinned) widget.equipmentPinned = 'none';	//alternative selections are equipment group names
+
 if (!widget.systemIsHovered) widget.systemIsHovered = false; 	//alternative selection is true
+if (!widget.systemIsPinned) widget.systemIsPinned = false; 	//alternative selection is true
 
 if (!widget.trhIsHovered) widget.trhIsHovered = false;	//alternative selection is true
+if (!widget.trhIsPinned) widget.trhIsPinned = false;	//alternative selection is true
+
 if (!widget.legendHovered) widget.legendHovered = 'none';	// alternative selections are category names
 
 if (!widget.monthDropDownSelected) widget.monthDropDownSelected = 'All';
@@ -508,25 +536,25 @@ data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
 ////////////////////////////////////////////////////////////////
 
  // INITIALIZATION //
-const outerDiv = d3.select('#outer')
+widget.outerDiv = d3.select('#outer')
 	.style('height', jqHeight + 'px')
 	.style('width', jqWidth + 'px');
 
 
 const renderWidget = () => { 
 	// delete leftover elements from versions previously rendered
-	if (!outerDiv.empty()) outerDiv.selectAll('*').remove();
+	if (!widget.outerDiv.empty()) widget.outerDiv.selectAll('*').remove();
 
 	// DROPDOWNS //
 	const paddingLeftOfTools = 20;
-	const dateDropdownWidth = 100;
-	const paddingBetweenDropdowns = 20;
-  const paddingUnderDropdownTitles = 10;
+	const dateDropdownWidth = data.widgetSize === 'small' ? 100 : 140;
+	const paddingBetweenDropdowns = data.widgetSize === 'large' ? 30 : 20;
+  const paddingUnderDropdownTitles = 8;
 	const dropdownBorderRadius = '100px'
 	const dropdownsWidth = paddingLeftOfTools + (dateDropdownWidth * 2) + paddingBetweenDropdowns;
 
 
-	const dropdownDiv = outerDiv.append('div')
+	const dropdownDiv = widget.outerDiv.append('div')
 		.attr('class', 'dropdownDiv')
 
 		//Year Dropdown
@@ -552,7 +580,7 @@ const renderWidget = () => {
 			.data(data.availableYears).enter()
 				.append('option')
 					.property('selected', d => d === widget.yearDropDownSelected)
-					.text(d => d);
+					.text(d => d)
 
 
 
@@ -573,7 +601,7 @@ const renderWidget = () => {
 		.style('top', data.margin.top + getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles + 'px')
 		.style('font', data.dropdownFont)
 		.style('color', data.dropdownTextColor)
-		.on('click', unhover)
+		// .on('click', unhover)
 		.on('change', dropdownMonthChanged)
 		.selectAll('option')
 			.data(d => data.availableDates[widget.yearDropDownSelected]).enter()
@@ -581,15 +609,15 @@ const renderWidget = () => {
 					.property('selected', d => d === widget.monthDropDownSelected)
 					.text(d => d);
 
-
+					
 
 	// SVG INITIALIZATION //
 
-	widget.svg = outerDiv.append('svg')
+	widget.svg = widget.outerDiv.append('svg')
 		.attr('class', 'log')
 		.attr('width', '100%')
 		.attr('height', '98%')
-		.on('click', unhover);
+		.on('mousedown', unpin);
 	d3.select(widget.svg.node().parentNode)
 		.style('background-color', data.backgroundColor)
 		// .on('click', unhover);
@@ -600,14 +628,14 @@ const renderWidget = () => {
 		.attr('class', 'graphicGroup')
 		.attr('transform', `translate(${data.margin.left}, ${data.margin.top})`);
 
-	graphicGroup.append('rect')	//TODO: delete
-		.attr('height', data.graphicHeight)
-		.attr('width', data.graphicWidth)
-		.attr('fill', data.backgroundColor)
-		.attr('stroke', 'black')
+	// graphicGroup.append('rect')	//TODO: delete
+	// 	.attr('height', data.graphicHeight)
+	// 	.attr('width', data.graphicWidth)
+	// 	.attr('fill', data.backgroundColor)
+	// 	.attr('stroke', 'black')
 
-	const toolsGroupHeight = data.graphicHeight / 4;
-	const paddingBetweenToolsAndCharts = 30
+	const toolsGroupHeight = data.widgetSize === 'small' ? 110 : (data.widgetSize === 'medium' ? 120 : 130);
+	const paddingBetweenToolsAndCharts = data.widgetSize === 'large' ? 50 : 30;
 	const paddingAboveUtilityRate = 15;
 	const toolsGroup = graphicGroup.append('g')
 		.attr('class', 'toolsGroup')
@@ -617,24 +645,24 @@ const renderWidget = () => {
 	// 	.attr('width', data.graphicWidth)
 	// 	.attr('fill', 'none')
 	// 	.attr('stroke', 'black')
-
+	const paddingLeftOfButton = data.widgetSize === 'small' ? 20 : (data.widgetSize === 'medium' ? 30 : 60);
 	const utilityRateGroup = toolsGroup.append('g')
 		.attr('class', 'utilityRateGroup')
 		.attr('transform', `translate(${paddingLeftOfTools}, ${getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles + getTextHeight(data.dropdownFont) + paddingAboveUtilityRate})`)
 
 	const buttonGroup = toolsGroup.append('g')
 		.attr('class', 'buttonGroup')
-		.attr('transform', `translate(${paddingLeftOfTools + (dateDropdownWidth * 1.35) + paddingBetweenDropdowns}, ${getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles + getTextHeight(data.dropdownFont) + paddingAboveUtilityRate})`)
+		.attr('transform', `translate(${paddingLeftOfTools + (dateDropdownWidth * 1.35) + paddingBetweenDropdowns + paddingLeftOfButton}, ${getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles + getTextHeight(data.dropdownFont) + paddingAboveUtilityRate})`)
 
 
 
-	const paddingBetweenCharts = 40;
+	const paddingBetweenCharts = 0;
 
 	const chartsGroup = graphicGroup.append('g')
 		.attr('class', 'chartsGroup')
 		.attr('transform', `translate(0, ${toolsGroupHeight + paddingBetweenToolsAndCharts})`);
 
-	const yAxisWidth = 45;
+	const yAxisWidth = getTextWidth('8,888,888,888', data.tickFont);
 	const xAxisHeight = 25;
 	const chartWidth = (data.graphicWidth - ((paddingBetweenCharts * 2) + yAxisWidth)) / 2.5;
 	const trhChartWidth = chartWidth / 2;
@@ -647,12 +675,12 @@ const renderWidget = () => {
 		getTextWidth('Projected', data.legendFont) + (circleRadius * 2.5),
 		getTextWidth('Measured', data.legendFont) + (circleRadius * 2.5)
 	];
-	const paddingBetweenLegendCategories = 15
+	const paddingBetweenLegendCategories = data.widgetSize === 'large' ? 25 : (data.widgetSize === 'medium' ? 20 : 15)
 
 	const legendWidth = legendWidths.reduce((accum, curr) => accum + curr) + (paddingBetweenLegendCategories * 2);
-	const legendHeight = 10;
+	const legendHeight = data.widgetSize === 'large' ? 40 : (data.widgetSize === 'medium' ? 35 : 30);
 
-	const paddingAboveLegend = 35;
+	const paddingAboveLegend = data.widgetSize === 'large' ? 60 : (data.widgetSize === 'medium' ? 50 : 40);
 	const chartHeight = data.graphicHeight - (toolsGroupHeight + paddingBetweenToolsAndCharts + legendHeight + paddingAboveLegend);
 
 
@@ -903,6 +931,17 @@ const renderWidget = () => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
   //********************************************* KWH CHART ***********************************************************//
   // initialization
   const kwhChart = chartsGroup.append('g')
@@ -949,44 +988,12 @@ const renderWidget = () => {
 				}
 			})
 			.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
-			.on('mouseover', function (d, i, nodes) {
-				if (widget.activeChartType === 'stacked'){
-					widget.systemIsHovered = true;
-				}
-				if (widget.activeChartType === 'grouped'){
-					//reset last hover
-					resetElements('.costTooltip');
-					resetElements('.kwhTooltip');
-					//change for this hover
-					widget.equipmentHovered = this.parentNode.__data__.type;
-					renderChangeTools();
-					widget.svg.selectAll('.dynamicCategoryRects')
-						.style('fill-opacity', (innerD, innerI, innerNodes) => {
-							const myCat = innerD.category
-							const myEq = innerNodes[innerI].parentNode.__data__.type
-							if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-								return 1;
-							} else {
-								return unhoveredOpacity;
-							}
-						})
-						.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-							const myCat = innerD.category
-							const myEq = innerNodes[innerI].parentNode.__data__.type
-							if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-								return 1;
-							} else {
-								return 0;
-							}
-						})
-					}
-				appendCostTooltip();
-				appendKwhTooltip();
-				kwhChart.selectAll('.kwhYAxisTitle')
-					.style('opacity', 0);
-				costChart.selectAll('.costYAxisTitle')
-					.style('opacity', 0);
-			});
+			.on('mouseover', tryBarHoverFunc)
+			.on('mousedown', function(){
+				d3.event.stopPropagation()
+			})
+			.on('click', barPinFunc)
+			.on('mouseout', tryUnhover)
 
 			
   // x axis
@@ -1034,15 +1041,15 @@ const renderWidget = () => {
 
 	// tooltip
 	function appendKwhTooltip () {
+		resetElements('.kwhTooltip')
 		const isStacked = widget.activeChartType === 'stacked'
 		const kwhDataForDate = widget.activeChartType === 'stacked' ? widget.dataForDate.categoryDataForDate : widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].kwh;
-		const maxWidthCat = kwhDataForDate.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${isStacked ? curr.kwh : curr.value}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${isStacked ? curr.kwh : curr.value}`, 'bold ' + data.tooltipFont) ?
+		const maxWidthCat = kwhDataForDate.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${isStacked ? curr.kwh : curr.value}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${isStacked ? accum.kwh : accum.value}`, 'bold ' + data.tooltipFont) ?
 			curr :
 			accum
 		);
-
-		const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}: ${isStacked ? maxWidthCat.kwh + ' kWh' : maxWidthCat.value + ' kWh'}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2) + data.paddingAfterLegendCat
-		const tooltipHeight = (data.tooltipPadding * 2) + (kwhDataForDate.length * getTextHeight(data.tooltipFont)) + ((kwhDataForDate.length - 1) * data.paddingBetweenTooltipText);
+		const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}:`, 'bold ' + data.tooltipFont) + getTextWidth(`${isStacked ? maxWidthCat.kwh + ' kWh' : maxWidthCat.value + ' kWh'}`, data.tooltipFont) + (data.tooltipPadding * 2.5) + data.paddingAfterLegendCat
+		const tooltipHeight = (data.tooltipPadding * 2) + (3 * getTextHeight(data.tooltipFont)) + (2 * data.paddingBetweenTooltipText);
 
 		const tooltip = kwhBarSection.append('g')
 			.attr('class', 'kwhTooltip')
@@ -1052,8 +1059,8 @@ const renderWidget = () => {
 			.attr('class', 'tooltip')
 			.attr('height', tooltipHeight)
 			.attr('width', tooltipWidth)
-			.attr('fill', 'white')
-			.attr('opacity', 0.75)
+			.attr('fill', data.tooltipBackgroundColor)
+			.attr('opacity', data.tooltipOpacity)
 			.attr('rx', 5)
 			.attr('ry', 5)
 
@@ -1061,7 +1068,7 @@ const renderWidget = () => {
 			.data(kwhDataForDate)
 			.enter().append('g')
 				.attr('class', d => `kwhTextGroup ${d.category}KwhTextGroup tooltip`)
-				.attr('transform', (d, i) => `translate(${data.tooltipPadding},${data.tooltipPadding + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
+				.attr('transform', (d, i) => `translate(${data.tooltipPadding},${(data.tooltipPadding * 1.5) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
 	
 		textGroups.append('text')
 			.text((d, i) => d.category.slice(0,1).toUpperCase() +': ')
@@ -1130,45 +1137,12 @@ costEquipmentGroups.selectAll('.categoryRects')
 			}
 		})
 		.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
-		.on('mouseover', function (d, i, nodes) {
-			if (widget.activeChartType === 'stacked'){
-				widget.systemIsHovered = true;
-			}
-			if (widget.activeChartType === 'grouped'){
-				//reset last hover
-				resetElements('.costTooltip');
-				resetElements('.kwhTooltip');
-				//change for this hover
-				widget.equipmentHovered = this.parentNode.__data__.type;
-				renderChangeTools();
-				const thisType = nodes[i].parentNode.__data__.type;
-				widget.svg.selectAll('.dynamicCategoryRects')
-					.style('fill-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category
-						const myEq = innerNodes[innerI].parentNode.__data__.type
-						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-							return 1;
-						} else {
-							return unhoveredOpacity;
-						}
-					})
-					.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category
-						const myEq = innerNodes[innerI].parentNode.__data__.type
-						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-							return 1;
-						} else {
-							return 0;
-						}
-					})
-			}
-			appendCostTooltip();
-			appendKwhTooltip();
-			kwhChart.selectAll('.kwhYAxisTitle')
-				.style('opacity', 0);
-			costChart.selectAll('.costYAxisTitle')
-				.style('opacity', 0);
+		.on('mouseover', tryBarHoverFunc)
+		.on('mousedown', function(){
+			d3.event.stopPropagation()
 		})
+		.on('click', barPinFunc)
+		.on('mouseout', tryUnhover)
 
 		
 // x axis
@@ -1219,6 +1193,7 @@ costBarSection.append('text')
 
 	// tooltip
 	function appendCostTooltip () {
+		resetElements('.costTooltip')
 		const costDataForDate = widget.activeChartType === 'stacked' ?
 			widget.dataForDate.categoryDataForDate :
 			widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].utilityRate;
@@ -1228,14 +1203,14 @@ costBarSection.append('text')
 			accum
 		);
 
-		const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}:${data.currencySymbol}${data.formatCurrency(maxWidthCat.cost)}@ ${data.currencySymbol}${data.formatAvgCurrency(maxWidthCat.rate)}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2) + (data.paddingAfterLegendCat * 2)
+		const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}:${data.currencySymbol}${data.formatCurrency(maxWidthCat.cost)}@ ${data.currencySymbol}${data.formatAvgCurrency(maxWidthCat.rate)}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2.5) + (data.paddingAfterLegendCat * 2)
 		const tooltipHeight = (data.tooltipPadding * 2) + (costDataForDate.length * getTextHeight(data.tooltipFont)) + ((costDataForDate.length - 1) * data.paddingBetweenTooltipText);
 
 		const maxWidthCostCat = costDataForDate.reduce((accum, curr) => getTextWidth(data.formatCurrency(curr.cost), 'bold ' + data.tooltipFont) > getTextWidth(data.formatCurrency(accum.cost), 'bold ' + data.tooltipFont) ?
 			curr :
 			accum
 		);
-		const maxWidthOfCost = getTextWidth(data.currencySymbol + data.formatCurrency(maxWidthCostCat.cost), 'bold ' + data.tooltipFont);
+		const maxWidthOfCost = getTextWidth(data.currencySymbol + data.formatCurrency(maxWidthCostCat.cost), data.tooltipFont);
 
 		const tooltip = costBarSection.append('g')
 			.attr('class', 'costTooltip')
@@ -1245,8 +1220,8 @@ costBarSection.append('text')
 			.attr('class', 'tooltip')
 			.attr('height', tooltipHeight)
 			.attr('width', tooltipWidth)
-			.attr('fill', 'white')
-			.attr('opacity', 0.75)
+			.attr('fill', data.tooltipBackgroundColor)
+			.attr('opacity', data.tooltipOpacity)
 			.attr('rx', 5)
 			.attr('ry', 5)
 
@@ -1254,7 +1229,7 @@ costBarSection.append('text')
 			.data(costDataForDate)
 			.enter().append('g')
 				.attr('class', d => `costTextGroup ${d.category}CostTextGroup tooltip`)
-				.attr('transform', (d, i) => `translate(${data.tooltipPadding},${data.tooltipPadding + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
+				.attr('transform', (d, i) => `translate(${data.tooltipPadding},${(data.tooltipPadding * 1.5) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
 	
 		textGroups.append('text')
 			.text((d, i) => d.category.slice(0,1).toUpperCase() +': ')
@@ -1317,6 +1292,24 @@ costBarSection.append('text')
 				trhChart.selectAll('.trhYAxisTitle')
 					.style('opacity', 0)
 			})
+			.on('mousedown', function(){
+				d3.event.stopPropagation()
+			})
+			.on('click', function (){
+				widget.trhIsHovered = true;
+				widget.trhIsPinned = true;
+				appendTrhTooltip();
+				trhChart.selectAll('.trhYAxisTitle')
+					.style('opacity', 0)
+			})
+			.on('mouseout', function () {
+				if(!widget.trhIsPinned){
+					widget.trhIsHovered = false;
+					widget.svg.selectAll('.trhYAxisTitle')
+						.style('opacity', 1)
+					resetElements('.trhTooltip');
+				}
+			})
 
 			
 	// x axis
@@ -1363,13 +1356,14 @@ costBarSection.append('text')
 
 	// tooltip
 	function appendTrhTooltip () {
+		resetElements('.trhTooltip')
 		const maxWidthCat = trhCategoryDataForDate
 			.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${curr.trh}`, data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${accum.trh}`, 'bold ' + data.tooltipFont) ?
 				curr :
 				accum
 			);
 		const trhTooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}: ${maxWidthCat.trh + ' tRh'}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2)
-		const trhTooltipHeight = 30;
+		const trhTooltipHeight = data.widgetSize === 'medium' ? 40 : (data.widgetSize === 'small' ? 35 : 50);
 		const trhTooltip = trhBarSection.append('g')
 			.attr('class', 'trhTooltip')
 			.attr('transform', `translate(${trhBarSectionWidth - trhTooltipWidth}, 0)`)
@@ -1378,8 +1372,8 @@ costBarSection.append('text')
 			.attr('class', 'tooltip')
 			.attr('height', trhTooltipHeight)
 			.attr('width', trhTooltipWidth)
-			.attr('fill', 'white')
-			.attr('opacity', 0.75)
+			.attr('fill', data.tooltipBackgroundColor)
+			.attr('opacity', data.tooltipOpacity)
 			.attr('rx', 5)
 			.attr('ry', 5)
 
@@ -1429,13 +1423,10 @@ costBarSection.append('text')
 			.attr('transform', (d, i) => `translate(${circleRadius + (i * paddingBetweenLegendCategories) + getPrevLegendWidths(i)}, ${circleRadius})`)
 			.on('mouseover', function (d) {
 				widget.legendHovered = d.name;
-
 				widget.svg.selectAll(`.${d.name}LegendText`)
 					.style('font-weight', 'bold')
-
 				widget.svg.selectAll(`.${d.name}LegendCircle`)
 					.attr('r', hoveredCircleRadius)
-
 				widget.svg.selectAll(`.dynamicCategoryRects`)
 					.style('fill-opacity', (innerD, innerI, innerNodes) => {
 						const myCat = innerD.category
@@ -1455,10 +1446,8 @@ costBarSection.append('text')
 							return 0;
 						}
 					})
-
 				widget.svg.selectAll('.trhCategoryRects')
 					.style('opacity', innerD => widget.legendHovered === 'none' || widget.legendHovered === innerD.category ? 1 : unhoveredOpacity)
-
 			})
 			.on('mouseout', function (d) {
 				widget.legendHovered = 'none';
@@ -1543,14 +1532,14 @@ costBarSection.append('text')
 		const percentVal = change * 100;
 		return Math.round(percentVal);
 	}
-	const paddingBetweenPercentAndValue = 5;
+	const paddingBetweenPercentAndValue = data.widgetSize === 'large' ? 10 : 5;
 	const paddingBetweenArrowAndPercent = 0;
 	const getWidthOfPercentArrowAndText = text => getTextWidth(text + 'W%', data.changePercentFont) + paddingBetweenArrowAndPercent;
-	const changeToolWidth = (4.5/8) * barSectionWidth;
-	const changeToolHeight = 60;
+	const changeToolWidth = data.widgetSize === 'small' ? 0.56 * barSectionWidth : (data.widgetSize === 'medium' ? 0.53 * barSectionWidth : 0.5 * barSectionWidth);
+	const changeToolHeight = data.widgetSize === 'small' ? 60 : (data.widgetSize === 'medium' ? 70 : 90);
 	const getArrowPath = decrease => decrease ? './images/Down Arrow.svg' : './images/Up Arrow.svg';
-	const imgCircleRadius = 22;
-	const paddingBetweenChangeTools = imgCircleRadius + 5;
+	const imgCircleRadius = data.widgetSize === 'large' ? 28 : (data.widgetSize === 'medium' ? 25 : 22);
+	const paddingBetweenChangeTools = data.widgetSize === 'large' ? imgCircleRadius + 15 : (data.widgetSize === 'medium' ? imgCircleRadius + 10 : imgCircleRadius + 5);
 
 
 	function getSystemOrHoveredData () {
@@ -1659,18 +1648,20 @@ costBarSection.append('text')
 	function renderChangeTools () {
 		resetElements('.changeTools')
 
+		const changeToolsLeft = data.widgetSize === 'small' ? 300 : (data.widgetSize === 'medium' ? 400 : 475)
 		const changeTools = toolsGroup.append('g')
 			.attr('class', 'changeTools')
-			.attr('transform', 	`translate(${300}, ${32})`)
+			.attr('transform', 	`translate(${changeToolsLeft}, ${32})`)
 
 		const systemOrHoveredData = getSystemOrHoveredData()
-		
+		const leftOfChangeTools = data.widgetSize === 'large' ? 90 : (data.widgetSize === 'medium' ? 40 : 0)
+
 		//append data to each changeToolGroup
 		const changeToolGroups = changeTools.selectAll('.changeToolGroups')
 			.data(systemOrHoveredData)
 			.enter().append('g')
 				.attr('class', d => `changeToolGroups ${d.category}ChangeToolGroup`)
-				.attr('transform', (d, i) => `translate(${imgCircleRadius + (i * (changeToolWidth + paddingBetweenChangeTools))}, 0)`)
+				.attr('transform', (d, i) => `translate(${leftOfChangeTools + imgCircleRadius + (i * (changeToolWidth + paddingBetweenChangeTools))}, 0)`)
 		
 		//append rects to each changeToolGroup
 		changeToolGroups.append('rect')
@@ -1743,6 +1734,8 @@ costBarSection.append('text')
 					.attr('fill', data.changePercentColor)
 					.style('font', data.changePercentFont)
 
+		const paddingHidingText = data.widgetSize === 'small' ? 30 : 40;
+
 		const percentChangeText2 = percentChangeTextGroup.selectAll('.digitBox2')
 			.data(d => d.percent.last)
 				.enter().append('text')
@@ -1757,7 +1750,7 @@ costBarSection.append('text')
 							return i * getTextWidth('0', data.changePercentFont);
 						}
 					})
-					.attr('y', 30)
+					.attr('y', paddingHidingText)
 					.attr('fill', data.changePercentColor)
 					.style('font', data.changePercentFont)
 				
@@ -1777,7 +1770,7 @@ costBarSection.append('text')
 				.attr('y', 0)
 			.transition()
 				.duration(thisDuration)
-				.attr('y', -30)
+				.attr('y', -paddingHidingText)
 			.transition()
 				.duration(0)
 				.text(() => displayForIndex[digitIndex][+currentVal + 1])
@@ -1789,13 +1782,13 @@ costBarSection.append('text')
 				.delay(thisDuration * delayMultiplier)
 				.duration(0)
 				.text(() => displayForIndex[digitIndex][currentVal + 1])
-				.attr('y', 30)
+				.attr('y', paddingHidingText)
 			.transition()
 				.duration(thisDuration)
 				.attr('y', 0)
 			.transition()
 				.duration(0)
-				.attr('y', 30);
+				.attr('y', paddingHidingText);
 	}
 
 	function decreaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal) {
@@ -1810,7 +1803,7 @@ costBarSection.append('text')
 				.attr('y', 0)
 			.transition()
 				.duration(thisDuration)
-				.attr('y', 30)
+				.attr('y', paddingHidingText)
 			.transition()
 				.duration(0)
 				.text(() => displayForIndex[digitIndex][+currentVal - 1])
@@ -1822,13 +1815,13 @@ costBarSection.append('text')
 				.delay(thisDuration * delayMultiplier)
 				.duration(0)
 				.text(() => displayForIndex[digitIndex][currentVal - 1])
-				.attr('y', -30)
+				.attr('y', -paddingHidingText)
 			.transition()
 				.duration(thisDuration)
 				.attr('y', 0)
 			.transition()
 				.duration(0)
-				.attr('y', 30);
+				.attr('y', paddingHidingText);
 
 	}
 
@@ -1912,16 +1905,13 @@ changeDigits(trhPercentObj.last, trhPercentObj.new, 'trh');
 
 //************************************* BUTTON ******************************************//
 const buttonMargin = 5;
-const buttonWidth = 80 - (buttonMargin * 2)
+const buttonWidth = data.widgetSize === 'small' ? 80 - (buttonMargin * 2) : (data.widgetSize === 'medium' ? 110 - (buttonMargin * 2) : 120 - (buttonMargin * 2))
 const endCircleRadius = buttonWidth / 6
 const rectHeight = endCircleRadius * 2
 const rectWidth = endCircleRadius * 3.5
-const systemBackgroundColor = '#7663F2';
-const systemTextColor = 'white'
-const equipmentBackgroundColor = '#8EF056';
-const equipmentTextColor = 'white'
-const buttonBackgroundFill = () => widget.activeChartType === 'stacked' ? systemBackgroundColor : equipmentBackgroundColor;
-const cy = ((40 / 2) + (rectHeight / 2)) - buttonMargin
+const buttonBackgroundFill = () => widget.activeChartType === 'stacked' ? data.sysBtnBackgroundColor : data.eqBtnBackgroundColor;
+// const cy = ((40 / 2) + (rectHeight / 2)) - buttonMargin	
+const cy = getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol + rectHeight / 2 + buttonMargin
 const rectLeftX = buttonMargin + endCircleRadius;
 const rectRightX = rectLeftX + rectWidth
 
@@ -1930,11 +1920,11 @@ const rectRightX = rectLeftX + rectWidth
 	const toggleButton = () => {
 		buttonGroup.select('.knob')
 			.transition()
-				.duration(666)	// 2/3 of sec (nothing satanical intended)
-				.attr('cx', widget.activeChartType === 'stacked' ? rectRightX: rectLeftX);
+				.duration(666)	// (2/3 of sec --nothing satanical intended)
+				.attr('cx', widget.activeChartType === 'grouped' ? rectRightX: rectLeftX);
 		buttonGroup.selectAll('.buttonBackground')
 			.transition()
-				.duration(666)	// 2/3 of sec (nothing satanical intended)
+				.duration(666)	// (2/3 of sec --nothing satanical intended)
 				.attr('fill', buttonBackgroundFill());
 		renderButtonText(true);
 	}
@@ -1943,10 +1933,10 @@ const rectRightX = rectLeftX + rectWidth
 
 	buttonGroup.append('text')
 		.text('View')
+		.attr('dominant-baseline', 'hanging')
 		.style('font', data.toolTitleFont)
 		.attr('fill', data.toolTitleColor)
-		.attr('x', ((buttonMargin + buttonWidth) - getTextWidth('View', data.tooltipFont)) / 2)
-		.attr('y', 12)
+		.attr('x', ((buttonWidth) - getTextWidth('View', data.toolTitleFont)) / 2)
 
 
 		// BUTTON BACKGROUND //
@@ -1982,16 +1972,15 @@ const rectRightX = rectLeftX + rectWidth
 		.attr('fill', 'white')
 		.attr('r', knobRadius)
 		.attr('cy', cy)
-		.attr('cx', widget.activeChartType === 'stacked' ? rectRightX : rectLeftX)
+		.attr('cx', widget.activeChartType === 'grouped' ? rectRightX : rectLeftX)
 
 
 
 	// STATUS TEXT //
-	const groupedX = buttonMargin + (endCircleRadius * 2) + ((buttonWidth - (endCircleRadius * 3)) / 2);
-	const stackedX = buttonMargin + ((buttonWidth - (endCircleRadius * 2)) / 2);
+	const stackedX = buttonMargin + (endCircleRadius * 2) + ((buttonWidth - (endCircleRadius * 3)) / 2);
+	const groupedX = buttonMargin + ((buttonWidth - (endCircleRadius * 2)) / 2);
 
-
-	const renderButtonText = (changed) => {
+	const renderButtonText = changed => {
 		resetElements('.statusText');
 
 		buttonGroup.append('text')
@@ -1999,16 +1988,16 @@ const rectRightX = rectLeftX + rectWidth
 			.attr('text-anchor', 'middle')
 			.attr('dominant-baseline', 'middle')
 			.attr('y', cy + 1.4)
-			.attr('x', widget.activeChartType === 'stacked' ? stackedX : groupedX)
+			.attr('x', widget.activeChartType === 'grouped' ? groupedX : stackedX)
 			.style('font', data.buttonFont)
 			.text(changed ? (widget.activeChartType === 'stacked' ? 'EQ' : 'SYS') : (widget.activeChartType === 'stacked' ? 'SYS' : 'EQ'))
-			.attr('fill', changed ? (widget.activeChartType === 'stacked' ? systemTextColor : equipmentTextColor) : (widget.activeChartType === 'stacked' ? equipmentTextColor : systemTextColor))
+			.attr('fill', changed ? (widget.activeChartType === 'stacked' ? data.eqBtnTextColor : data.sysBtnTextColor) : (widget.activeChartType === 'stacked' ? data.sysBtnTextColor : data.eqBtnTextColor))
 			.attr('opacity', changed ? 0 : 1)
 			.on('click', transitionChartsClickFunction)
 			.transition()
 				.duration(666)
 				.text(widget.activeChartType === 'stacked' ? 'SYS' : 'EQ')
-				.attr('fill', widget.activeChartType === 'stacked' ? equipmentTextColor : systemTextColor)
+				.attr('fill', widget.activeChartType === 'stacked' ? data.sysBtnTextColor : data.eqBtnTextColor)
 				.attr('opacity', 1);
 	}
 	renderButtonText()
@@ -2029,8 +2018,15 @@ const rectRightX = rectLeftX + rectWidth
 
 
 
-		//************************ UNHOVER FUNCTION *************************//
+		//************************ UNHOVER & UNPIN FUNCTIONS *************************//
+		function tryUnhover (d, i, nodes) {
+			if ((widget.activeChartType === 'stacked' && !widget.systemIsPinned) || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')){
+				unhover();
+			}
+		}
+
 		function unhover () {
+			d3.event.stopPropagation()
 			widget.equipmentHovered = 'none';
 			widget.systemIsHovered = false;
 			widget.trhIsHovered = false;
@@ -2047,6 +2043,68 @@ const rectRightX = rectLeftX + rectWidth
 			resetElements('.costTooltip');
 			resetElements('.kwhTooltip');
 			renderChangeTools();
+		}
+		function unpin () {
+			widget.equipmentPinned = 'none';
+			widget.systemIsPinned = false;
+			widget.trhIsPinned = false;
+			unhover();
+		}
+
+		//************************ DYNAMIC BAR HOVER/PIN FUNCTIONS *************************//
+		function tryBarHoverFunc (d, i, nodes) {
+			if (widget.activeChartType === 'stacked' || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')) {
+				barHoverFunc (d, i, nodes)
+			}
+		}
+
+		function barHoverFunc (d, i, nodes) {
+			if (widget.activeChartType === 'stacked'){
+				widget.systemIsHovered = true;
+			}
+			if (widget.activeChartType === 'grouped'){
+				//reset last hover
+				resetElements('.costTooltip');
+				resetElements('.kwhTooltip');
+				//change for this hover
+				widget.equipmentHovered = nodes[i].parentNode.__data__.type;
+				renderChangeTools();
+				widget.svg.selectAll('.dynamicCategoryRects')
+					.style('fill-opacity', (innerD, innerI, innerNodes) => {
+						const myCat = innerD.category
+						const myEq = innerNodes[innerI].parentNode.__data__.type
+						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+							return 1;
+						} else {
+							return unhoveredOpacity;
+						}
+					})
+					.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+						const myCat = innerD.category
+						const myEq = innerNodes[innerI].parentNode.__data__.type
+						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+							return 1;
+						} else {
+							return 0;
+						}
+					})
+				}
+			appendCostTooltip();
+			appendKwhTooltip();
+			kwhChart.selectAll('.kwhYAxisTitle')
+				.style('opacity', 0);
+			costChart.selectAll('.costYAxisTitle')
+				.style('opacity', 0);
+		}
+
+		function barPinFunc  (d, i, nodes) {
+			if (widget.activeChartType === 'stacked'){
+				widget.systemIsPinned = true;
+			}
+			if (widget.activeChartType === 'grouped'){
+				widget.equipmentPinned = nodes[i].parentNode.__data__.type;
+			}
+			barHoverFunc(d, i, nodes);
 		}
 }
 
