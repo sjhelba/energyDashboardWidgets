@@ -1457,7 +1457,7 @@ costBarSection.append('text')
 			.data(trhCategoryDataForDate)
 			.enter().append('g')
 				.attr('class', d => `trhTextGroup ${d.category}TrhTextGroup tooltip`)
-				.attr('transform', (d, i) => `translate(${(data.tooltipPadding)},${data.tooltipPadding + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
+				.attr('transform', (d, i) => `translate(${(data.tooltipPadding)},${(data.tooltipPadding * 1.25) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
 	
 		trhTextGroups.append('text')
 			.text(d => `${d.category.slice(0,1).toUpperCase()}:`)
@@ -1839,7 +1839,7 @@ costBarSection.append('text')
 			.style('font', data.changePercentFont)
 			.style('font-size', (getTextHeight(data.changePercentFont) / 2) + 'pt')
 
-		const changeDuration = 250;
+		const changeDuration = 275;
 
 
 		function increaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
