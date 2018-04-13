@@ -341,7 +341,7 @@ const properties = [
 	},
 	{
 		name: 'tooltipBackgroundColor',
-		value: '#bababa',
+		value: '#dedfe0',
 		typeSpec: 'gx:Color'
 	},
 	{
@@ -1830,129 +1830,171 @@ costBarSection.append('text')
 					.attr('fill', data.changePercentColor)
 					.style('font', data.changePercentFont)
 				
-
-	const changeDuration = 250;
-
-
-	function increaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal) {
-		const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
-		const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
-		const thisDuration = changeDuration / numbersToGetThrough;
-
-		digitObjToChange1
-			.transition()
-				.delay(thisDuration * delayMultiplier)
-				.duration(0)
-				.attr('y', 0)
-			.transition()
-				.duration(thisDuration)
-				.attr('y', -paddingHidingText)
-			.transition()
-				.duration(0)
-				.text(() => displayForIndex[digitIndex][+currentVal + 1])
-				.attr('y', 0);
-
-
-		digitObjToChange2
-			.transition()
-				.delay(thisDuration * delayMultiplier)
-				.duration(0)
-				.text(() => displayForIndex[digitIndex][currentVal + 1])
-				.attr('y', paddingHidingText)
-			.transition()
-				.duration(thisDuration)
-				.attr('y', 0)
-			.transition()
-				.duration(0)
-				.attr('y', paddingHidingText);
-	}
-
-	function decreaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal) {
-		const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
-		const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
-		const thisDuration = changeDuration / numbersToGetThrough;
-
-		digitObjToChange1
-			.transition()
-				.delay(thisDuration * delayMultiplier)
-				.duration(0)
-				.attr('y', 0)
-			.transition()
-				.duration(thisDuration)
-				.attr('y', paddingHidingText)
-			.transition()
-				.duration(0)
-				.text(() => displayForIndex[digitIndex][+currentVal - 1])
-				.attr('y', 0);
-
-
-		digitObjToChange2
-			.transition()
-				.delay(thisDuration * delayMultiplier)
-				.duration(0)
-				.text(() => displayForIndex[digitIndex][currentVal - 1])
-				.attr('y', -paddingHidingText)
-			.transition()
-				.duration(thisDuration)
-				.attr('y', 0)
-			.transition()
-				.duration(0)
-				.attr('y', paddingHidingText);
-
-	}
-
-
-
-	let kwhPercentObj = JSON.parse(JSON.stringify(systemOrHoveredData[0].percent));
-	kwhPercentObj.current = kwhPercentObj.last.slice();
-	let costPercentObj = JSON.parse(JSON.stringify(systemOrHoveredData[1].percent));
-	costPercentObj.current = costPercentObj.last.slice();
-	let trhPercentObj = JSON.parse(JSON.stringify(systemOrHoveredData[2].percent));
-	trhPercentObj.current = trhPercentObj.last.slice();
-
-
-	function loopFromTo(category, digitIndex, from, to) {
-		let differenceBtwOldAndNewVal = 0;
-		if (from < to) {
-			differenceBtwOldAndNewVal = to - from;
-			for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
-				increaseDigit (category, digitIndex, i, differenceBtwOldAndNewVal, from + i);
-			}
-		} else {
-			differenceBtwOldAndNewVal = from - to;
-			for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
-				decreaseDigit (category, digitIndex, i, differenceBtwOldAndNewVal, from - i);
-			}
-		}
-	}
-
-	function changeDigits (currentArr, newArr, category) {
-		currentArr = currentArr.slice();
-		newArr = newArr.slice();
-		// if (+currentArr.slice(1).join('') < +newArr.slice(1).join('')) {
-			currentArr.forEach((currentDigit, digitIndex) => {
-				if(+newArr[digitIndex] !== +currentDigit) {
-					loopFromTo(category, digitIndex, +currentDigit, +newArr[digitIndex])
-				}
-			})
-	}
-	
-changeDigits(kwhPercentObj.last, kwhPercentObj.new, 'kwh');
-changeDigits(costPercentObj.last, costPercentObj.new, 'cost');
-changeDigits(trhPercentObj.last, trhPercentObj.new, 'trh');
-
-
-
-
-
 		//append percent sign
 		percentChangeTextGroup.append('text')
 			.text('%')
+			.attr('class', d => `${d.category}PercentSign`)
 			.attr('x', d => d.percent.last[0] === 1 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
 			.attr('fill', data.changePercentColor)
 			.style('font', data.changePercentFont)
 			.style('font-size', (getTextHeight(data.changePercentFont) / 2) + 'pt')
 
+		const changeDuration = 250;
+
+
+		function increaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
+			const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
+			const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
+			const thisDuration = changeDuration / numbersToGetThrough;
+
+			digitObjToChange1
+				.transition()
+					.delay(thisDuration * delayMultiplier)
+					.duration(0)
+					.attr('y', 0)
+					.attr('x', () => {
+						if (digitIndex === 1 && !newIsOver99) {
+							return getTextWidth('0', data.changePercentFont) / 2
+						} else if (digitIndex === 2 && !newIsOver99) {
+							return getTextWidth('0', data.changePercentFont) * 1.5;
+						} else {
+							return digitIndex * getTextWidth('0', data.changePercentFont);						}
+					})
+				.transition()
+					.duration(thisDuration)
+					.attr('y', -paddingHidingText)
+				.transition()
+					.duration(0)
+					.text(() => displayForIndex[digitIndex][+currentVal + 1])
+					.attr('y', 0);
+
+
+			digitObjToChange2
+				.transition()
+					.delay(thisDuration * delayMultiplier)
+					.duration(0)
+					.text(() => displayForIndex[digitIndex][currentVal + 1])
+					.attr('y', paddingHidingText)
+					.attr('x', () => {
+						if (digitIndex === 1 && !newIsOver99) {
+							return getTextWidth('0', data.changePercentFont) / 2
+						} else if (digitIndex === 2 && !newIsOver99) {
+							return getTextWidth('0', data.changePercentFont) * 1.5;
+						} else {
+							return digitIndex * getTextWidth('0', data.changePercentFont);						}
+					})
+				.transition()
+					.duration(thisDuration)
+					.attr('y', 0)
+				.transition()
+					.duration(0)
+					.attr('y', paddingHidingText);
+		}
+
+		function decreaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
+			const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
+			const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
+			const thisDuration = changeDuration / numbersToGetThrough;
+
+			digitObjToChange1
+				.transition()
+					.delay(thisDuration * delayMultiplier)
+					.duration(0)
+					.attr('y', 0)
+					.attr('x', () => {
+						if (digitIndex === 1 && !newIsOver99) {
+							return getTextWidth('0', data.changePercentFont) / 2
+						} else if (digitIndex === 2 && !newIsOver99) {
+							return getTextWidth('0', data.changePercentFont) * 1.5;
+						} else {
+							return digitIndex * getTextWidth('0', data.changePercentFont);						}
+					})
+				.transition()
+					.duration(thisDuration)
+					.attr('y', paddingHidingText)
+				.transition()
+					.duration(0)
+					.text(() => displayForIndex[digitIndex][+currentVal - 1])
+					.attr('y', 0);
+
+
+			digitObjToChange2
+				.transition()
+					.delay(thisDuration * delayMultiplier)
+					.duration(0)
+					.text(() => displayForIndex[digitIndex][currentVal - 1])
+					.attr('y', -paddingHidingText)
+					.attr('x', () => {
+						if (digitIndex === 1 && !newIsOver99) {
+							return getTextWidth('0', data.changePercentFont) / 2
+						} else if (digitIndex === 2 && !newIsOver99) {
+							return getTextWidth('0', data.changePercentFont) * 1.5;
+						} else {
+							return digitIndex * getTextWidth('0', data.changePercentFont);						}
+					})
+				.transition()
+					.duration(thisDuration)
+					.attr('y', 0)
+				.transition()
+					.duration(0)
+					.attr('y', paddingHidingText);
+
+		}
+
+
+
+		let kwhPercentObj = JSON.parse(JSON.stringify(systemOrHoveredData[0].percent));
+		kwhPercentObj.current = kwhPercentObj.last.slice();
+		let costPercentObj = JSON.parse(JSON.stringify(systemOrHoveredData[1].percent));
+		costPercentObj.current = costPercentObj.last.slice();
+		let trhPercentObj = JSON.parse(JSON.stringify(systemOrHoveredData[2].percent));
+		trhPercentObj.current = trhPercentObj.last.slice();
+
+
+		function loopFromTo(category, digitIndex, from, to, lastWasOver99, newIsOver99) {
+			let differenceBtwOldAndNewVal = 0;
+			if (from < to) {
+				differenceBtwOldAndNewVal = to - from;
+				for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
+					increaseDigit (category, digitIndex, i, differenceBtwOldAndNewVal, from + i, lastWasOver99, newIsOver99);
+				}
+			} else {
+				differenceBtwOldAndNewVal = from - to;
+				for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
+					decreaseDigit (category, digitIndex, i, differenceBtwOldAndNewVal, from - i, lastWasOver99, newIsOver99);
+				}
+			}
+		}
+
+		function changeDigits (currentArr, newArr, category) {
+			currentArr = currentArr.slice();
+			newArr = newArr.slice();
+			const currentFirstDigit = +currentArr[0];
+			const newFirstDigit = +newArr[0];
+			// if (+currentArr.slice(1).join('') < +newArr.slice(1).join('')) {
+				currentArr.forEach((currentDigit, digitIndex) => {
+					if(+newArr[digitIndex] !== +currentDigit) {
+						// if (category === 'trh')console.log('currentArr is: ', currentArr)
+						loopFromTo(category, digitIndex, +currentDigit, +newArr[digitIndex], currentFirstDigit > 0, newFirstDigit > 0)
+					}
+				})
+				// change percent sign placement if necessary
+				if (currentFirstDigit !== newFirstDigit){					
+					widget.svg.select(`.${category}PercentSign`).attr('x', newFirstDigit === 1 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
+				}
+
+		}
+		
+		changeDigits(kwhPercentObj.last, kwhPercentObj.new, 'kwh');
+		changeDigits(costPercentObj.last, costPercentObj.new, 'cost');
+		changeDigits(trhPercentObj.last, trhPercentObj.new, 'trh');
+
+
+
+
+
+
+		// value change group
 		const valueChangeGroup = changeToolGroups.append('g')
 			.attr('class', 'valueChangeGroup')
 			.attr('transform', d => `translate(${(changeToolWidth / 2) - (getTextWidth(d.value + d.label, data.changeValueFont) / 2)},${changeToolsPaddingTop + getTextHeight(data.changePercentFont) + paddingBetweenPercentAndValue + getTextHeight(data.changeValueFont)})`)

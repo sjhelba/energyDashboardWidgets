@@ -39,7 +39,7 @@ baselineData = [
       rendered: true
     }
   ]},
-  {month: 'Feb', year: 2015, rate: 0.03, trh: getRandomInt(minForTrhBaseline, maxForTrhBaseline), equipment: [
+  {month: 'Feb', year: 2015, rate: 0.03, trh: 300 || getRandomInt(minForTrhBaseline, maxForTrhBaseline), equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForBaseline, maxForBaseline),
@@ -745,7 +745,7 @@ measuredData = [
   //     rendered: true
   //   }
   // ]},
-  {month: 'Feb', year: 2016, rate: 0.04, trh: getRandomInt(minForTrhMeasured, maxForTrhMeasured), equipment: [
+  {month: 'Feb', year: 2016, rate: 0.04, trh: 3000 || getRandomInt(minForTrhMeasured, maxForTrhMeasured), equipment: [
     {
       type: 'CHs',
       value: getRandomInt(minForMeasured, maxForMeasured),
