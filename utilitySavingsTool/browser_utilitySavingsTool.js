@@ -1793,7 +1793,7 @@ costBarSection.append('text')
 		const percentChangeText1 = percentChangeTextGroup.selectAll('.digitBox1')
 			.data(d => d.percent.last)
 				.enter().append('text')
-					.attr('class', (d, i, nodes) => `digitBox1 g1DigitIndex${i}For${nodes[i].parentNode.__data__.category}`)
+					.attr('class', (d, i, nodes) => `digitBox1 g1DigitIndex${i}For${nodes[i].parentNode.__data__.category} digitIndex${i}For${nodes[i].parentNode.__data__.category}`)
 					.text((d, i) => {
 						return displayForIndex[i][d]
 					})
@@ -1815,7 +1815,7 @@ costBarSection.append('text')
 		const percentChangeText2 = percentChangeTextGroup.selectAll('.digitBox2')
 			.data(d => d.percent.last)
 				.enter().append('text')
-					.attr('class', (d, i, nodes) => `digitBox2 g2DigitIndex${i}For${nodes[i].parentNode.__data__.category}`)
+					.attr('class', (d, i, nodes) => `digitBox2 g2DigitIndex${i}For${nodes[i].parentNode.__data__.category} digitIndex${i}For${nodes[i].parentNode.__data__.category}`)
 					.text((d, i) => displayForIndex[i][d])
 					.attr('x', (d, i, nodes) => {
 						if(i === 1 && nodes[0].__data__ === 0) {
@@ -1971,18 +1971,27 @@ costBarSection.append('text')
 			newArr = newArr.slice();
 			const currentFirstDigit = +currentArr[0];
 			const newFirstDigit = +newArr[0];
-			// if (+currentArr.slice(1).join('') < +newArr.slice(1).join('')) {
+
 				currentArr.forEach((currentDigit, digitIndex) => {
 					if(+newArr[digitIndex] !== +currentDigit) {
-						// if (category === 'trh')console.log('currentArr is: ', currentArr)
 						loopFromTo(category, digitIndex, +currentDigit, +newArr[digitIndex], currentFirstDigit > 0, newFirstDigit > 0)
+					} else if (currentFirstDigit !== newFirstDigit) {	//change placement of any otherwise unchanging digits if need be
+						widget.svg.selectAll(`.digitIndex${digitIndex}For${category}`)
+							.attr('x', () => {
+								if (digitIndex === 1 && newFirstDigit === 0) {
+									return getTextWidth('0', data.changePercentFont) / 2
+								} else if (digitIndex === 2 && newFirstDigit === 0) {
+									return getTextWidth('0', data.changePercentFont) * 1.5;
+								} else {
+									return digitIndex * getTextWidth('0', data.changePercentFont);						}
+							});
 					}
 				})
+
 				// change percent sign placement if necessary
 				if (currentFirstDigit !== newFirstDigit){					
 					widget.svg.select(`.${category}PercentSign`).attr('x', newFirstDigit === 1 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
 				}
-
 		}
 		
 		changeDigits(kwhPercentObj.last, kwhPercentObj.new, 'kwh');
