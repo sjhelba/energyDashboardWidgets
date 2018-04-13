@@ -500,7 +500,7 @@ if (!widget.legendHovered) widget.legendHovered = 'none';	// alternative selecti
 
 if (!widget.monthDropDownSelected) widget.monthDropDownSelected = 'All';
 if (!widget.yearDropDownSelected) widget.yearDropDownSelected = thisYear;
-if (!widget.activeChartType) widget.activeChartType = 'stacked';	//alternative selection 'grouped'
+if (!widget.activeChartType) widget.activeChartType = 'grouped';	//alternative selection 'grouped'
 
 	// FAKE DATA //
 data.baselineData = baselineData;
@@ -864,6 +864,13 @@ const renderWidget = () => {
 					.transition()
 						.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 
+
+			if (stackedOrGrouped === 'grouped') {
+				appendHoverableKwhRects ()
+			} else {
+				resetElements('.hoverableKwhRects')
+			}
+						
 			//tick styling
 			kwhChart.selectAll('.tick text')
 				.style('fill', data.tickTextColor)
@@ -912,6 +919,13 @@ const renderWidget = () => {
 					.transition()
 						.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 
+				if (stackedOrGrouped === 'grouped') {
+					appendHoverableCostRects ()
+				} else {
+					resetElements('.hoverableCostRects')
+				}
+
+				
 			//tick styling
 			costChart.selectAll('.tick text')
 				.style('fill', data.tickTextColor)
@@ -994,6 +1008,33 @@ const renderWidget = () => {
 			})
 			.on('click', barPinFunc)
 			.on('mouseout', tryUnhover)
+
+			function appendHoverableKwhRects () {
+				resetElements('.hoverableKwhRects');
+				equipmentGroups.selectAll('.hoverableKwhRects')
+					.data(d => d.kwh)
+					.enter().append("rect")
+						.attr('class', `hoverableKwhRects`)
+						.attr("x", d => x0Scale(d.category))
+						.attr("y", (d, i, nodes) => {
+							const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.value > accum.__data__.value ? curr : accum);
+							return kwhYScale(maxHeightForGroup.__data__.value)
+							})
+						.attr("width",  x0Scale.bandwidth())
+						.attr('opacity', 0)
+						.attr("height", (d, i, nodes) => {
+							const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.value > accum.__data__.value ? curr : accum);
+							return barSectionHeight - kwhYScale(maxHeightForGroup.__data__.value)
+						})
+						.on('mouseover', tryBarHoverFunc)
+						.on('mousedown', function(){
+							d3.event.stopPropagation()
+						})
+						.on('click', barPinFunc)
+						.on('mouseout', tryUnhover)
+			}
+
+			if (widget.activeChartType === 'grouped') appendHoverableKwhRects();
 
 			
   // x axis
@@ -1144,7 +1185,42 @@ costEquipmentGroups.selectAll('.categoryRects')
 		.on('click', barPinFunc)
 		.on('mouseout', tryUnhover)
 
-		
+
+		function appendHoverableCostRects () {
+			resetElements('.hoverableCostRects');
+			costEquipmentGroups.selectAll('.hoverableCostRects')
+				.data(d => d.utilityRate)
+				.enter().append("rect")
+					.attr('class', `hoverableCostRects`)
+					.attr("x", d => x0Scale(d.category))
+					.attr("y", (d, i, nodes) => {
+						const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.cost > accum.__data__.cost ? curr : accum);
+						return costYScale(maxHeightForGroup.__data__.cost);
+						})
+					.attr("width",  x0Scale.bandwidth())
+					.attr('opacity', 0)
+					.attr("height", (d, i, nodes) => {
+						const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.cost > accum.__data__.cost ? curr : accum);
+						return barSectionHeight - costYScale(maxHeightForGroup.__data__.cost)
+					})
+					.on('mouseover', tryBarHoverFunc)
+					.on('mousedown', function(){
+						d3.event.stopPropagation()
+					})
+					.on('click', barPinFunc)
+					.on('mouseout', tryUnhover)
+		}
+
+		if (widget.activeChartType === 'grouped') appendHoverableCostRects();
+
+
+
+
+
+
+
+
+
 // x axis
 costBarSection.append('g')
 	.attr("class", "axis xAxis")
@@ -1429,8 +1505,8 @@ costBarSection.append('text')
 					.attr('r', hoveredCircleRadius)
 				widget.svg.selectAll(`.dynamicCategoryRects`)
 					.style('fill-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category
-						const myEq = innerNodes[innerI].parentNode.__data__.type
+						const myCat = innerD.category;
+						const myEq = innerNodes[innerI].parentNode.__data__.type;
 						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
 							return 1;
 						} else {
