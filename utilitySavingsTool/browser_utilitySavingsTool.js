@@ -27,31 +27,11 @@ const getTextHeight = font => {
 };
 
 const unhoveredOpacity = 0.25;
-const duration = 2000;
+const barsTransitionDuration = 2000;
 
 const categories = [{name: 'baseline', displayName: 'Baseline'}, {name: 'projected', displayName: 'Projected'}, {name: 'measured', displayName: 'Measured'}];
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-const updateDateWidgetRendering = () => {
-	widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData])
-	renderWidget();
-}
-
-const dropdownYearChanged = () => {
-	widget.yearDropDownSelected = d3.event.target.value;
-	widget.monthDropDownSelected = 'All';
-	updateDateWidgetRendering()
-};
-const dropdownMonthChanged = () => {
-	widget.monthDropDownSelected = d3.event.target.value;
-	updateDateWidgetRendering()
-};
-
-
-const resetElements = elementsToReset => {
-	const selectionForCheck = widget.svg.selectAll(elementsToReset)
-  if (!selectionForCheck.empty()) selectionForCheck.remove();
-};
+const indexOfMonth = {Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11}
 
 const getNextNiceVal = uglyMaxNum => {
 	const innerFunc = (origVal) => {
@@ -75,9 +55,15 @@ const getNextNiceVal = uglyMaxNum => {
 	return innerFunc(uglyMaxNum - 1) === uglyMaxNum ? uglyMaxNum : innerFunc(uglyMaxNum);
 };
 
+const getRateForDate = (selectedMonth, selectedYear, rates) => {
+	for(let i = rates.length - 1; i >= 0; i--) {
+		let pointedRate = rates[i]
+		if ( pointedRate.year < selectedYear || (pointedRate.year === selectedYear && indexOfMonth[pointedRate.month] <= indexOfMonth[selectedMonth]) ) return pointedRate.rate;
+	};
+	return 0;
+};
 
-const getDataForDate = (month, year, categoriesData = [data.baselineData, data.projectedData, data.measuredData]) => {
-	console.log('active equipment groups: ', data.activeEquipmentGroups)
+const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rates) => {
 	let categoryDataForDate = [
 		{
 			category: 'baseline',
@@ -102,7 +88,7 @@ const getDataForDate = (month, year, categoriesData = [data.baselineData, data.p
 	];
 	let equipmentDataForDate = [];
 	let equipmentRatesAndWeights = [];
-	data.activeEquipmentGroups.forEach(equip => {
+	activeEquipmentGroups.forEach(equip => {
 		equipmentDataForDate.push(
 			{
 				type: equip,
@@ -175,21 +161,21 @@ const getDataForDate = (month, year, categoriesData = [data.baselineData, data.p
 			if((month === 'All' || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)){
 				equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
 					// set kwh vals
-					equipmentGroup.kwh[categoryIndex].value = monthlyDatum.equipment[egIndex].value;
+					equipmentGroup.kwh[categoryIndex].value = monthlyDatum.equipmentKwhs[equipmentGroup.type] || 0;	//default to 0 if missing data for date
 					// set utility rates for baseline and measured
 					if (categoryIndex !== 1) {
-
+						const monthlyDatumRate = getRateForDate(monthlyDatum.month, monthlyDatum.year, rates)
 						if (month === 'All') {
 							let currentObj = equipmentRatesAndWeights[egIndex].utilityRate[categoryIndex].ratesAndWeights
-							if (!currentObj[monthlyDatum.rate]) currentObj[monthlyDatum.rate] = 0;
-							currentObj[monthlyDatum.rate]++
+							if (!currentObj[monthlyDatum.rate]) currentObj[monthlyDatumRate] = 0;
+							currentObj[monthlyDatumRate]++
 						} else {
-							equipmentGroup.utilityRate[categoryIndex].rate = monthlyDatum.rate;
+							equipmentGroup.utilityRate[categoryIndex].rate = monthlyDatumRate;
 						}
 					}
 				})
 				// set system level trh vals for baseline and measured
-				if (categoryIndex !== 1) categoryDataForDate[categoryIndex].trh = monthlyDatum.trh;
+				if (categoryIndex !== 1) categoryDataForDate[categoryIndex].trh = monthlyDatum.trh || 0;	//default to 0 if missing data for date
 			}
 		})
   })
@@ -224,7 +210,6 @@ const getDataForDate = (month, year, categoriesData = [data.baselineData, data.p
 				}
 			})
 		};
-
 		//set projected rates to be equal to the baseline rates
 		equipmentGroup.utilityRate[1].rate = equipmentGroup.utilityRate[0].rate;
 		//set costs, accum costs, and system level rates
@@ -250,9 +235,12 @@ const properties = [
 	},
 	{
 		name: 'systemName',
-		value: 'My System'
+		value: 'System'
 	},
-	// if data not able to be pulled upon async try, will change values of these bools:
+	{
+		name: 'currencyName',
+		value: 'USD'
+	},
 	{
 		name: 'includePCPs',
 		value: true
@@ -305,11 +293,6 @@ const properties = [
 		typeSpec: 'gx:Color'
 	},
 	{
-		name: 'systemNameColor',
-		value: 'black',
-		typeSpec: 'gx:Color'
-	},
-	{
 		name: 'legendTextColor',
 		value: 'black',
 		typeSpec: 'gx:Color'
@@ -335,7 +318,7 @@ const properties = [
 		typeSpec: 'gx:Color'
 	},
 	{
-		name: 'tooltipColor',
+		name: 'tooltipFontColor',
 		value: 'black',
 		typeSpec: 'gx:Color'
 	},
@@ -372,6 +355,10 @@ const properties = [
 	{
 		name: 'tooltipOpacity',
 		value: 0.9,
+	},
+	{
+		name: 'btnKnobColor',
+		value: 'white'
 	}
 ];
 
@@ -386,13 +373,13 @@ const thisYear = today.getFullYear();
 const data = {};
 properties.forEach(prop => data[prop.name] = prop.value);
 
-	// FROM JQ //
-// //small
-// const jqWidth = 881;
-// const jqHeight = 441;
-//med
-const jqWidth = 1201;
-const jqHeight = 701;
+	// FROM JQ //	// TODO: change to actual JQ dimensions for Niagara
+//small
+const jqWidth = 881;	
+const jqHeight = 441;
+// //med
+// const jqWidth = 1201;	
+// const jqHeight = 701;
 // //lrg
 // const jqWidth = 1601;
 // const jqHeight = 851;
@@ -486,7 +473,6 @@ data.paddingAfterLegendCat = 5;
 if (!widget.year) widget.year = thisYear;
 if (!widget.month) widget.month = 'All';
 
-
 if (!widget.equipmentHovered) widget.equipmentHovered = 'none';	//alternative selections are equipment group names
 if (!widget.equipmentPinned) widget.equipmentPinned = 'none';	//alternative selections are equipment group names
 
@@ -500,24 +486,23 @@ if (!widget.legendHovered) widget.legendHovered = 'none';	// alternative selecti
 
 if (!widget.monthDropDownSelected) widget.monthDropDownSelected = 'All';
 if (!widget.yearDropDownSelected) widget.yearDropDownSelected = thisYear;
-if (!widget.activeChartType) widget.activeChartType = 'grouped';	//alternative selection 'grouped'
+if (!widget.activeChartType) widget.activeChartType = 'stacked';	//alternative selection 'grouped'
 
-	// FAKE DATA //
+	// FAKE DATA //					// TODO: gather real data for Niagara
+data.blendedRates = blendedRates;
 data.baselineData = baselineData;
 data.projectedData = projectedData;
 data.measuredData = measuredData;
-data.utilityRate = data.measuredData[data.measuredData.length - 1].rate;
-data.currency = 'USD';
 data.currencySymbol = '$';
 data.currencyPrecision = '2'
 
 	// CALCULATED DEFS //
+data.utilityRate = data.blendedRates[data.blendedRates.length - 1].rate;
 data.formatCurrency = d3.format(`,.${data.currencyPrecision}f`)
 data.formatAvgCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`)
 
 	//get dataForDate
-widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData])
-console.log(widget.dataForDate)
+widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates)
 
 // eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
 data.availableDates = {};
@@ -526,8 +511,30 @@ data.measuredData.forEach(date => {
 	data.availableDates[date.year].push(date.month);
 })
 data.availableYears = Object.keys(data.availableDates).sort((a,b) => b - a);
-// data.availableYears.forEach(yr => data.availableDates[yr].sort((a,b) => months.indexOf(a) - months.indexOf(b)))
 data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
+
+
+// Funcs utilizing widget
+widget.updateDateWidgetRendering = () => {
+	widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates)
+	renderWidget();
+}
+
+widget.dropdownYearChanged = () => {
+	widget.yearDropDownSelected = d3.event.target.value;
+	widget.monthDropDownSelected = 'All';
+	widget.updateDateWidgetRendering()
+};
+
+widget.dropdownMonthChanged = () => {
+	widget.monthDropDownSelected = d3.event.target.value;
+	widget.updateDateWidgetRendering()
+};
+
+widget.resetElements = elementsToReset => {
+	const selectionForCheck = widget.svg.selectAll(elementsToReset)
+  if (!selectionForCheck.empty()) selectionForCheck.remove();
+};
 
 
 
@@ -536,11 +543,12 @@ data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
 ////////////////////////////////////////////////////////////////
 
  // INITIALIZATION //
-widget.outerDiv = d3.select('#outer')
+widget.outerDiv = d3.select('#outer')	
+	.attr('class', 'UtilitySavingsToolOuter')
 	.style('height', jqHeight + 'px')
 	.style('width', jqWidth + 'px');
 
-
+ // RENDER //
 const renderWidget = () => { 
 	// delete leftover elements from versions previously rendered
 	if (!widget.outerDiv.empty()) widget.outerDiv.selectAll('*').remove();
@@ -575,7 +583,7 @@ const renderWidget = () => {
 		.style('font', data.dropdownFont)
 		.style('color', data.dropdownTextColor)
 		// .on('click', unhover)
-		.on('change', dropdownYearChanged)
+		.on('change', widget.dropdownYearChanged)
 		.selectAll('option')
 			.data(data.availableYears).enter()
 				.append('option')
@@ -602,7 +610,7 @@ const renderWidget = () => {
 		.style('font', data.dropdownFont)
 		.style('color', data.dropdownTextColor)
 		// .on('click', unhover)
-		.on('change', dropdownMonthChanged)
+		.on('change', widget.dropdownMonthChanged)
 		.selectAll('option')
 			.data(d => data.availableDates[widget.yearDropDownSelected]).enter()
 				.append('option')
@@ -616,11 +624,9 @@ const renderWidget = () => {
 	widget.svg = widget.outerDiv.append('svg')
 		.attr('class', 'log')
 		.attr('width', '100%')
-		.attr('height', '98%')
+		.attr('height', '100%')
 		.on('mousedown', unpin);
-	d3.select(widget.svg.node().parentNode)
-		.style('background-color', data.backgroundColor)
-		// .on('click', unhover);
+	d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor)
 	d3.select(widget.svg.node().parentNode.parentNode).style('background-color', 'darkGray');	// TODO: delete for Niagara
 
 	// GENERAL GROUPS //
@@ -628,11 +634,7 @@ const renderWidget = () => {
 		.attr('class', 'graphicGroup')
 		.attr('transform', `translate(${data.margin.left}, ${data.margin.top})`);
 
-	// graphicGroup.append('rect')	//TODO: delete
-	// 	.attr('height', data.graphicHeight)
-	// 	.attr('width', data.graphicWidth)
-	// 	.attr('fill', data.backgroundColor)
-	// 	.attr('stroke', 'black')
+
 
 	const toolsGroupHeight = data.widgetSize === 'small' ? 110 : (data.widgetSize === 'medium' ? 120 : 130);
 	const paddingBetweenToolsAndCharts = data.widgetSize === 'large' ? 50 : 30;
@@ -640,11 +642,6 @@ const renderWidget = () => {
 	const toolsGroup = graphicGroup.append('g')
 		.attr('class', 'toolsGroup')
 
-	// toolsGroup.append('rect')	//TODO:  delete
-	// 	.attr('height', toolsGroupHeight)
-	// 	.attr('width', data.graphicWidth)
-	// 	.attr('fill', 'none')
-	// 	.attr('stroke', 'black')
 	const paddingLeftOfButton = data.widgetSize === 'small' ? 20 : (data.widgetSize === 'medium' ? 30 : 60);
 	const utilityRateGroup = toolsGroup.append('g')
 		.attr('class', 'utilityRateGroup')
@@ -760,6 +757,7 @@ const renderWidget = () => {
 	const xAxisGenerator = d3.axisBottom()
 		.scale(x0Scale)
 		.tickSize(widget.activeChartType === 'grouped' ? 6 : 0)
+		.tickSizeOuter(0)
 		.tickFormat((d, i) => widget.activeChartType === 'grouped' ? d : null);
 
 	const trhXAxisGenerator = d3.axisBottom()
@@ -827,20 +825,20 @@ const renderWidget = () => {
 			//transition axes
 			kwhChart.select('.kwhXAxisTitle')
 			.transition()
-				.delay(stackedOrGrouped === 'grouped' ? 0 : duration / 2)
-				.duration(duration / 2)
+				.delay(stackedOrGrouped === 'grouped' ? 0 : barsTransitionDuration / 2)
+				.duration(barsTransitionDuration / 2)
 				.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
 				// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
 
 			kwhChart.select('.xAxis')
 				.transition()
-					.delay(stackedOrGrouped === 'grouped' ? duration / 2 : 0)
-					.duration(duration / 2)
+					.delay(stackedOrGrouped === 'grouped' ? barsTransitionDuration / 2 : 0)
+					.duration(barsTransitionDuration / 2)
 					.call(xAxisGenerator);
 
 			kwhChart.select('.yAxis')
 				.transition()
-					.duration(duration)
+					.duration(barsTransitionDuration)
 					.call(kwhYAxisGenerator);
 
 			kwhChart.select('.kwhYAxisTitle')
@@ -850,12 +848,12 @@ const renderWidget = () => {
 			// transition bars
 			kwhChart.selectAll('.equipmentGroups')
 				.transition()
-					.duration(duration)
+					.duration(barsTransitionDuration)
 					.attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
 			
 			kwhChart.selectAll('.categoryRects')	// .data(d => d.kwh)
 				.transition()
-					.duration(duration - 500)
+					.duration(barsTransitionDuration - 500)
 					.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category): x0Scale(d.category))
 					.attr("y", d => kwhYScale(stackedOrGrouped === 'grouped' ? d.value : d.accumulated))
 					.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
@@ -868,7 +866,7 @@ const renderWidget = () => {
 			if (stackedOrGrouped === 'grouped') {
 				appendHoverableKwhRects ()
 			} else {
-				resetElements('.hoverableKwhRects')
+				widget.resetElements('.hoverableKwhRects')
 			}
 						
 			//tick styling
@@ -882,20 +880,20 @@ const renderWidget = () => {
 			//transition axes
 			costChart.select('.costXAxisTitle')
 				.transition()
-					.delay(stackedOrGrouped === 'grouped' ? 0 : duration / 2)
-					.duration(duration / 2)
+					.delay(stackedOrGrouped === 'grouped' ? 0 : barsTransitionDuration / 2)
+					.duration(barsTransitionDuration / 2)
 					.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
 					// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
 
 			costChart.select('.xAxis')
 				.transition()
-					.delay(stackedOrGrouped === 'grouped' ? duration / 2 : 0)
-					.duration(duration / 2)
+					.delay(stackedOrGrouped === 'grouped' ? barsTransitionDuration / 2 : 0)
+					.duration(barsTransitionDuration / 2)
 					.call(xAxisGenerator);
 
 			costChart.select('.yAxis')
 				.transition()
-					.duration(duration)
+					.duration(barsTransitionDuration)
 					.call(costYAxisGenerator);
 
 			costChart.select('.costYAxisTitle')
@@ -905,12 +903,12 @@ const renderWidget = () => {
 			// transition bars
 			costChart.selectAll('.equipmentGroups')
 				.transition()
-					.duration(duration)
+					.duration(barsTransitionDuration)
 					.attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
 			
 			costChart.selectAll('.categoryRects')	// .data(d => d.utilityRate)
 				.transition()
-					.duration(duration - 500)
+					.duration(barsTransitionDuration - 500)
 					.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category): x0Scale(d.category))
 					.attr("y", d => costYScale(stackedOrGrouped === 'grouped' ? d.cost : d.accumulatedCost))
 					.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
@@ -922,7 +920,7 @@ const renderWidget = () => {
 				if (stackedOrGrouped === 'grouped') {
 					appendHoverableCostRects ()
 				} else {
-					resetElements('.hoverableCostRects')
+					widget.resetElements('.hoverableCostRects')
 				}
 
 				
@@ -1010,7 +1008,7 @@ const renderWidget = () => {
 			.on('mouseout', tryUnhover)
 
 			function appendHoverableKwhRects () {
-				resetElements('.hoverableKwhRects');
+				widget.resetElements('.hoverableKwhRects');
 				equipmentGroups.selectAll('.hoverableKwhRects')
 					.data(d => d.kwh)
 					.enter().append("rect")
@@ -1073,7 +1071,7 @@ const renderWidget = () => {
 		.attr('dominant-baseline', 'hanging')
 		.attr('x', (barSectionWidth / 2) - (getTextWidth(data.systemName, data.tickFont) / 2) )
 		.style('font', data.systemNameFont)
-		.attr('fill', data.systemNameColor)
+		.attr('fill', data.tickTextColor)
 		.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
 		// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
 		// .on('mouseover', unhover)
@@ -1082,7 +1080,7 @@ const renderWidget = () => {
 
 	// tooltip
 	function appendKwhTooltip () {
-		resetElements('.kwhTooltip')
+		widget.resetElements('.kwhTooltip')
 		const isStacked = widget.activeChartType === 'stacked'
 		const kwhDataForDate = widget.activeChartType === 'stacked' ? widget.dataForDate.categoryDataForDate : widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].kwh;
 		const maxWidthCat = kwhDataForDate.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${isStacked ? curr.kwh : curr.value}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${isStacked ? accum.kwh : accum.value}`, 'bold ' + data.tooltipFont) ?
@@ -1115,14 +1113,14 @@ const renderWidget = () => {
 			.text((d, i) => d.category.slice(0,1).toUpperCase() +': ')
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
-			.attr('fill', d => data[d.category + 'Color']|| data.tooltipColor)
+			.attr('fill', d => data[d.category + 'Color']|| data.tooltipFontColor)
 			.style('font-weight', 'bold')
 
 		textGroups.append('text')
 			.text((d, i) => isStacked ? d.kwh + ' kWh' : d.value + ' kWh')
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
-			.attr('fill', data.tooltipColor)
+			.attr('fill', data.tooltipFontColor)
 			.attr('x', getTextWidth('M:', 'bold ' + data.tooltipFont) + data.paddingAfterLegendCat)
 	}
 	if (widget.systemIsHovered || widget.equipmentHovered !== 'none') appendKwhTooltip();
@@ -1187,7 +1185,7 @@ costEquipmentGroups.selectAll('.categoryRects')
 
 
 		function appendHoverableCostRects () {
-			resetElements('.hoverableCostRects');
+			widget.resetElements('.hoverableCostRects');
 			costEquipmentGroups.selectAll('.hoverableCostRects')
 				.data(d => d.utilityRate)
 				.enter().append("rect")
@@ -1242,7 +1240,7 @@ costChart.selectAll('.tick text')
 // y axis units title
 costBarSection.append('text')
 	.attr('class', 'costYAxisTitle')
-	.text(data.currency)
+	.text(data.currencyName)
 	.attr('transform', 'rotate(-90)')
 	.attr('y', 5)
 	.attr("text-anchor", "middle")
@@ -1259,7 +1257,7 @@ costBarSection.append('text')
 	.attr('dominant-baseline', 'hanging')
 	.attr('x', (barSectionWidth / 2) - (getTextWidth(data.systemName, data.tickFont) / 2) )
 	.style('font', data.systemNameFont)
-	.attr('fill', data.systemNameColor)
+	.attr('fill', data.tickTextColor)
 	.text(data.systemName)
 	.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
 	// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
@@ -1269,7 +1267,7 @@ costBarSection.append('text')
 
 	// tooltip
 	function appendCostTooltip () {
-		resetElements('.costTooltip')
+		widget.resetElements('.costTooltip')
 		const costDataForDate = widget.activeChartType === 'stacked' ?
 			widget.dataForDate.categoryDataForDate :
 			widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].utilityRate;
@@ -1311,7 +1309,7 @@ costBarSection.append('text')
 			.text((d, i) => d.category.slice(0,1).toUpperCase() +': ')
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
-			.attr('fill', d => data[d.category + 'Color']|| data.tooltipColor)
+			.attr('fill', d => data[d.category + 'Color']|| data.tooltipFontColor)
 			.style('font-weight', 'bold')
 
 
@@ -1319,7 +1317,7 @@ costBarSection.append('text')
 			.text((d, i) => data.currencySymbol + data.formatCurrency(d.cost))
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
-			.attr('fill', data.tooltipColor)
+			.attr('fill', data.tooltipFontColor)
 			.attr('text-anchor', 'end')
 			.attr('x', getTextWidth('M:', 'bold ' + data.tooltipFont) + maxWidthOfCost + data.paddingAfterLegendCat)
 
@@ -1327,7 +1325,7 @@ costBarSection.append('text')
 			.text((d, i) => '@ ' + data.currencySymbol + data.formatAvgCurrency(d.rate))
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
-			.attr('fill', data.tooltipColor)
+			.attr('fill', data.tooltipFontColor)
 			.attr('x', getTextWidth('M:', 'bold ' + data.tooltipFont) + maxWidthOfCost + (data.paddingAfterLegendCat * 2))
 
 	}
@@ -1383,7 +1381,7 @@ costBarSection.append('text')
 					widget.trhIsHovered = false;
 					widget.svg.selectAll('.trhYAxisTitle')
 						.style('opacity', 1)
-					resetElements('.trhTooltip');
+					widget.resetElements('.trhTooltip');
 				}
 			})
 
@@ -1425,14 +1423,14 @@ costBarSection.append('text')
 		.attr('dominant-baseline', 'hanging')
 		.attr('x', (trhBarSectionWidth / 2) - (getTextWidth(data.systemName, data.tickFont) / 2) )
 		.style('font', data.systemNameFont)
-		.attr('fill', data.systemNameColor)
+		.attr('fill', data.tickTextColor)
 		.attr('y', barSectionHeight + 6)
 		.text(data.systemName)
 
 
 	// tooltip
 	function appendTrhTooltip () {
-		resetElements('.trhTooltip')
+		widget.resetElements('.trhTooltip')
 		const maxWidthCat = trhCategoryDataForDate
 			.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${curr.trh}`, data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${accum.trh}`, 'bold ' + data.tooltipFont) ?
 				curr :
@@ -1463,7 +1461,7 @@ costBarSection.append('text')
 			.text(d => `${d.category.slice(0,1).toUpperCase()}:`)
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
-			.attr('fill', d => data[d.category + 'Color']|| data.tooltipColor)
+			.attr('fill', d => data[d.category + 'Color']|| data.tooltipFontColor)
 			.style('font-weight', 'bold')
 
 		trhTextGroups.append('text')
@@ -1471,7 +1469,7 @@ costBarSection.append('text')
 			.attr('x', getTextWidth('M:', 'bold ' + data.tooltipFont) + data.paddingAfterLegendCat)
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
-			.attr('fill', data.tooltipColor)
+			.attr('fill', data.tooltipFontColor)
 
 	}
 	if (widget.trhIsHovered) appendTrhTooltip();
@@ -1486,8 +1484,6 @@ costBarSection.append('text')
 	}
 
 
-
-
 	const legendGroup = graphicGroup.append('g')
 		.attr('class', 'legend')
 		.attr('transform', `translate(${(data.graphicWidth / 2) - (legendWidth / 2)}, ${data.graphicHeight - legendHeight})`)
@@ -1497,6 +1493,9 @@ costBarSection.append('text')
 		.enter().append('g')
 			.attr('class', d => `legend${d.displayName}Group legendCategories`)
 			.attr('transform', (d, i) => `translate(${circleRadius + (i * paddingBetweenLegendCategories) + getPrevLegendWidths(i)}, ${circleRadius})`)
+			.on('mousedown', function(){
+				d3.event.stopPropagation()
+			})
 			.on('mouseover', function (d) {
 				widget.legendHovered = d.name;
 				widget.svg.selectAll(`.${d.name}LegendText`)
@@ -1590,6 +1589,7 @@ costBarSection.append('text')
 		.attr('y', getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol)
 		.attr('dominant-baseline', 'hanging')
 		.style('font', data.currencySymbolFont)
+		.attr('fill', data.currencySymbolColor)
 		.text(data.currencySymbol)
 
 	const utilityRate = utilityRateGroup.append('text')
@@ -1597,6 +1597,7 @@ costBarSection.append('text')
 		.attr('x', getTextWidth(data.currencySymbol, data.currencySymbolFont) + paddingRightOfCurrencySymbol)
 		.attr('y', getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol)
 		.style('font', data.utilityRateFont)
+		.attr('fill', data.utilityRateColor)
 		.text(data.formatCurrency(data.utilityRate))
 
 
@@ -1662,7 +1663,6 @@ costBarSection.append('text')
 				label: data.currencySymbol
 			};
 		} else {
-			
 			// set percentage arrays
 				//kwh
 				kwhPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[2].kwh).toString().split('').map(digit => +digit);
@@ -1722,7 +1722,7 @@ costBarSection.append('text')
 	};
 
 	function renderChangeTools () {
-		resetElements('.changeTools')
+		widget.resetElements('.changeTools')
 
 		const changeToolsLeft = data.widgetSize === 'small' ? 300 : (data.widgetSize === 'medium' ? 400 : 475)
 		const changeTools = toolsGroup.append('g')
@@ -1839,13 +1839,13 @@ costBarSection.append('text')
 			.style('font', data.changePercentFont)
 			.style('font-size', (getTextHeight(data.changePercentFont) / 2) + 'pt')
 
-		const changeDuration = 275;
+		const rollingPercentsChangeDuration = 275;
 
 
 		function increaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
 			const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
 			const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
-			const thisDuration = changeDuration / numbersToGetThrough;
+			const thisDuration = rollingPercentsChangeDuration / numbersToGetThrough;
 
 			digitObjToChange1
 				.transition()
@@ -1894,7 +1894,7 @@ costBarSection.append('text')
 		function decreaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
 			const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
 			const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
-			const thisDuration = changeDuration / numbersToGetThrough;
+			const thisDuration = rollingPercentsChangeDuration / numbersToGetThrough;
 
 			digitObjToChange1
 				.transition()
@@ -1938,7 +1938,6 @@ costBarSection.append('text')
 				.transition()
 					.duration(0)
 					.attr('y', paddingHidingText);
-
 		}
 
 
@@ -2037,21 +2036,20 @@ const endCircleRadius = buttonWidth / 6
 const rectHeight = endCircleRadius * 2
 const rectWidth = endCircleRadius * 3.5
 const buttonBackgroundFill = () => widget.activeChartType === 'stacked' ? data.sysBtnBackgroundColor : data.eqBtnBackgroundColor;
-// const cy = ((40 / 2) + (rectHeight / 2)) - buttonMargin	
 const cy = getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol + rectHeight / 2 + buttonMargin
 const rectLeftX = buttonMargin + endCircleRadius;
 const rectRightX = rectLeftX + rectWidth
-
+const buttonTransitionDuration = 666 // (just 2/3 of sec --nothing satanical intended)
 
 
 	const toggleButton = () => {
 		buttonGroup.select('.knob')
 			.transition()
-				.duration(666)	// (2/3 of sec --nothing satanical intended)
+				.duration(buttonTransitionDuration)	// (2/3 of sec --nothing satanical intended)
 				.attr('cx', widget.activeChartType === 'grouped' ? rectRightX: rectLeftX);
 		buttonGroup.selectAll('.buttonBackground')
 			.transition()
-				.duration(666)	// (2/3 of sec --nothing satanical intended)
+				.duration(buttonTransitionDuration)	// (2/3 of sec --nothing satanical intended)
 				.attr('fill', buttonBackgroundFill());
 		renderButtonText(true);
 	}
@@ -2096,7 +2094,7 @@ const rectRightX = rectLeftX + rectWidth
 
 	buttonGroup.append('circle')
 		.attr('class', 'knob')
-		.attr('fill', 'white')
+		.attr('fill', data.btnKnobColor)
 		.attr('r', knobRadius)
 		.attr('cy', cy)
 		.attr('cx', widget.activeChartType === 'grouped' ? rectRightX : rectLeftX)
@@ -2108,7 +2106,7 @@ const rectRightX = rectLeftX + rectWidth
 	const groupedX = buttonMargin + ((buttonWidth - (endCircleRadius * 2)) / 2);
 
 	const renderButtonText = changed => {
-		resetElements('.statusText');
+		widget.resetElements('.statusText');
 
 		buttonGroup.append('text')
 			.attr('class', 'statusText')
@@ -2122,7 +2120,7 @@ const rectRightX = rectLeftX + rectWidth
 			.attr('opacity', changed ? 0 : 1)
 			.on('click', transitionChartsClickFunction)
 			.transition()
-				.duration(666)
+				.duration(buttonTransitionDuration)
 				.text(widget.activeChartType === 'stacked' ? 'SYS' : 'EQ')
 				.attr('fill', widget.activeChartType === 'stacked' ? data.sysBtnTextColor : data.eqBtnTextColor)
 				.attr('opacity', 1);
@@ -2165,15 +2163,15 @@ const rectRightX = rectLeftX + rectWidth
 				.style('opacity', 1);
 			widget.svg.selectAll('.costYAxisTitle')
 				.style('opacity', 1);
-			resetElements('.costTooltip');
-			resetElements('.kwhTooltip');
+			widget.resetElements('.costTooltip');
+			widget.resetElements('.kwhTooltip');
 			renderChangeTools();
 		}
 		function unhoverTrh () {
 			widget.trhIsHovered = false;
 			widget.svg.selectAll('.trhYAxisTitle')
 				.style('opacity', 1)
-			resetElements('.trhTooltip');
+			widget.resetElements('.trhTooltip');
 		}
 		function unhoverAll () {
 			unhoverDynamic();
@@ -2199,8 +2197,8 @@ const rectRightX = rectLeftX + rectWidth
 			}
 			if (widget.activeChartType === 'grouped'){
 				//reset last hover
-				resetElements('.costTooltip');
-				resetElements('.kwhTooltip');
+				widget.resetElements('.costTooltip');
+				widget.resetElements('.kwhTooltip');
 				//change for this hover
 				widget.equipmentHovered = nodes[i].parentNode.__data__.type;
 				renderChangeTools();

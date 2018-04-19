@@ -465,8 +465,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-
-
         /* DATAPOINTS */
         // groups of datapoints
         const dataPointsGroups = chartGroup.selectAll('circle')

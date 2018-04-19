@@ -1,23 +1,23 @@
-body * {
+.UtilitySavingsToolOuter * {
   margin: 0;
   padding: 0;
 }
 
-select {
+.UtilitySavingsToolOuter select {
   padding-left: 5px;
   position: absolute;
   border: 1.5px solid black;
 }
 
-h4 {
+.UtilitySavingsToolOuter h4 {
   padding-left: 5px;
   position: absolute;
 }
 
-.axis path {
+.UtilitySavingsToolOuter .axis path {
   stroke-width: 2;
 }
 
-.changeToolSvg {
+.UtilitySavingsToolOuter .changeToolSvg {
   overflow: hidden;
 }
