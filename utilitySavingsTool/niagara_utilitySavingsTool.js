@@ -411,10 +411,17 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			'CDPs',
 			'CTFs',
 		];
-		if (!data.includeCTFs) {data.activeEquipmentGroups.splice(4, 1)}
-		if (!data.includeCDPs) {data.activeEquipmentGroups.splice(3, 1)}
-		if (!data.includeSCPs) {data.activeEquipmentGroups.splice(2, 1)}
-		if (!data.includePCPs) {data.activeEquipmentGroups.splice(1, 1)}
+		if (!data.includeCTFs) data.activeEquipmentGroups.splice(4, 1)
+		if (!data.includeCDPs) data.activeEquipmentGroups.splice(3, 1)
+		if (!data.includeSCPs) data.activeEquipmentGroups.splice(2, 1)
+		if (!data.includePCPs) data.activeEquipmentGroups.splice(1, 1)
+		data.equipmentHistoryNames = data.activeEquipmentGroups.map(type => {
+			if (type === 'CHs') return 'Chillers';
+			if (type === 'PCPs') return 'Pcwps';
+			if (type === 'SCPs') return 'Scwps';
+			if (type === 'CDPs') return 'Twps';
+			if (type === 'CTFs') return 'Towers';
+		});
 
 		// SIZING //
 		function chooseSize (jqH, jqW) {
@@ -590,7 +597,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.catch(err => 'error iterating through trh trends: ' + err)
 			.then(() => {
 			  
-			  const populateEquipmentTrendData = eqType => {
+			  const populateEquipmentTrendData = (eqType, eqTypeIndex) => {
 			    return Promise.all([widget.resolve(`history:^${eqType}_BlKwhMr`), widget.resolve(`history:^${eqType}_PrKwh`), widget.resolve(`history:^${eqType}_MsKwhMr`)])
 			    .then(histories => {
 			      const [baselineKwh, projectedKwh, measuredKwh] = histories;
@@ -604,7 +611,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
       					  const rowYear = timestamp.getFullYear();
       					  if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
       					  if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-      					  baselineDates[rowYear][rowMonth].kwh[eqType] = rowValue;
+      					  baselineDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
       					}
       			  }),
       			  projectedKwh.cursor({
@@ -616,7 +623,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
       					  const rowYear = timestamp.getFullYear();
       					  if (!projectedDates[rowYear]) projectedDates[rowYear] = {};
       					  if (!projectedDates[rowYear][rowMonth]) projectedDates[rowYear][rowMonth] = {kwh: {}};
-      					  baselineDates[rowYear][rowMonth].kwh[eqType] = rowValue;
+      					  baselineDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
       					}
       			  }),
       			  measuredKwh.cursor({
@@ -628,7 +635,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
       					  const rowYear = timestamp.getFullYear();
       					  if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
       					  if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-      					  measuredDates[rowYear][rowMonth].kwh[eqType] = rowValue;
+      					  measuredDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
       					}
       			  }),
 			        ]
@@ -639,7 +646,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			    .catch(err => console.error('error finding or iterating through ' + eqType + 'historyTrends: ' + err))
 			  };
 			  // return kwh trends for each eqType
-			  return Promise.all(data.activeEquipmentGroups.map(eqType => populateEquipmentTrendData(eqType)));
+			  return Promise.all(data.equipmentHistoryNames.map(eqType => populateEquipmentTrendData(eqType)));
 			  
 			})
 			.then(() => {
@@ -1773,7 +1780,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		const getWidthOfPercentArrowAndText = text => getTextWidth(text + 'W%', data.changePercentFont) + paddingBetweenArrowAndPercent;
 		const changeToolWidth = data.widgetSize === 'small' ? 0.56 * barSectionWidth : (data.widgetSize === 'medium' ? 0.53 * barSectionWidth : 0.5 * barSectionWidth);
 		const changeToolHeight = data.widgetSize === 'small' ? 60 : (data.widgetSize === 'medium' ? 70 : 90);
-		const getArrowPath = decrease => decrease ? './images/Down Arrow.svg' : './images/Up Arrow.svg';
+		const getArrowPath = decrease => decrease ? 'nmodule/tekScratch/rc/images/Down Arrow.svg' : 'nmodule/tekScratch/rc/images/Up Arrow.svg';
 		const imgCircleRadius = data.widgetSize === 'large' ? 28 : (data.widgetSize === 'medium' ? 25 : 22);
 		const paddingBetweenChangeTools = data.widgetSize === 'large' ? imgCircleRadius + 15 : (data.widgetSize === 'medium' ? imgCircleRadius + 10 : imgCircleRadius + 5);
 
@@ -1810,7 +1817,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					value: Math.abs(hoveredEquipmentDataForDate.kwh[2].value - hoveredEquipmentDataForDate.kwh[0].value),
 					percent: JSON.parse(JSON.stringify(kwhPercent)),
 					arrowPath: getArrowPath(hoveredEquipmentDataForDate.kwh[2].value <= hoveredEquipmentDataForDate.kwh[0].value),
-					imgPath: './images/Electricity Badge.svg',
+					imgPath: 'nmodule/tekScratch/rc/images/Electricity Badge.svg',
 					label: ' kWh'
 				};
 				cost = {
@@ -1818,7 +1825,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					value: data.formatCurrency(Math.abs(hoveredEquipmentDataForDate.utilityRate[2].cost - hoveredEquipmentDataForDate.utilityRate[0].cost)),
 					percent: JSON.parse(JSON.stringify(costPercent)),
 					arrowPath: getArrowPath(hoveredEquipmentDataForDate.utilityRate[2].cost <= hoveredEquipmentDataForDate.utilityRate[0].cost),
-					imgPath: './images/Monetary Badge.svg',
+					imgPath: 'nmodule/tekScratch/rc/images/Monetary Badge.svg',
 					label: data.currencySymbol
 				};
 			} else {
@@ -1847,7 +1854,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					value: Math.abs(widget.dataForDate.categoryDataForDate[2].kwh - widget.dataForDate.categoryDataForDate[0].kwh),
 					percent: JSON.parse(JSON.stringify(kwhPercent)),
 					arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].kwh <= widget.dataForDate.categoryDataForDate[0].kwh),
-					imgPath: './images/Electricity Badge.svg',
+					imgPath: 'nmodule/tekScratch/rc/images/Electricity Badge.svg',
 					label: ' kWh'
 				};
 				cost = {
@@ -1855,7 +1862,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					value: data.formatCurrency(Math.abs(widget.dataForDate.categoryDataForDate[2].cost - widget.dataForDate.categoryDataForDate[0].cost)),
 					percent: JSON.parse(JSON.stringify(costPercent)),
 					arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].cost <= widget.dataForDate.categoryDataForDate[0].cost),
-					imgPath: './images/Monetary Badge.svg',
+					imgPath: 'nmodule/tekScratch/rc/images/Monetary Badge.svg',
 					label: data.currencySymbol
 				};
 			}
@@ -1874,7 +1881,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				value: Math.abs(widget.dataForDate.categoryDataForDate[2].trh - widget.dataForDate.categoryDataForDate[0].trh),
 				percent: JSON.parse(JSON.stringify(trhPercent)),
 				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].trh <= widget.dataForDate.categoryDataForDate[0].trh),
-				imgPath: './images/Production Badge.svg',
+				imgPath: 'nmodule/tekScratch/rc/images/Production Badge.svg',
 				label: ' tRh'
 			};
 			return [kwh, cost, trh]
