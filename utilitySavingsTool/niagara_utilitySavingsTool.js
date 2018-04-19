@@ -58,7 +58,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		for(let i = rates.length - 1; i >= 0; i--) {
 			let pointedRate = rates[i]
 			if ( pointedRate.year < selectedYear || (pointedRate.year === selectedYear && indexOfMonth[pointedRate.month] <= indexOfMonth[selectedMonth]) ) return pointedRate.rate;
-		};
+		}
 		return 0;
 	};
 
@@ -206,8 +206,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 							equipmentGroup.utilityRate[catIndex].rate = total;
 						}
 					}
-				})
-			};
+				});
+			}
 			//set projected rates to be equal to the baseline rates
 			equipmentGroup.utilityRate[1].rate = equipmentGroup.utilityRate[0].rate;
 			//set costs, accum costs, and system level rates
@@ -220,7 +220,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		})
 		return {categoryDataForDate, equipmentDataForDate};
 	};
-	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 
 
 
@@ -745,7 +744,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		const paddingBetweenDropdowns = data.widgetSize === 'large' ? 30 : 20;
 		const paddingUnderDropdownTitles = 8;
 		const dropdownBorderRadius = '100px'
-		const dropdownsWidth = paddingLeftOfTools + (dateDropdownWidth * 2) + paddingBetweenDropdowns;
 
 		const dropdownDiv = widget.outerDiv.append('div')
 			.attr('class', 'dropdownDiv')
@@ -759,7 +757,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.style('color', data.toolTitleColor)
 			.style('font', data.toolTitleFont)
 
-		const yearSelect = dropdownDiv.append('select')
+		dropdownDiv.append('select')
 			.style('width', dateDropdownWidth + 'px')
 			.attr('class', 'yearSelect')
 			.style('border-radius', dropdownBorderRadius)
@@ -770,8 +768,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			// .on('click', unhover)
 			.on('change', widget.dropdownYearChanged)
 			.selectAll('option')
-				.data(data.availableYears).enter()
-					.append('option')
+				.data(data.availableYears)
+				.enter().append('option')
 						.property('selected', d => d === widget.yearDropDownSelected)
 						.text(d => d)
 
@@ -784,7 +782,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.style('color', data.toolTitleColor)
 			.style('font', data.toolTitleFont);
 
-		const monthSelect = dropdownDiv.append('select')
+		dropdownDiv.append('select')
 			.style('width', dateDropdownWidth + 'px')
 			.attr('class', 'monthSelect')
 			.style('border-radius', dropdownBorderRadius)
@@ -794,10 +792,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.style('color', data.dropdownTextColor)
 			.on('change', widget.dropdownMonthChanged)
 			.selectAll('option')
-				.data(d => data.availableDates[widget.yearDropDownSelected]).enter()
-					.append('option')
-						.property('selected', d => d === widget.monthDropDownSelected)
-						.text(d => d);
+				.data(data.availableDates[widget.yearDropDownSelected])
+				.enter().append('option')
+					.property('selected', d => d === widget.monthDropDownSelected)
+					.text(d => d);
 
 		// SVG INITIALIZATION //
 
@@ -836,7 +834,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		const yAxisWidth = getTextWidth('8,888,888,888', data.tickFont);
 		const xAxisHeight = 25;
 		const chartWidth = (data.graphicWidth - ((paddingBetweenCharts * 2) + yAxisWidth)) / 2.5;
-		const trhChartWidth = chartWidth / 2;
 
 		const circleRadius = 6
 		const hoveredCircleRadius = circleRadius * 1.1
@@ -880,7 +877,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			let allVals;
 
 			if (groupedOrStacked === 'grouped' && chartName !== 'trh'){
-				arraysOfVals = widget.dataForDate.equipmentDataForDate.map(mapFuncForArrOfEquipVals);
+				const arraysOfVals = widget.dataForDate.equipmentDataForDate.map(mapFuncForArrOfEquipVals);
 				allVals = [].concat(...arraysOfVals)
 			} else {
 				allVals = widget.dataForDate.categoryDataForDate.map(cat => cat[chartName]);
@@ -934,12 +931,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.scale(x0Scale)
 			.tickSize(widget.activeChartType === 'grouped' ? 6 : 0)
 			.tickSizeOuter(0)
-			.tickFormat((d, i) => widget.activeChartType === 'grouped' ? d : null);
+			.tickFormat(d => widget.activeChartType === 'grouped' ? d : null);
 
 		const trhXAxisGenerator = d3.axisBottom()
 			.scale(trhXScale)
 			.tickSize(0)
-			.tickFormat((d, i) => null);
+			.tickFormat(() => null);
 			
 		// y axis
 		const kwhYScale = d3.scaleLinear()
@@ -983,7 +980,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				.rangeRound([0, x0Scale.bandwidth()]); // running to account for changes to x0Scale
 			xAxisGenerator
 				.tickSize(widget.activeChartType === 'grouped' ? 6 : 0)
-				.tickFormat((d, i) => widget.activeChartType === 'grouped' ? d : null);
+				.tickFormat(d => widget.activeChartType === 'grouped' ? d : null);
 
 			//y axis changes
 			kwhMaxYTick = getMaxYTick(stackedOrGrouped, 'kwh');
@@ -1049,7 +1046,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				kwhChart.selectAll('.tick text')
 					.style('fill', data.tickTextColor)
 					.style('font', data.tickFont)
-			};
+			}
 			kwhChartTransition()
 
 			function costChartTransition() {
@@ -1112,7 +1109,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		//click handler for chart transitions
 		const transitionChartsClickFunction = () => {
 			unhoverAll();
-			widget.activeChartType === 'stacked' ?	widget.activeChartType = 'grouped' :	widget.activeChartType = 'stacked';
+			widget.activeChartType = widget.activeChartType === 'stacked' ? 'grouped' : 'stacked';
 			transitionCharts(widget.activeChartType)
 			toggleButton();
 		};
@@ -1277,14 +1274,14 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					.attr('transform', (d, i) => `translate(${data.tooltipPadding},${(data.tooltipPadding * 1.5) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
 		
 			textGroups.append('text')
-				.text((d, i) => d.category.slice(0,1).toUpperCase() +': ')
+				.text(d => d.category.slice(0,1).toUpperCase() +': ')
 				.attr('dominant-baseline', 'hanging')
 				.style('font', data.tooltipFont)
 				.attr('fill', d => data[d.category + 'Color']|| data.tooltipFontColor)
 				.style('font-weight', 'bold')
 
 			textGroups.append('text')
-				.text((d, i) => isStacked ? d.kwh + ' kWh' : d.value + ' kWh')
+				.text(d => isStacked ? d.kwh + ' kWh' : d.value + ' kWh')
 				.attr('dominant-baseline', 'hanging')
 				.style('font', data.tooltipFont)
 				.attr('fill', data.tooltipFontColor)
@@ -1467,7 +1464,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					.attr('transform', (d, i) => `translate(${data.tooltipPadding},${(data.tooltipPadding * 1.5) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
 		
 			textGroups.append('text')
-				.text((d, i) => d.category.slice(0,1).toUpperCase() +': ')
+				.text(d => d.category.slice(0,1).toUpperCase() +': ')
 				.attr('dominant-baseline', 'hanging')
 				.style('font', data.tooltipFont)
 				.attr('fill', d => data[d.category + 'Color']|| data.tooltipFontColor)
@@ -1475,7 +1472,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 			textGroups.append('text')
-				.text((d, i) => data.currencySymbol + data.formatCurrency(d.cost))
+				.text(d => data.currencySymbol + data.formatCurrency(d.cost))
 				.attr('dominant-baseline', 'hanging')
 				.style('font', data.tooltipFont)
 				.attr('fill', data.tooltipFontColor)
@@ -1483,7 +1480,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				.attr('x', getTextWidth('M:', 'bold ' + data.tooltipFont) + maxWidthOfCost + data.paddingAfterLegendCat)
 
 			textGroups.append('text')
-				.text((d, i) => '@ ' + data.currencySymbol + data.formatAvgCurrency(d.rate))
+				.text(d => '@ ' + data.currencySymbol + data.formatAvgCurrency(d.rate))
 				.attr('dominant-baseline', 'hanging')
 				.style('font', data.tooltipFont)
 				.attr('fill', data.tooltipFontColor)
@@ -1745,15 +1742,16 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.toolTitleFont)
 
-
-		const currencySymbol = utilityRateGroup.append('text')
+		//currencySymbol
+		utilityRateGroup.append('text')
 			.attr('y', getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol)
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.currencySymbolFont)
 			.attr('fill', data.currencySymbolColor)
 			.text(data.currencySymbol)
 
-		const utilityRate = utilityRateGroup.append('text')
+		//blended utility rate
+		utilityRateGroup.append('text')
 			.attr('dominant-baseline', 'hanging')
 			.attr('x', getTextWidth(data.currencySymbol, data.currencySymbolFont) + paddingRightOfCurrencySymbol)
 			.attr('y', getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol)
@@ -1880,7 +1878,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				label: ' tRh'
 			};
 			return [kwh, cost, trh]
-		};
+		}
 
 		function renderChangeTools () {
 			widget.resetElements('.changeTools')
@@ -1918,7 +1916,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 			const percentChangeGroups = changeToolGroups.append('g')
 				.attr('class', 'percentChangeGroups')
-				.attr('transform', d => `translate(${(changeToolWidth / 2) - (getWidthOfPercentArrowAndText('>88') / 2)},${changeToolsPaddingTop})`)
+				.attr('transform', `translate(${(changeToolWidth / 2) - (getWidthOfPercentArrowAndText('>88') / 2)},${changeToolsPaddingTop})`)
 			
 			//append arrows
 			percentChangeGroups.append('svg:image')
@@ -1948,7 +1946,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				.attr('transform', `translate(5,${(getTextHeight(data.changePercentFont) - 5)})`)
 				.attr('class', (d, i) => `textGroupIndex${i}`)
 						
-			const percentChangeText1 = percentChangeTextGroup.selectAll('.digitBox1')
+			percentChangeTextGroup.selectAll('.digitBox1')
 				.data(d => d.percent.last)
 					.enter().append('text')
 						.attr('class', (d, i, nodes) => `digitBox1 g1DigitIndex${i}For${nodes[i].parentNode.__data__.category} digitIndex${i}For${nodes[i].parentNode.__data__.category}`)
@@ -1970,7 +1968,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 			const paddingHidingText = data.widgetSize === 'small' ? 30 : 40;
 
-			const percentChangeText2 = percentChangeTextGroup.selectAll('.digitBox2')
+			percentChangeTextGroup.selectAll('.digitBox2')
 				.data(d => d.percent.last)
 					.enter().append('text')
 						.attr('class', (d, i, nodes) => `digitBox2 g2DigitIndex${i}For${nodes[i].parentNode.__data__.category} digitIndex${i}For${nodes[i].parentNode.__data__.category}`)
@@ -2276,7 +2274,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 			//************************ UNHOVER & UNPIN FUNCTIONS *************************//
-			function tryUnhover (d, i, nodes) {
+			function tryUnhover () {
 				if ((widget.activeChartType === 'stacked' && !widget.systemIsPinned) || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')){
 					unhoverDynamic();
 				}
