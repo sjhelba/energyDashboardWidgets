@@ -28,7 +28,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	const unhoveredOpacity = 0.25;
 	const barsTransitionDuration = 2000;
 
-	const categories = [{name: 'baseline', displayName: 'Baseline'}, {name: 'projected', displayName: 'Projected'}, {name: 'measured', displayName: 'Measured'}];
+	const categories = [{name: 'baseline', displayName: 'Baseline'}, {name: 'measured', displayName: 'Measured'}];
 	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 	const indexOfMonth = {Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11}
 
@@ -72,12 +72,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				rate: 0 //weighted avg of multiple rates if for yr rather than month
 			},
 			{
-				category: 'projected',
-				kwh: 0,
-				cost: 0.05,
-				rate: 0 //weighted avg of multiple rates if for yr rather than month
-			},
-			{
 				category: 'measured',
 				kwh: 0,
 				cost: 0.05,
@@ -99,12 +93,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 							accumulatedCost: 0
 						},
 						{
-							category: 'projected',
-							rate: 0,
-							cost: 0,
-							accumulatedCost: 0
-						},
-						{
 							category: 'measured',
 							rate: 0,
 							cost: 0,
@@ -114,11 +102,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					kwh: [
 						{
 							category: 'baseline',
-							value: 0,
-							accumulated: 0
-						},
-						{
-							category: 'projected',
 							value: 0,
 							accumulated: 0
 						},
@@ -140,11 +123,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 							weightedRate: 0
 						},
 						{
-							category: 'projected',
-							ratesAndWeights: {},
-							weightedRate: 0
-						},
-						{
 							category: 'measured',
 							ratesAndWeights: {},
 							weightedRate: 0
@@ -155,25 +133,23 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		});
 		categoriesData.forEach((categoryData, categoryIndex) => {
 			categoryData.forEach(monthlyDatum => {
-				// if (months set to all OR current month matches) && (category is baseline or projected OR year matches)
-				if((month === 'All' || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)){
+				// if (months set to all OR current month matches) && (category is baseline  OR year matches)
+				if((month === 'All' || monthlyDatum.month === month) && (categoryIndex === 0 || monthlyDatum.year == year)){
 					equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
 						// set kwh vals
 						equipmentGroup.kwh[categoryIndex].value = monthlyDatum.equipmentKwhs[equipmentGroup.type] || 0;	//default to 0 if missing data for date
 						// set utility rates for baseline and measured
-						if (categoryIndex !== 1) {
-							const monthlyDatumRate = getRateForDate(monthlyDatum.month, monthlyDatum.year, rates)
-							if (month === 'All') {
-								let currentObj = equipmentRatesAndWeights[egIndex].utilityRate[categoryIndex].ratesAndWeights
-								if (!currentObj[monthlyDatum.rate]) currentObj[monthlyDatumRate] = 0;
-								currentObj[monthlyDatumRate]++
-							} else {
-								equipmentGroup.utilityRate[categoryIndex].rate = monthlyDatumRate;
-							}
+						const monthlyDatumRate = getRateForDate(monthlyDatum.month, monthlyDatum.year, rates)
+						if (month === 'All') {
+							let currentObj = equipmentRatesAndWeights[egIndex].utilityRate[categoryIndex].ratesAndWeights
+							if (!currentObj[monthlyDatum.rate]) currentObj[monthlyDatumRate] = 0;
+							currentObj[monthlyDatumRate]++
+						} else {
+							equipmentGroup.utilityRate[categoryIndex].rate = monthlyDatumRate;
 						}
-					})
-					// set system level trh vals for baseline and measured
-					if (categoryIndex !== 1) categoryDataForDate[categoryIndex].trh = monthlyDatum.trh || 0;	//default to 0 if missing data for date
+				})
+					// set system level trh vals
+					categoryDataForDate[categoryIndex].trh = monthlyDatum.trh || 0;	//default to 0 if missing data for date
 				}
 			})
 		})
@@ -189,27 +165,23 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			//CALCULATE WEIGHTED AVERAGE RATES IF MULTIPLE MONTHS
 			if (month === 'All') {
 				equipmentRatesAndWeights[egIndex].utilityRate.forEach((category, catIndex) => {
-					if (catIndex !== 1){
-						const rates = Object.keys(category.ratesAndWeights);
-						if (rates.length === 1) {
-							equipmentGroup.utilityRate[catIndex].rate = +rates[0];
-						} else {
-							let count = 0;
-							let total = 0;
-							rates.forEach(rate => {
-								count += (+category.ratesAndWeights[rate]);
-							});
-							rates.forEach(rate => {
-								let weight = (+category.ratesAndWeights[rate]) / count;
-								total += weight * rate;
-							});
-							equipmentGroup.utilityRate[catIndex].rate = total;
-						}
+					const rates = Object.keys(category.ratesAndWeights);
+					if (rates.length === 1) {
+						equipmentGroup.utilityRate[catIndex].rate = +rates[0];
+					} else {
+						let count = 0;
+						let total = 0;
+						rates.forEach(rate => {
+							count += (+category.ratesAndWeights[rate]);
+						});
+						rates.forEach(rate => {
+							let weight = (+category.ratesAndWeights[rate]) / count;
+							total += weight * rate;
+						});
+						equipmentGroup.utilityRate[catIndex].rate = total;
 					}
 				});
 			}
-			//set projected rates to be equal to the baseline rates
-			equipmentGroup.utilityRate[1].rate = equipmentGroup.utilityRate[0].rate;
 			//set costs, accum costs, and system level rates
 			equipmentGroup.utilityRate.forEach((category, catIndex) => {
 				category.cost = category.rate * equipmentGroup.kwh[catIndex].value;
@@ -279,11 +251,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			{
 				name: 'baselineColor',
 				value: '#003366',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'projectedColor',
-				value: '#FF6633',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -512,12 +479,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			//data to populate
 	const blendedRateDates = {};
 	const baselineDates = {};
-	const projectedDates = {};
 	const measuredDates = {};
 	
 	data.blendedRates = [];
 	data.baselineData = [];
-	data.projectedData = [];
 	data.measuredData = [];
 	data.currencySymbol = data.facetsCurrencySymbolOverride === 'null' ? '$' : data.facetsCurrencySymbolOverride;
 	data.currencyPrecision = data.facetsCurrencyPrecisionOverride === 'null' ? 2 : data.facetsCurrencyPrecisionOverride;
@@ -598,9 +563,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.then(() => {
 			  
 			  const populateEquipmentTrendData = (eqType, eqTypeIndex) => {
-			    return Promise.all([widget.resolve(`history:^${eqType}_BlKwhMr`), widget.resolve(`history:^${eqType}_PrKwh`), widget.resolve(`history:^${eqType}_MsKwhMr`)])
+			    return Promise.all([widget.resolve(`history:^${eqType}_BlKwhMr`), widget.resolve(`history:^${eqType}_MsKwhMr`)])
 			    .then(histories => {
-			      const [baselineKwh, projectedKwh, measuredKwh] = histories;
+			      const [baselineKwh, measuredKwh] = histories;
 			      const iterativeKwhPromises = [
 			        baselineKwh.cursor({
       					limit: 5000000,
@@ -611,18 +576,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
       					  const rowYear = timestamp.getFullYear();
       					  if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
       					  if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-      					  baselineDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
-      					}
-      			  }),
-      			  projectedKwh.cursor({
-      					limit: 5000000,
-      					each: function(row, index){
-      					  const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-      					  const rowValue = +row.get('value');
-      					  const rowMonth = timestamp.getMonth();
-      					  const rowYear = timestamp.getFullYear();
-      					  if (!projectedDates[rowYear]) projectedDates[rowYear] = {};
-      					  if (!projectedDates[rowYear][rowMonth]) projectedDates[rowYear][rowMonth] = {kwh: {}};
       					  baselineDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
       					}
       			  }),
@@ -664,18 +617,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             });
           });
         });
-        const projectedYears = Object.keys(projectedDates).sort((a, b) => a - b);
-        projectedYears.forEach(year => {
-          const projectedMonths = Object.keys(projectedDates[year]).sort((a, b) => a - b);
-          projectedMonths.forEach(month => {
-            const thisMonthData = projectedDates[year][month]
-            data.projectedData.push({
-              month: months[+month],
-              year: +year,
-              equipmentKwhs: thisMonthData.kwh
-            });
-          });
-        });
         const measuredYears = Object.keys(measuredDates).sort((a, b) => a - b);
         measuredYears.forEach(year => {
           const measuredMonths = Object.keys(measuredDates[year]).sort((a, b) => a - b);
@@ -695,7 +636,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				data.formatAvgCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`)
 
 					//get dataForDate
-				widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates)
+				widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.measuredData], data.activeEquipmentGroups, data.blendedRates)
 
 					// eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
 				data.availableDates = {};
@@ -708,7 +649,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 					// Funcs utilizing widget
 				widget.updateDateWidgetRendering = () => {
-					widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates)
+					widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.measuredData], data.activeEquipmentGroups, data.blendedRates)
 					render(widget);
 				}
 				widget.dropdownYearChanged = () => {
@@ -847,7 +788,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		const legendWidths = [
 			getTextWidth('Baseline', data.legendFont) + (circleRadius * 2.5),
-			getTextWidth('Projected', data.legendFont) + (circleRadius * 2.5),
 			getTextWidth('Measured', data.legendFont) + (circleRadius * 2.5)
 		];
 		const paddingBetweenLegendCategories = data.widgetSize === 'large' ? 25 : (data.widgetSize === 'medium' ? 20 : 15)
@@ -931,7 +871,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		const trhXScale = d3.scaleBand()
 			.paddingOuter(0.8)
 			.paddingInner(0.4)
-			.domain(categories.filter((cat, catIndex) => catIndex != 1).map(cat => cat.name))	//equipmentTypes or categories
+			.domain(categories.map(cat => cat.name))	//equipmentTypes or categories
 			.rangeRound([0, trhBarSectionWidth])
 
 		const xAxisGenerator = d3.axisBottom()
@@ -1259,7 +1199,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				accum
 			);
 			const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}:`, 'bold ' + data.tooltipFont) + getTextWidth(`${isStacked ? maxWidthCat.kwh + ' kWh' : maxWidthCat.value + ' kWh'}`, data.tooltipFont) + (data.tooltipPadding * 2.5) + data.paddingAfterLegendCat
-			const tooltipHeight = (data.tooltipPadding * 2) + (3 * getTextHeight(data.tooltipFont)) + (2 * data.paddingBetweenTooltipText);
+			const tooltipHeight = (data.tooltipPadding * 2) + (2 * getTextHeight(data.tooltipFont)) + (data.paddingBetweenTooltipText);
 
 			const tooltip = kwhBarSection.append('g')
 				.attr('class', 'kwhTooltip')
@@ -1502,7 +1442,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 		//********************************** TRH CHART *****************************************//
-		const trhCategoryDataForDate = widget.dataForDate.categoryDataForDate.filter(cat => cat.category !== 'projected')
+		const trhCategoryDataForDate = widget.dataForDate.categoryDataForDate
 
 		// initialization
 
@@ -1795,7 +1735,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 				// set percentage arrays
 					//kwh
-				kwhPercent.new = getNiceChangePercent(hoveredEquipmentDataForDate.kwh[0].value, hoveredEquipmentDataForDate.kwh[2].value).toString().split('').map(digit => +digit);
+				kwhPercent.new = getNiceChangePercent(hoveredEquipmentDataForDate.kwh[0].value, hoveredEquipmentDataForDate.kwh[1].value).toString().split('').map(digit => +digit);
 				if (kwhPercent.new.length > 2) kwhPercent.new = [1, 9, 9];
 				if (kwhPercent.new.length === 1) kwhPercent.new.unshift(0, 0);
 				if (kwhPercent.new.length === 2) kwhPercent.new.unshift(0);
@@ -1803,7 +1743,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				widget.lastKwhPercent = kwhPercent.new.slice();
 
 					//cost
-				costPercent.new = getNiceChangePercent(hoveredEquipmentDataForDate.utilityRate[0].cost, hoveredEquipmentDataForDate.utilityRate[2].cost).toString().split('').map(digit => +digit);
+				costPercent.new = getNiceChangePercent(hoveredEquipmentDataForDate.utilityRate[0].cost, hoveredEquipmentDataForDate.utilityRate[1].cost).toString().split('').map(digit => +digit);
 				if (costPercent.new.length > 2) costPercent.new = [1, 9, 9];
 				if (costPercent.new.length === 1) costPercent.new.unshift(0, 0);
 				if (costPercent.new.length === 2) costPercent.new.unshift(0);
@@ -1814,24 +1754,24 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				//create objects to iterate over
 				kwh = {
 					category: 'kwh',
-					value: Math.abs(hoveredEquipmentDataForDate.kwh[2].value - hoveredEquipmentDataForDate.kwh[0].value),
+					value: Math.abs(hoveredEquipmentDataForDate.kwh[1].value - hoveredEquipmentDataForDate.kwh[0].value),
 					percent: JSON.parse(JSON.stringify(kwhPercent)),
-					arrowPath: getArrowPath(hoveredEquipmentDataForDate.kwh[2].value <= hoveredEquipmentDataForDate.kwh[0].value),
+					arrowPath: getArrowPath(hoveredEquipmentDataForDate.kwh[1].value <= hoveredEquipmentDataForDate.kwh[0].value),
 					imgPath: 'nmodule/tekScratch/rc/images/Electricity Badge.svg',
 					label: ' kWh'
 				};
 				cost = {
 					category: 'cost',
-					value: data.formatCurrency(Math.abs(hoveredEquipmentDataForDate.utilityRate[2].cost - hoveredEquipmentDataForDate.utilityRate[0].cost)),
+					value: data.formatCurrency(Math.abs(hoveredEquipmentDataForDate.utilityRate[1].cost - hoveredEquipmentDataForDate.utilityRate[0].cost)),
 					percent: JSON.parse(JSON.stringify(costPercent)),
-					arrowPath: getArrowPath(hoveredEquipmentDataForDate.utilityRate[2].cost <= hoveredEquipmentDataForDate.utilityRate[0].cost),
+					arrowPath: getArrowPath(hoveredEquipmentDataForDate.utilityRate[1].cost <= hoveredEquipmentDataForDate.utilityRate[0].cost),
 					imgPath: 'nmodule/tekScratch/rc/images/Monetary Badge.svg',
 					label: data.currencySymbol
 				};
 			} else {
 				// set percentage arrays
 					//kwh
-					kwhPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[2].kwh).toString().split('').map(digit => +digit);
+					kwhPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[1].kwh).toString().split('').map(digit => +digit);
 					if (kwhPercent.new.length > 2) kwhPercent.new = [1, 9, 9];
 					if (kwhPercent.new.length === 1) kwhPercent.new.unshift(0, 0);
 					if (kwhPercent.new.length === 2) kwhPercent.new.unshift(0);
@@ -1839,7 +1779,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					widget.lastKwhPercent = kwhPercent.new.slice();
 		
 						//cost
-					costPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].cost, widget.dataForDate.categoryDataForDate[2].cost).toString().split('').map(digit => +digit);
+					costPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].cost, widget.dataForDate.categoryDataForDate[1].cost).toString().split('').map(digit => +digit);
 					if (costPercent.new.length > 2) costPercent.new = [1, 9, 9];
 					if (costPercent.new.length === 1) costPercent.new.unshift(0, 0);
 					if (costPercent.new.length === 2) costPercent.new.unshift(0);
@@ -1851,24 +1791,24 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					//create objects to iterate over
 				kwh = {
 					category: 'kwh',
-					value: Math.abs(widget.dataForDate.categoryDataForDate[2].kwh - widget.dataForDate.categoryDataForDate[0].kwh),
+					value: Math.abs(widget.dataForDate.categoryDataForDate[1].kwh - widget.dataForDate.categoryDataForDate[0].kwh),
 					percent: JSON.parse(JSON.stringify(kwhPercent)),
-					arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].kwh <= widget.dataForDate.categoryDataForDate[0].kwh),
+					arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[1].kwh <= widget.dataForDate.categoryDataForDate[0].kwh),
 					imgPath: 'nmodule/tekScratch/rc/images/Electricity Badge.svg',
 					label: ' kWh'
 				};
 				cost = {
 					category: 'cost',
-					value: data.formatCurrency(Math.abs(widget.dataForDate.categoryDataForDate[2].cost - widget.dataForDate.categoryDataForDate[0].cost)),
+					value: data.formatCurrency(Math.abs(widget.dataForDate.categoryDataForDate[1].cost - widget.dataForDate.categoryDataForDate[0].cost)),
 					percent: JSON.parse(JSON.stringify(costPercent)),
-					arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].cost <= widget.dataForDate.categoryDataForDate[0].cost),
+					arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[1].cost <= widget.dataForDate.categoryDataForDate[0].cost),
 					imgPath: 'nmodule/tekScratch/rc/images/Monetary Badge.svg',
 					label: data.currencySymbol
 				};
 			}
 		// set percentage arrays
 			//trh
-			trhPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].trh, widget.dataForDate.categoryDataForDate[2].trh).toString().split('').map(digit => +digit);
+			trhPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].trh, widget.dataForDate.categoryDataForDate[1].trh).toString().split('').map(digit => +digit);
 			if (trhPercent.new.length > 2) trhPercent.new = [1, 9, 9];
 			if (trhPercent.new.length === 1) trhPercent.new.unshift(0, 0);
 			if (trhPercent.new.length === 2) trhPercent.new.unshift(0);
@@ -1878,9 +1818,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		//create object to iterate over
 			trh = {
 				category: 'trh',
-				value: Math.abs(widget.dataForDate.categoryDataForDate[2].trh - widget.dataForDate.categoryDataForDate[0].trh),
+				value: Math.abs(widget.dataForDate.categoryDataForDate[1].trh - widget.dataForDate.categoryDataForDate[0].trh),
 				percent: JSON.parse(JSON.stringify(trhPercent)),
-				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].trh <= widget.dataForDate.categoryDataForDate[0].trh),
+				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[1].trh <= widget.dataForDate.categoryDataForDate[0].trh),
 				imgPath: 'nmodule/tekScratch/rc/images/Production Badge.svg',
 				label: ' tRh'
 			};
