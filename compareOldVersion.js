@@ -1,6 +1,5 @@
-"use strict";
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/d3/d3.min', 'css!nmodule/tekScratch/rc/web/UtilitySavingsTool/style'], function (Widget, subscriberMixIn, d3) {
-
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/d3/d3.min'], function (Widget, subscriberMixIn, d3) {
+	"use strict";
 
 ////////// Hard Coded Defs //////////
 
@@ -27,18 +26,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	};
 
 	const unhoveredOpacity = 0.25;
-	const barsTransitionDuration = 1500;
+	const barsTransitionDuration = 2000;
 
 	const categories = [{name: 'baseline', displayName: 'Baseline'}, {name: 'projected', displayName: 'Projected'}, {name: 'measured', displayName: 'Measured'}];
 	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 	const indexOfMonth = {Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11}
-	const base64Images = {
-		downArrow: 'data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMC40NyIgaGVpZ2h0PSIyOC40MSIgdmlld0JveD0iMCAwIDIwLjQ3IDI4LjQxIj4NCiAgPHRpdGxlPkRvd24gQXJyb3c8L3RpdGxlPg0KICA8Zz4NCiAgICA8cGF0aCBkPSJNMTcuNzUsOFYzMS4zMmMwLDIuOSw0LjUsMi45LDQuNSwwVjhjMC0yLjktNC41LTIuOS00LjUsMGgwWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTkuNzcgLTUuODMpIiBmaWxsPSIjMzliNTRhIi8+DQogICAgPHBhdGggZD0iTTEwLjQ0LDI1LjgzbDgsNy43N2MyLjA4LDIsNS4yNi0xLjE2LDMuMTgtMy4xOGwtOC03Ljc3Yy0yLjA4LTItNS4yNiwxLjE2LTMuMTgsMy4xOGgwWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTkuNzcgLTUuODMpIiBmaWxsPSIjMzliNTRhIi8+DQogICAgPHBhdGggZD0iTTI2LjM4LDIyLjY0bC04LDcuNzdjLTIuMDgsMiwxLjExLDUuMjEsMy4xOCwzLjE4bDgtNy43N2MyLjA4LTItMS4xMS01LjIxLTMuMTgtMy4xOGgwWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTkuNzcgLTUuODMpIiBmaWxsPSIjMzliNTRhIi8+DQogIDwvZz4NCjwvc3ZnPg0K',
-		upArrow: 'data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMC40NyIgaGVpZ2h0PSIyOC40MSIgdmlld0JveD0iMCAwIDIwLjQ3IDI4LjQxIj4NCiAgPHRpdGxlPlVwIEFycm93PC90aXRsZT4NCiAgPGc+DQogICAgPHBhdGggZD0iTTIyLjI1LDMyVjhjMC0yLjktNC41LTIuOS00LjUsMFYzMmMwLDIuOSw0LjUsMi45LDQuNSwwaDBaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtOS43NyAtNS43NikiIGZpbGw9IiNlZDFjMjQiLz4NCiAgICA8cGF0aCBkPSJNMjkuNTYsMTQuMTdsLTgtNy43N2MtMi4wOC0yLTUuMjYsMS4xNi0zLjE4LDMuMThsOCw3Ljc3YzIuMDgsMiw1LjI2LTEuMTYsMy4xOC0zLjE4aDBaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtOS43NyAtNS43NikiIGZpbGw9IiNlZDFjMjQiLz4NCiAgICA8cGF0aCBkPSJNMTMuNjIsMTcuMzZsOC03Ljc3YzIuMDgtMi0xLjExLTUuMjEtMy4xOC0zLjE4bC04LDcuNzdjLTIuMDgsMiwxLjExLDUuMjEsMy4xOCwzLjE4aDBaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtOS43NyAtNS43NikiIGZpbGw9IiNlZDFjMjQiLz4NCiAgPC9nPg0KPC9zdmc+DQo=',
-		electricityBadge: 'data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MyIgaGVpZ2h0PSI0MyIgdmlld0JveD0iMCAwIDQzIDQzIj4NCiAgPHRpdGxlPkVsZWN0cmljaXR5IEJhZGdlPC90aXRsZT4NCiAgPGNpcmNsZSBjeD0iMjEuNSIgY3k9IjIxLjUiIHI9IjIwIiBmaWxsPSIjZmZmIiBzdHJva2U9IiM0ZDRkNGQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIzIi8+DQogIDxwYXRoIGQ9Ik0yOC42OSw1LjM4bC02LjQ2LS4wNmExLDEsMCwwLDAtLjgzLjQ2TDEzLjUyLDE4LjY1YTAuOTQsMC45NCwwLDAsMCwuODEsMS40M0wxNywyMCwxMC44MywzNC43OSwyNi42NiwxOS4zMmMwLjQzLS42OC0wLjA2LTAuODUtMC44Ni0wLjg1aC0zTDI5LjQ5LDcuNTlDMjkuOTEsNywzMC41OSw1LjM4LDI4LjY5LDUuMzhaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxLjUgMS41KSIgZmlsbD0iIzRkNGQ0ZCIvPg0KPC9zdmc+DQo=',
-		monetaryBadge: 'data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MyIgaGVpZ2h0PSI0MyIgdmlld0JveD0iMCAwIDQzIDQzIj4NCiAgPHRpdGxlPk1vbmV0YXJ5IEJhZGdlPC90aXRsZT4NCiAgPGNpcmNsZSBjeD0iMjEuNSIgY3k9IjIxLjUiIHI9IjIwIiBmaWxsPSIjZmZmIiBzdHJva2U9IiM0ZDRkNGQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIzIi8+DQogIDx0ZXh0IHRyYW5zZm9ybT0idHJhbnNsYXRlKDEyLjQ1IDMyLjI1KSIgZm9udC1zaXplPSIzMS40NiIgZmlsbD0iIzRkNGQ0ZCIgZm9udC1mYW1pbHk9Ik5pcm1hbGEgVUkiIGZvbnQtd2VpZ2h0PSI3MDAiPiQ8L3RleHQ+DQo8L3N2Zz4NCg==',
-		productionBadge: 'data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MyIgaGVpZ2h0PSI0MyIgdmlld0JveD0iMCAwIDQzIDQzIj4NCiAgPHRpdGxlPlByb2R1Y3Rpb24gQmFkZ2U8L3RpdGxlPg0KICA8Y2lyY2xlIGN4PSIyMS41IiBjeT0iMjEuNSIgcj0iMjAiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzRkNGQ0ZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiLz4NCiAgPHBhdGggZD0iTTI0LDIwLjg3VjVhMiwyLDAsMCwwLTItMkgxOWEyLDIsMCwwLDAtMiwyVjZoM1Y3SDE3VjloM3YxSDE3djJoM3YxSDE3djJoM3YxSDE3djQuODdBNy41LDcuNSwwLDEsMCwyNCwyMC44N1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEuNSAxLjUpIiBmaWxsPSIjNGQ0ZDRkIi8+DQo8L3N2Zz4NCg=='
-	}
 
 	const getNextNiceVal = uglyMaxNum => {
 		const innerFunc = (origVal) => {
@@ -70,7 +62,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		return 0;
 	};
 
-	const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rates, equipmentHistoryNames) => {
+	const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rates) => {
 		let categoryDataForDate = [
 			{
 				category: 'baseline',
@@ -167,7 +159,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				if((month === 'All' || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)){
 					equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
 						// set kwh vals
-						equipmentGroup.kwh[categoryIndex].value = monthlyDatum.equipmentKwhs[equipmentHistoryNames[egIndex]] || 0;	//default to 0 if missing data for date
+						equipmentGroup.kwh[categoryIndex].value = monthlyDatum.equipmentKwhs[equipmentGroup.type] || 0;	//default to 0 if missing data for date
 						// set utility rates for baseline and measured
 						if (categoryIndex !== 1) {
 							const monthlyDatumRate = getRateForDate(monthlyDatum.month, monthlyDatum.year, rates)
@@ -238,6 +230,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	var UtilitySavingsTool = function () {
 		var that = this;
 		Widget.apply(this, arguments);
+
 		that.properties().addAll([
 			{
 				name: 'backgroundColor',
@@ -379,10 +372,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			},
 			{
 				name: 'btnKnobColor',
-				value: 'white',
-				typeSpec: 'gx:Color'
+				value: 'white'
 			}
 		]);
+
+
 
 		subscriberMixIn(that);
 	};
@@ -393,7 +387,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 ////////////////////////////////////////////////////////////////
-	// / * SETUP DEFINITIONS AND DATA * /
+	// /* SETUP DEFINITIONS AND DATA */
 ////////////////////////////////////////////////////////////////
 
 
@@ -403,6 +397,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		// FROM USER // 
 		const data = widget.properties().toValueMap();	//obj with all exposed properties as key/value pairs
+
 		// FROM JQ //
 		const jq = widget.jq();
 		const jqWidth = jq.width() || 880;
@@ -515,226 +510,227 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		// GET HISTORY DATA //
 			//data to populate
-		const blendedRateDates = {};
-		const baselineDates = {};
-		const projectedDates = {};
-		const measuredDates = {};
-		
-		data.blendedRates = [];
-		data.baselineData = [];
-		data.projectedData = [];
-		data.measuredData = [];
-		data.currencySymbol = data.facetsCurrencySymbolOverride === 'null' ? '$' : data.facetsCurrencySymbolOverride;
-		data.currencyPrecision = data.facetsCurrencyPrecisionOverride === 'null' ? 2 : data.facetsCurrencyPrecisionOverride;
-		
-		//return blended utility rate history trend
-		return widget.resolve(`history:^System_Bur`)
-				.then(historyTable => {
-					if (data.facetsCurrencySymbolOverride === 'null') data.currencySymbol = historyTable.getCol('value').getFacets().get('units') || '$';
-					if (data.facetsCurrencyPrecisionOverride === 'null') data.currencyPrecision = historyTable.getCol('value').getFacets().get('precision') || 2;
-					
-					return historyTable.cursor({
-						limit: 5000000,
-						each: function(row, index){
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-							const rowValue = +row.get('value');
-							const rowMonth = timestamp.getMonth();
-							const rowYear = timestamp.getFullYear();
-							if (!blendedRateDates[rowYear]) blendedRateDates[rowYear] = {};
-							if (!blendedRateDates[rowYear][rowMonth]) blendedRateDates[rowYear][rowMonth] = {total: 0, count: 0};
-							blendedRateDates[rowYear][rowMonth].total += rowValue;
-							blendedRateDates[rowYear][rowMonth].count ++;
-						}
-					});
-				})
-				.catch(err => console.error('Could not iterate over blended utility rate history trend: ' + err))
-				.then(() => {
-					// push into ordered arr format with avg rates for months with more than one rate
-					const rateYears = Object.keys(blendedRateDates).sort((a, b) => a - b);
-					rateYears.forEach(year => {
-						const rateMonths = Object.keys(blendedRateDates[year]).sort((a, b) => a - b);
-						rateMonths.forEach(month => {
-							const thisMonthData = blendedRateDates[year][month]
-							data.blendedRates.push({
-								rate: thisMonthData.total / thisMonthData.count,
-								month: months[+month],
-								year: +year
-							});
-						});
-					});
-
-					//return trh history trends
-					return Promise.all([widget.resolve(`history:^System_BlTrhMr`), widget.resolve(`history:^System_MsTrhMr`)])
-					
-				})
-				.then(historyTrendTables => {
-					const [baselineTable, measuredTable] = historyTrendTables;
-					const iterativePromises = [
-						baselineTable.cursor({
-						limit: 5000000,
-						each: function(row, index){
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-							const rowValue = +row.get('value');
-							const rowMonth = timestamp.getMonth();
-							const rowYear = timestamp.getFullYear();
-							if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
-							if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-							baselineDates[rowYear][rowMonth].trh = rowValue;
-						}
-					}),
-					measuredTable.cursor({
-						limit: 5000000,
-						each: function(row, index){
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-							const rowValue = +row.get('value');
-							const rowMonth = timestamp.getMonth();
-							const rowYear = timestamp.getFullYear();
-							if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
-							if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-							measuredDates[rowYear][rowMonth].trh = rowValue;
-						}
-					})
-						];
-						
-					return Promise.all(iterativePromises);
-					
-				})
-				.catch(err => 'error iterating through trh trends: ' + err)
-				.then(() => {
-					
-					const populateEquipmentTrendData = (eqType, eqTypeIndex) => {
-						return Promise.all([widget.resolve(`history:^${eqType}_BlKwhMr`), widget.resolve(`history:^${eqType}_PrKwh`), widget.resolve(`history:^${eqType}_MsKwhMr`)])
-						.then(histories => {
-							const [baselineKwh, projectedKwh, measuredKwh] = histories;
-							const iterativeKwhPromises = [
-								baselineKwh.cursor({
-									limit: 5000000,
-									each: function(row, index){
-										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-										const rowValue = +row.get('value');
-										const rowMonth = timestamp.getMonth();
-										const rowYear = timestamp.getFullYear();
-										if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
-										if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-										baselineDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
-									}
-								}),
-								projectedKwh.cursor({
-									limit: 5000000,
-									each: function(row, index){
-										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-										const rowValue = +row.get('value');
-										const rowMonth = timestamp.getMonth();
-										const rowYear = timestamp.getFullYear();
-										if (!projectedDates[rowYear]) projectedDates[rowYear] = {};
-										if (!projectedDates[rowYear][rowMonth]) projectedDates[rowYear][rowMonth] = {kwh: {}};
-										projectedDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
-									}
-								}),
-								measuredKwh.cursor({
-									limit: 5000000,
-									each: function(row, index){
-										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-										const rowValue = +row.get('value');
-										const rowMonth = timestamp.getMonth();
-										const rowYear = timestamp.getFullYear();
-										if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
-										if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-										measuredDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
-									}
-								}),
-								]
-
-							return Promise.all(iterativeKwhPromises);
-							
-						})
-						.catch(err => console.error('error finding or iterating through ' + eqType + 'historyTrends: ' + err))
-					};
-					// return kwh trends for each eqType
-					return Promise.all(data.equipmentHistoryNames.map((eqType, eqIndex) => populateEquipmentTrendData(eqType, eqIndex)));
-					
-				})
-				.then(() => {
-					// push kwhs and trhs into ordered arr formats
-					const baselineYears = Object.keys(baselineDates).sort((a, b) => a - b);
-					baselineYears.forEach(year => {
-						const baselineMonths = Object.keys(baselineDates[year]).sort((a, b) => a - b);
-						baselineMonths.forEach(month => {
-							const thisMonthData = baselineDates[year][month]
-							data.baselineData.push({
-								month: months[+month],
-								year: +year,
-								trh: thisMonthData.trh,
-								equipmentKwhs: thisMonthData.kwh
-							});
-						});
-					});
-					const projectedYears = Object.keys(projectedDates).sort((a, b) => a - b);
-					projectedYears.forEach(year => {
-						const projectedMonths = Object.keys(projectedDates[year]).sort((a, b) => a - b);
-						projectedMonths.forEach(month => {
-							const thisMonthData = projectedDates[year][month]
-							data.projectedData.push({
-								month: months[+month],
-								year: +year,
-								equipmentKwhs: thisMonthData.kwh
-							});
-						});
-					});
-					const measuredYears = Object.keys(measuredDates).sort((a, b) => a - b);
-					measuredYears.forEach(year => {
-						const measuredMonths = Object.keys(measuredDates[year]).sort((a, b) => a - b);
-						measuredMonths.forEach(month => {
-							const thisMonthData = measuredDates[year][month]
-							data.measuredData.push({
-								month: months[+month],
-								year: +year,
-								trh: thisMonthData.trh,
-								equipmentKwhs: thisMonthData.kwh
-							});
-						});
-					});
-					// CALCULATED DEFS //
-					data.utilityRate = data.blendedRates[data.blendedRates.length - 1].rate;
-					data.formatCurrency = d3.format(`,.${data.currencyPrecision}f`)
-					data.formatAvgCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`)
-
-						//get dataForDate
-					widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames)
-						// eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
-					data.availableDates = {};
-					data.measuredData.forEach(date => {
-						if (!data.availableDates[date.year]) data.availableDates[date.year] = [];
-						data.availableDates[date.year].push(date.month);
-					})
-					data.availableYears = Object.keys(data.availableDates).sort((a,b) => b - a);
-					data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
-
-						// Funcs utilizing widget
-					widget.updateDateWidgetRendering = () => {
-						widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames)
-						render(widget);
+	const blendedRateDates = {};
+	const baselineDates = {};
+	const projectedDates = {};
+	const measuredDates = {};
+	
+	data.blendedRates = [];
+	data.baselineData = [];
+	data.projectedData = [];
+	data.measuredData = [];
+	data.currencySymbol = data.facetsCurrencySymbolOverride === 'null' ? '$' : data.facetsCurrencySymbolOverride;
+	data.currencyPrecision = data.facetsCurrencyPrecisionOverride === 'null' ? 2 : data.facetsCurrencyPrecisionOverride;
+	
+	//return blended utility rate history trend
+	return widget.resolve(`history:^System_Bur`)
+			.then(historyTable => {
+			  if (data.facetsCurrencySymbolOverride === 'null') data.currencySymbol = historyTable.getCol('value').getFacets().get('units') || '$';
+        if (data.facetsCurrencyPrecisionOverride === 'null') data.currencyPrecision = historyTable.getCol('value').getFacets().get('precision') || 2;
+        
+			  return historyTable.cursor({
+					limit: 5000000,
+					each: function(row, index){
+					  const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+					  const rowValue = +row.get('value');
+					  const rowMonth = timestamp.getMonth();
+					  const rowYear = timestamp.getFullYear();
+					  if (!blendedRateDates[rowYear]) blendedRateDates[rowYear] = {};
+					  if (!blendedRateDates[rowYear][rowMonth]) blendedRateDates[rowYear][rowMonth] = {total: 0, count: 0};
+					  blendedRateDates[rowYear][rowMonth].total += rowValue;
+					  blendedRateDates[rowYear][rowMonth].count ++;
 					}
-					widget.dropdownYearChanged = () => {
-						widget.yearDropDownSelected = d3.event.target.value;
-						widget.monthDropDownSelected = 'All';
-						widget.updateDateWidgetRendering()
-					};
-					widget.dropdownMonthChanged = () => {
-						widget.monthDropDownSelected = d3.event.target.value;
-						widget.updateDateWidgetRendering()
-					};
-					widget.resetElements = elementsToReset => {
-						const selectionForCheck = widget.svg.selectAll(elementsToReset)
-						if (!selectionForCheck.empty()) selectionForCheck.remove();
-					};
-					
+			  });
+			})
+			.catch(err => console.error('Could not iterate over blended utility rate history trend: ' + err))
+			.then(() => {
+			  // push into ordered arr format with avg rates for months with more than one rate
+			  const rateYears = Object.keys(blendedRateDates).sort((a, b) => a - b);
+        rateYears.forEach(year => {
+          const rateMonths = Object.keys(blendedRateDates[year]).sort((a, b) => a - b);
+          rateMonths.forEach(month => {
+            const thisMonthData = blendedRateDates[year][month]
+            data.blendedRates.push({
+              rate: thisMonthData.total / thisMonthData.count,
+              month: months[+month],
+              year: +year
+            });
+          });
+        });
+        
+        //return trh history trends
+        return Promise.all([widget.resolve(`history:^System_BlTrhMr`), widget.resolve(`history:^System_MsTrhMr`)])
+        
+			})
+			.then(historyTrendTables => {
+			  const [baselineTable, measuredTable] = historyTrendTables;
+			  const iterativePromises = [
+			    baselineTable.cursor({
+					limit: 5000000,
+					each: function(row, index){
+					  const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+					  const rowValue = +row.get('value');
+					  const rowMonth = timestamp.getMonth();
+					  const rowYear = timestamp.getFullYear();
+					  if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
+					  if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+					  baselineDates[rowYear][rowMonth].trh = rowValue;
+					}
+			  }),
+			  measuredTable.cursor({
+					limit: 5000000,
+					each: function(row, index){
+					  const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+					  const rowValue = +row.get('value');
+					  const rowMonth = timestamp.getMonth();
+					  const rowYear = timestamp.getFullYear();
+					  if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
+					  if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+					  measuredDates[rowYear][rowMonth].trh = rowValue;
+					}
+			  })
+			    ];
+			    
+			  return Promise.all(iterativePromises);
+			  
+			})
+			.catch(err => 'error iterating through trh trends: ' + err)
+			.then(() => {
+			  
+			  const populateEquipmentTrendData = (eqType, eqTypeIndex) => {
+			    return Promise.all([widget.resolve(`history:^${eqType}_BlKwhMr`), widget.resolve(`history:^${eqType}_PrKwh`), widget.resolve(`history:^${eqType}_MsKwhMr`)])
+			    .then(histories => {
+			      const [baselineKwh, projectedKwh, measuredKwh] = histories;
+			      const iterativeKwhPromises = [
+			        baselineKwh.cursor({
+      					limit: 5000000,
+      					each: function(row, index){
+      					  const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+      					  const rowValue = +row.get('value');
+      					  const rowMonth = timestamp.getMonth();
+      					  const rowYear = timestamp.getFullYear();
+      					  if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
+      					  if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+      					  baselineDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
+      					}
+      			  }),
+      			  projectedKwh.cursor({
+      					limit: 5000000,
+      					each: function(row, index){
+      					  const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+      					  const rowValue = +row.get('value');
+      					  const rowMonth = timestamp.getMonth();
+      					  const rowYear = timestamp.getFullYear();
+      					  if (!projectedDates[rowYear]) projectedDates[rowYear] = {};
+      					  if (!projectedDates[rowYear][rowMonth]) projectedDates[rowYear][rowMonth] = {kwh: {}};
+      					  baselineDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
+      					}
+      			  }),
+      			  measuredKwh.cursor({
+      					limit: 5000000,
+      					each: function(row, index){
+      					  const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+      					  const rowValue = +row.get('value');
+      					  const rowMonth = timestamp.getMonth();
+      					  const rowYear = timestamp.getFullYear();
+      					  if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
+      					  if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+      					  measuredDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
+      					}
+      			  }),
+			        ]
 
+			      return Promise.all(iterativeKwhPromises);
+			      
+			    })
+			    .catch(err => console.error('error finding or iterating through ' + eqType + 'historyTrends: ' + err))
+			  };
+			  // return kwh trends for each eqType
+			  return Promise.all(data.equipmentHistoryNames.map(eqType => populateEquipmentTrendData(eqType)));
+			  
+			})
+			.then(() => {
+        // push kwhs and trhs into ordered arr formats
+			  const baselineYears = Object.keys(baselineDates).sort((a, b) => a - b);
+        baselineYears.forEach(year => {
+          const baselineMonths = Object.keys(baselineDates[year]).sort((a, b) => a - b);
+          baselineMonths.forEach(month => {
+            const thisMonthData = baselineDates[year][month]
+            data.baselineData.push({
+              month: months[+month],
+              year: +year,
+              trh: thisMonthData.trh,
+              equipmentKwhs: thisMonthData.kwh
+            });
+          });
+        });
+        const projectedYears = Object.keys(projectedDates).sort((a, b) => a - b);
+        projectedYears.forEach(year => {
+          const projectedMonths = Object.keys(projectedDates[year]).sort((a, b) => a - b);
+          projectedMonths.forEach(month => {
+            const thisMonthData = projectedDates[year][month]
+            data.projectedData.push({
+              month: months[+month],
+              year: +year,
+              equipmentKwhs: thisMonthData.kwh
+            });
+          });
+        });
+        const measuredYears = Object.keys(measuredDates).sort((a, b) => a - b);
+        measuredYears.forEach(year => {
+          const measuredMonths = Object.keys(measuredDates[year]).sort((a, b) => a - b);
+          measuredMonths.forEach(month => {
+            const thisMonthData = measuredDates[year][month]
+            data.measuredData.push({
+              month: months[+month],
+              year: +year,
+              trh: thisMonthData.trh,
+              equipmentKwhs: thisMonthData.kwh
+            });
+          });
+        });
+				// CALCULATED DEFS //
+        data.utilityRate = data.blendedRates[data.blendedRates.length - 1].rate;
+				data.formatCurrency = d3.format(`,.${data.currencyPrecision}f`)
+				data.formatAvgCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`)
 
+					//get dataForDate
+				widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates)
 
-					return data;
+					// eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
+				data.availableDates = {};
+				data.measuredData.forEach(date => {
+					if (!data.availableDates[date.year]) data.availableDates[date.year] = [];
+					data.availableDates[date.year].push(date.month);
 				})
-				.catch(err => console.error('error resolving histories: ' + err));
+				data.availableYears = Object.keys(data.availableDates).sort((a,b) => b - a);
+				data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
+
+					// Funcs utilizing widget
+				widget.updateDateWidgetRendering = () => {
+					widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates)
+					render(widget);
+				}
+				widget.dropdownYearChanged = () => {
+					widget.yearDropDownSelected = d3.event.target.value;
+					widget.monthDropDownSelected = 'All';
+					widget.updateDateWidgetRendering()
+				};
+				widget.dropdownMonthChanged = () => {
+					widget.monthDropDownSelected = d3.event.target.value;
+					widget.updateDateWidgetRendering()
+				};
+				widget.resetElements = elementsToReset => {
+					const selectionForCheck = widget.svg.selectAll(elementsToReset)
+					if (!selectionForCheck.empty()) selectionForCheck.remove();
+				};
+        
+
+
+
+				return data;
+			})
+			.catch(err => console.error('error resolving histories: ' + err));
 	};
 
 
@@ -770,7 +766,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		dropdownDiv.append('select')
 			.style('width', dateDropdownWidth + 'px')
-			.attr('class', 'yearSelect UtilitySavingsToolDropdown')
+			.attr('class', 'yearSelect')
 			.style('border-radius', dropdownBorderRadius)
 			.style('left', data.margin.left + paddingLeftOfTools + 'px')
 			.style('top', data.margin.top + getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles + 'px')
@@ -795,7 +791,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		dropdownDiv.append('select')
 			.style('width', dateDropdownWidth + 'px')
-			.attr('class', 'monthSelect UtilitySavingsToolDropdown')
+			.attr('class', 'monthSelect')
 			.style('border-radius', dropdownBorderRadius)
 			.style('left', data.margin.left + paddingLeftOfTools + dateDropdownWidth + paddingBetweenDropdowns + 'px')
 			.style('top', data.margin.top + getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles + 'px')
@@ -812,8 +808,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		widget.svg = widget.outerDiv.append('svg')
 			.attr('class', 'log')
-			.attr('width', data.graphicWidth)
-			.attr('height', data.graphicHeight)
+			.attr('width', '100%')
+			.attr('height', '100%')
 			.on('mousedown', unpin);
 
 		// GENERAL GROUPS //
@@ -878,7 +874,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-		// ***************************************	SCALES, GENERATORS, AND TICKS FOR CHARTS ************************************************ //
+		//***************************************	SCALES, GENERATORS, AND TICKS FOR CHARTS ************************************************//
 		//TICKS
 		const getMaxYTick = (groupedOrStacked, chartName) => {
 			let mapFuncForArrOfEquipVals = chartName === 'kwh' ?
@@ -978,7 +974,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.tickValues(trhYTicks)
 
 
-		// ********************************************* CHART TRANSITIONS *********************************************************** //
+		//********************************************* CHART TRANSITIONS ***********************************************************//
 		//Kwh Chart Transition Func:
 		const transitionCharts = stackedOrGrouped => {
 
@@ -1129,7 +1125,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-		// ********************************************* KWH CHART *********************************************************** //
+		//********************************************* KWH CHART ***********************************************************//
 		// initialization
 		const kwhChart = chartsGroup.append('g')
 			.attr('class', 'kwhChart')
@@ -1303,7 +1299,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-		// *********************************** COST CHART ************************************ //
+
+
+
+
+		//*********************************** COST CHART ************************************//
 	// initialization
 
 	// chart group
@@ -1501,7 +1501,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-		// ********************************** TRH CHART ***************************************** //
+		//********************************** TRH CHART *****************************************//
 		const trhCategoryDataForDate = widget.dataForDate.categoryDataForDate.filter(cat => cat.category !== 'projected')
 
 		// initialization
@@ -1641,7 +1641,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-	// ************************************* LEGEND ****************************************** //
+	//************************************* LEGEND ******************************************//
 		const getPrevLegendWidths = index => {
 			let sum = 0;
 			for (let i = index - 1; i >= 0; i--) { sum += legendWidths[i] }
@@ -1738,7 +1738,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-	// ************************************* TOOLS ****************************************** //
+	//************************************* TOOLS ******************************************//
 
 		
 		// UTILITY RATE
@@ -1748,7 +1748,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.text('Blended Utility Rate')
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.toolTitleFont)
-			.attr('fill', data.toolTitleColor)
 
 		//currencySymbol
 		utilityRateGroup.append('text')
@@ -1781,7 +1780,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		const getWidthOfPercentArrowAndText = text => getTextWidth(text + 'W%', data.changePercentFont) + paddingBetweenArrowAndPercent;
 		const changeToolWidth = data.widgetSize === 'small' ? 0.56 * barSectionWidth : (data.widgetSize === 'medium' ? 0.53 * barSectionWidth : 0.5 * barSectionWidth);
 		const changeToolHeight = data.widgetSize === 'small' ? 60 : (data.widgetSize === 'medium' ? 70 : 90);
-		const getArrowPath = decrease => decrease ? base64Images.downArrow : base64Images.upArrow;
+		const getArrowPath = decrease => decrease ? 'nmodule/tekScratch/rc/images/Down Arrow.svg' : 'nmodule/tekScratch/rc/images/Up Arrow.svg';
 		const imgCircleRadius = data.widgetSize === 'large' ? 28 : (data.widgetSize === 'medium' ? 25 : 22);
 		const paddingBetweenChangeTools = data.widgetSize === 'large' ? imgCircleRadius + 15 : (data.widgetSize === 'medium' ? imgCircleRadius + 10 : imgCircleRadius + 5);
 
@@ -1818,7 +1817,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					value: Math.abs(hoveredEquipmentDataForDate.kwh[2].value - hoveredEquipmentDataForDate.kwh[0].value),
 					percent: JSON.parse(JSON.stringify(kwhPercent)),
 					arrowPath: getArrowPath(hoveredEquipmentDataForDate.kwh[2].value <= hoveredEquipmentDataForDate.kwh[0].value),
-					imgPath: base64Images.electricityBadge,
+					imgPath: 'nmodule/tekScratch/rc/images/Electricity Badge.svg',
 					label: ' kWh'
 				};
 				cost = {
@@ -1826,7 +1825,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					value: data.formatCurrency(Math.abs(hoveredEquipmentDataForDate.utilityRate[2].cost - hoveredEquipmentDataForDate.utilityRate[0].cost)),
 					percent: JSON.parse(JSON.stringify(costPercent)),
 					arrowPath: getArrowPath(hoveredEquipmentDataForDate.utilityRate[2].cost <= hoveredEquipmentDataForDate.utilityRate[0].cost),
-					imgPath: base64Images.monetaryBadge,
+					imgPath: 'nmodule/tekScratch/rc/images/Monetary Badge.svg',
 					label: data.currencySymbol
 				};
 			} else {
@@ -1855,7 +1854,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					value: Math.abs(widget.dataForDate.categoryDataForDate[2].kwh - widget.dataForDate.categoryDataForDate[0].kwh),
 					percent: JSON.parse(JSON.stringify(kwhPercent)),
 					arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].kwh <= widget.dataForDate.categoryDataForDate[0].kwh),
-					imgPath: base64Images.electricityBadge,
+					imgPath: 'nmodule/tekScratch/rc/images/Electricity Badge.svg',
 					label: ' kWh'
 				};
 				cost = {
@@ -1863,7 +1862,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					value: data.formatCurrency(Math.abs(widget.dataForDate.categoryDataForDate[2].cost - widget.dataForDate.categoryDataForDate[0].cost)),
 					percent: JSON.parse(JSON.stringify(costPercent)),
 					arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].cost <= widget.dataForDate.categoryDataForDate[0].cost),
-					imgPath: base64Images.monetaryBadge,
+					imgPath: 'nmodule/tekScratch/rc/images/Monetary Badge.svg',
 					label: data.currencySymbol
 				};
 			}
@@ -1882,7 +1881,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				value: Math.abs(widget.dataForDate.categoryDataForDate[2].trh - widget.dataForDate.categoryDataForDate[0].trh),
 				percent: JSON.parse(JSON.stringify(trhPercent)),
 				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].trh <= widget.dataForDate.categoryDataForDate[0].trh),
-				imgPath: base64Images.productionBadge,
+				imgPath: 'nmodule/tekScratch/rc/images/Production Badge.svg',
 				label: ' tRh'
 			};
 			return [kwh, cost, trh]
@@ -2174,7 +2173,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-	// ************************************* BUTTON ****************************************** //
+	//************************************* BUTTON ******************************************//
 	const buttonMargin = 5;
 	const buttonWidth = data.widgetSize === 'small' ? 80 - (buttonMargin * 2) : (data.widgetSize === 'medium' ? 110 - (buttonMargin * 2) : 120 - (buttonMargin * 2))
 	const endCircleRadius = buttonWidth / 6
@@ -2281,7 +2280,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
-			// ************************ UNHOVER & UNPIN FUNCTIONS ************************* //
+			//************************ UNHOVER & UNPIN FUNCTIONS *************************//
 			function tryUnhover () {
 				if ((widget.activeChartType === 'stacked' && !widget.systemIsPinned) || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')){
 					unhoverDynamic();
@@ -2320,7 +2319,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				unhoverAll();
 			}
 
-			// ************************ DYNAMIC BAR HOVER/PIN FUNCTIONS ************************* //
+			//************************ DYNAMIC BAR HOVER/PIN FUNCTIONS *************************//
 			function tryBarHoverFunc (d, i, nodes) {
 				if (widget.activeChartType === 'stacked' || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')) {
 					barHoverFunc (d, i, nodes)
@@ -2388,8 +2387,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			})
 			.catch(err => console.error('render did not complete: ' + err));
 	}
-	
-
 
 
 ////////////////////////////////////////////////////////////////
@@ -2400,7 +2397,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		var that = this;
 		element.addClass("UtilitySavingsToolOuter");
 		that.outerDiv = d3.select(element[0]).append('div')
-			.attr('class', 'UtilitySavingsTool')
+			.attr('class', 'UtilitySavingsTool');
 
 		that.getSubscriber().attach("changed", function (prop, cx) { render(that) });
 	};
@@ -2425,4 +2422,3 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 	return UtilitySavingsTool;
 });
-
