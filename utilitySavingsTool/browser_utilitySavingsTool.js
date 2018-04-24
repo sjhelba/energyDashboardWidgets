@@ -746,6 +746,7 @@ const renderWidget = () => {
 
 	const x1Scale = d3.scaleBand()
 		.domain(categories.map(cat => cat.name))
+		.paddingInner(0.15)
 		.rangeRound([0, x0Scale.bandwidth()]);
 
 	const trhXScale = d3.scaleBand()
@@ -975,7 +976,9 @@ const renderWidget = () => {
   equipmentGroups.selectAll('.categoryRects')
     .data(d => d.kwh)
     .enter().append("rect")
-      .attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+			.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+			.attr('rx', 1)
+			.attr('ry', 1)
       .attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
       .attr("y", d => widget.activeChartType === 'grouped' ? kwhYScale(d.value) : kwhYScale(d.accumulated))
       .attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
@@ -1013,6 +1016,8 @@ const renderWidget = () => {
 					.data(d => d.kwh)
 					.enter().append("rect")
 						.attr('class', `hoverableKwhRects`)
+						.attr('rx', 1)
+						.attr('ry', 1)
 						.attr("x", d => x0Scale(d.category))
 						.attr("y", (d, i, nodes) => {
 							const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.value > accum.__data__.value ? curr : accum);
@@ -1152,6 +1157,8 @@ costEquipmentGroups.selectAll('.categoryRects')
 	.data(d => d.utilityRate)
 	.enter().append("rect")
 		.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+		.attr('rx', 1)
+		.attr('ry', 1)
 		.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
 		.attr("y", d => widget.activeChartType === 'grouped' ? costYScale(d.cost) : costYScale(d.accumulatedCost))
 		.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())

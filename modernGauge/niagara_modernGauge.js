@@ -13,8 +13,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
   
       that.properties().addAll([
           {
-              name: 'gaugeTitle',
-              value: 'Gauge Title'
+              name: 'gaugeTitle1',
+              value: 'Gauge Title1'
+          },
+          {
+              name: 'gaugeTitle2',
+              value: 'Gauge Title2'
           },
           {
               name: 'efficiencyGauge',
@@ -29,6 +33,18 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
               value: 0.80
           },
           {
+              name: 'title1SpacingFromMiddle',
+              value: 35
+          },
+          {
+              name: 'title2SpacingFromMiddle',
+              value: 18
+          },
+          {
+              name: 'valueSpacingFromMiddle',
+              value: 11
+          },
+          {
               name: 'minVal',
               value: 0
           },
@@ -37,20 +53,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
               value: 2
           },
           {
-              name: 'borderCircleWidth',
-              value: 7
-          },
-          {
-              name: 'borderPadding',
-              value: 2
-          },
-          {
-              name: 'additionalGaugeArcThickness',
-              value: 1
+              name: 'gaugeArcThickness',
+              value: 23
           },
           {
               name: 'titleFont',
-              value: '11.0pt Nirmala UI',
+              value: '12.0pt Nirmala UI',
               typeSpec: 'gx:Font'
           },
           {
@@ -60,21 +68,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
           },
           {
               name: 'valueFont',
-              value: 'bold 18.0pt Nirmala UI',
+              value: 'bold 24.0pt Nirmala UI',
               typeSpec: 'gx:Font'
           },
           {
-              name: 'borderCircleColor',
-              value: '#ff474747',
-              typeSpec: 'gx:Color'
-          },
-          {
               name: 'backgroundColor',
-              value: '#ffffff',
-              typeSpec: 'gx:Color'
-          },
-          {
-              name: 'borderCircleFillColor',
               value: '#ffffff',
               typeSpec: 'gx:Color'
           },
@@ -108,6 +106,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
               name: 'valueColor',
               value: '#ff000000',
               typeSpec: 'gx:Color'
+          },
+          {
+              name: 'backgroundArcColor',
+              value: 'lightGray',
+              typeSpec: 'gx:Color'
           }
       ]);
   
@@ -123,19 +126,20 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
   ////////////////////////////////////////////////////////////////
   
       const props = [
-              'gaugeTitle', 'efficiencyGauge', 'baselineEfficiencyThreshold',
+              'gaugeTitle1', 'gaugeTitle2', 'efficiencyGauge', 'title1SpacingFromMiddle', 'title2SpacingFromMiddle',
+              'valueSpacingFromMiddle', 'baselineEfficiencyThreshold',
               'targetEfficiencyThreshold', 'minVal', 'maxVal',
-              'borderCircleWidth', 'borderPadding', 'additionalGaugeArcThickness', 'titleFont',
-              'unitsFont', 'valueFont', 'borderCircleColor', 'backgroundColor', 'borderCircleFillColor',
+              'gaugeArcThickness', 'titleFont', 
+              'unitsFont', 'valueFont', 'backgroundColor',
               'nominalGaugeArcColor', 'subTargetGaugeArcColor', 'subBaselineGaugeArcColor', 'titleColor',
-              'unitsColor', 'valueColor'
+              'unitsColor', 'valueColor', 'backgroundArcColor'
       ];
-      
+
 
       const setupDefinitions = widget => {
-        let cx, cy, width, height, borderCircleRadius,startAngle,endAngle,gaugeArcOuterRadius,
+        let cx, cy, width, height, startAngle,endAngle,gaugeArcOuterRadius,
         gaugeArcInnerRadius, minValForArc, maxValForArc, valForGaugeArc, minVal, maxVal,
-        efficiencyColorScale, angleScale, gaugeArcGenerator, titleArcGenerator,
+        efficiencyColorScale, angleScale, gaugeArcGenerator, backgroundArcGenerator,
         unitsArcGenerator, arcTween;
 
         const data = {};
@@ -144,19 +148,22 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
           props.forEach(prop => {data[prop] = widget.properties().getValue(prop);});
       
           const jq = widget.jq();
-          width = jq.width() - 2 || 300;
-          height = jq.height() - 2 || 300;
+          const jqWidth = jq.width() || 200;
+          const jqHeight = jq.height() || 200;
+          data.svgWidth = jqWidth - 2
+          data.svgHeight = jqHeight - 2
+          width = data.svgWidth;
+          height = data.svgHeight;
       
            // CALCULATED OR HARD-CODED DEFINITIONS //
           data.lastValue = widget.valToStartArcTransition;
           cx = width / 2;
           cy = height / 2;
-          borderCircleRadius = height < width ? (height / 2.5) - data.borderCircleWidth : (width / 2.5) - data.borderCircleWidth;
           // angles are measured in radians (pi * 2 radians === full circle, so in radians, 0 === 2 * pi)
           startAngle =  - Math.PI;
           endAngle = Math.PI;
-          gaugeArcOuterRadius = borderCircleRadius - (0.1 * borderCircleRadius) - data.borderPadding;
-          gaugeArcInnerRadius = gaugeArcOuterRadius - (0.17 * borderCircleRadius) - data.additionalGaugeArcThickness;
+          gaugeArcOuterRadius = height < width ? (height / 2) - 5 : (width / 2) - 5;
+          gaugeArcInnerRadius = gaugeArcOuterRadius - data.gaugeArcThickness;
           
           // sets value data
           let widgetValue = widget.value();
@@ -222,11 +229,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
               .outerRadius(gaugeArcOuterRadius)
               .cornerRadius('10'); // round edges of path
           
-          titleArcGenerator = d3.arc()
+          backgroundArcGenerator = d3.arc()
               .startAngle(startAngle)
               .endAngle(endAngle)
-              .innerRadius(borderCircleRadius)
-              .outerRadius(borderCircleRadius + data.borderCircleWidth);
+              .innerRadius(gaugeArcInnerRadius)
+              .outerRadius(gaugeArcOuterRadius);
           
           unitsArcGenerator = d3.arc()
               .startAngle(endAngle)
@@ -241,9 +248,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
               return gaugeArcGenerator(datum);
           };
           const tempObj = {
-            cx, cy, width, height, borderCircleRadius,startAngle,endAngle,gaugeArcOuterRadius,
+            cx, cy, width, height, startAngle,endAngle,gaugeArcOuterRadius,
             gaugeArcInnerRadius, minValForArc, maxValForArc, valForGaugeArc, minVal, maxVal,
-            efficiencyColorScale, angleScale, gaugeArcGenerator, titleArcGenerator,
+            efficiencyColorScale, angleScale, gaugeArcGenerator, backgroundArcGenerator,
             unitsArcGenerator, arcTween
           }
           Object.keys(tempObj).forEach(prop => {data[prop] = tempObj[prop]});
@@ -261,40 +268,34 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
         
         function renderWidget (widget, data) {
             let {
-                cx, cy, width, height, borderCircleRadius,startAngle,endAngle,gaugeArcOuterRadius,
-                gaugeArcInnerRadius, minValForArc, maxValForArc, valForGaugeArc, minVal, maxVal,
-                efficiencyColorScale, angleScale, gaugeArcGenerator, titleArcGenerator,
-                unitsArcGenerator, arcTween
+                cx, cy, width, height, startAngle,endAngle,gaugeArcOuterRadius, gaugeTitle1, gaugeTitle2, efficiencyGauge, 
+                gaugeArcInnerRadius, minValForArc, maxValForArc, valForGaugeArc, minVal, maxVal, baselineEfficiencyThreshold,
+                efficiencyColorScale, angleScale, gaugeArcGenerator, backgroundArcGenerator, targetEfficiencyThreshold,
+                unitsArcGenerator, arcTween, valueSpacingFromMiddle, title1SpacingFromMiddle, title2SpacingFromMiddle,
+                gaugeArcThickness, titleFont, unitsFont, valueFont, backgroundColor, nominalGaugeArcColor, subTargetGaugeArcColor,
+                subBaselineGaugeArcColor, titleColor, unitsColor, valueColor, backgroundArcColor
             } = data;
-            
+
             data.lastValue = data.lastValue || data.lastValue === 0 ? data.lastValue : minValForArc;
             
-            const svg = widget.svg;
+            const svg = widget.svg
+                .attr('width', data.svgWidth)
+                .attr('height', data.svgHeight);
 
-            d3.select(svg.node().parentNode).style('background-color', data.backgroundColor)
+            d3.select(svg.node().parentNode).style('background-color', backgroundColor)
 
 
             // delete leftover elements from versions previously rendered
             if (!svg.empty()) svg.selectAll("*").remove();
-            
-
-            const borderCircle = svg.append('circle')
-                .attr('id', 'borderCircle')
-                .attr('cx', cx)
-                .attr('cy', cy)
-                .attr('r', borderCircleRadius)
-                .attr('fill', data.borderCircleFillColor)
-                .attr('stroke', data.borderCircleColor)
-                .attr('stroke-width', data.borderCircleWidth);
                 
             const valueOutput = svg.append('text')
                 .attr('class', 'valueOutput')
                 .attr('x', cx)
-                .attr('y', cy)
+                .attr('y', cy + valueSpacingFromMiddle)
                 .attr('text-anchor', 'middle')
                 .attr('dominant-baseline', 'middle')
-                .attr('fill', data.valueColor)
-                .style('font', data.valueFont)
+                .attr('fill', valueColor)
+                .style('font', valueFont)
                 // formats output num using precision from value facets
                 .text(d3.format(`,.${data.precision}f`)(data.value));
             
@@ -302,45 +303,52 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                 .attr('class', 'chartGroup')
                 .attr('transform', `translate(${cx}, ${cy})`);
             
+            const backgroundPath = chartGroup.append('path')
+                .attr('id', widget.uniqueId + '_backgroundPath')
+                .attr('d', backgroundArcGenerator())
+                .attr('fill', data.backgroundArcColor);
 
 
             const gaugeArc = chartGroup.append('path')
                 .attr('id', 'gaugeArc')
                 .datum({endAngle: angleScale(data.lastValue)})
                 // fill nominal color for non-efficiency gauge or 3 color scale for efficiency gauge. Starts with min val color prior to transition
-                .attr('fill', data.efficiencyGauge ? efficiencyColorScale(data.lastValue) : data.nominalGaugeArcColor)
+                .attr('fill', efficiencyGauge ? efficiencyColorScale(data.lastValue) : nominalGaugeArcColor)
                 .attr('d', gaugeArcGenerator(angleScale(data.lastValue)))
                 .transition()
                     .duration(1000)
                     // if efficiency graph, transition from min val scale color to actual val's scale color
-                    .attr('fill', data.efficiencyGauge ? efficiencyColorScale(data.value) : data.nominalGaugeArcColor)
+                    .attr('fill', efficiencyGauge ? efficiencyColorScale(data.value) : nominalGaugeArcColor)
                     // gradually transition end angle from minValForArc to true val angle
                     .attrTween('d', arcTween(angleScale(valForGaugeArc)));
-            
-            const titlePath = chartGroup.append('path')
-                .attr('id', widget.uniqueId + '_titlePath')
-                .attr('d', titleArcGenerator())
-                .attr('fill', 'none');
-            
+
             const unitsPath = chartGroup.append('path')
                 .attr('id', widget.uniqueId + '_unitsPath')
                 .attr('d', unitsArcGenerator())
                 .attr('fill', 'none');
             
-            const titleOutput = chartGroup.append("text").append("textPath")
-                .attr("xlink:href", '#' + widget.uniqueId + '_titlePath') // ID of path text follows
+            const title1Output = chartGroup.append("text")
+                .attr('dominant-baseline', 'text-after-edge')
                 .style("text-anchor","middle")
-                .attr("startOffset", "20%")
-                .style('font', data.titleFont)
-                .attr('fill', data.titleColor)
-                .text(data.gaugeTitle);
+                .attr('y', -(title1SpacingFromMiddle))
+                .style('font', titleFont)
+                .attr('fill', titleColor)
+                .text(gaugeTitle1);
+            
+            const title2Output = chartGroup.append("text")
+                .attr('dominant-baseline', 'text-after-edge')
+                .style("text-anchor","middle")
+                .attr('y', -(title2SpacingFromMiddle))
+                .style('font', titleFont)
+                .attr('fill', titleColor)
+                .text(gaugeTitle2);
             
             const unitsOutput = chartGroup.append("text").append("textPath")
                 .attr("xlink:href", '#' + widget.uniqueId + '_unitsPath') // ID of path text follows
                 .style("text-anchor","end")
                 .attr("startOffset", "50%")
-                .style('font', data.unitsFont)
-                .attr('fill', data.unitsColor)
+                .style('font', unitsFont)
+                .attr('fill', unitsColor)
                 .text(data.units);
         }
         
@@ -358,13 +366,15 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
           var that = this;
 
           element.addClass("ModernGaugeOuter");
-      
-          that.svg = d3.select(element[0]).append('svg')
+        
+          const outerEl = d3.select(element[0])
+            .style('overflow', 'hidden')
+
+          that.svg = outerEl.append('svg')
               .attr('class', 'ModernGauge')
               .attr('top', 0)
               .attr('left', 0)
-              .attr('width', "95%")
-              .attr('height', "95%");
+              .style('overflow', 'hidden')
       
           that.uniqueId = 'ModernGauge_' + modernGaugeCounter;
           modernGaugeCounter++;

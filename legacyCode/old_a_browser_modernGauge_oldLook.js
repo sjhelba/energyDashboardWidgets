@@ -6,38 +6,35 @@ const degreesToRadians = deg => (deg * Math.PI) / 180;
 
 /* EXPOSED PROPERTIES */
 
-var gaugeTitle1 = 'System';
-var gaugeTitle2 = 'Efficiency'
+var gaugeTitle = 'System Efficiency';
 var efficiencyGauge = true;
 var decimalPlaces = 2;
 
 var baselineEfficiencyThreshold = 1.20;
 var targetEfficiencyThreshold = 0.80;
-var value = 1;  // example kW / tR
+var value = 6;  // example kW / tR
 var units = 'kW / tR';
-var minVal = 0;
-var maxVal = 2;
+var minVal = 2;
+var maxVal = 5;
 
-v = 7
-
-var gaugeArcThickness = 23
+var borderCircleWidth = 7
+var borderPadding = 2
+var additionalGaugeArcThickness = 2
 
 var titleFont = '12.0pt Nirmala UI';
-var unitsFont = '11.0pt Nirmala UI';
-var valueFont = 'bold 28.0pt Nirmala UI';
+var unitsFont = '10.0pt Nirmala UI';
+var valueFont = 'bold 27.0pt Nirmala UI';
 
-var backgroundColor = 'white';
+var borderCircleColor = '#474747';
+var backgroundColor = '#ffffff';
+var borderCircleFillColor = '#ffffff';
 // if efficiencyGauge is true, will utilize efficiencyColorScale for arc fill (all 3 gaugeArcColors), else only nominalGaugeArcColor
 var nominalGaugeArcColor = '#21A75D'
 var subTargetGaugeArcColor = '#ffd829'
 var subBaselineGaugeArcColor = '#c01616'
-var titleColor = '#000000';
+var titleColor = '#75757a';
 var unitsColor = '#75757a';
 var valueColor = '#000000';
-var backgroundArcColor = 'lightGray'
-var title1SpacingFromMiddle = 35;
-var title2SpacingFromMiddle = 18;
-var valueSpacingFromMiddle = 11;
 
 
 
@@ -52,11 +49,12 @@ var width = '200';
 /* SETUP DEFINITIONS */
 var cx = width / 2;
 var cy = height / 2;
+var borderCircleRadius = height < width ? (height / 2.5) - borderCircleWidth : (width / 2.5) - borderCircleWidth 
 // angles are measured in radians (pi * 2 radians === full circle, so in radians, 0 === 2 * pi)
 var startAngle =  - Math.PI;
 var endAngle = Math.PI;
-var gaugeArcOuterRadius = height < width ? (height / 2) - 5 : (width / 2) - 5;
-var gaugeArcInnerRadius = gaugeArcOuterRadius - gaugeArcThickness;
+var gaugeArcOuterRadius = borderCircleRadius - (.1 * borderCircleRadius) - borderPadding;
+var gaugeArcInnerRadius = gaugeArcOuterRadius - (.17 * borderCircleRadius) - additionalGaugeArcThickness;
 
 // implements value limit for gauge arc display so that never completely empty
 let valForGaugeArc = value;
@@ -77,6 +75,8 @@ if (efficiencyGauge) {
         valForGaugeArc = maxValForArc;
     }
 }
+// const valForGaugeArc = (efficiencyGauge && value < minValForArc) || (!efficiencyGauge && value > minValForArc) ? value : minValForArc;
+console.log('min/max: ', minVal, maxVal, 'trueVal: ', value, 'minValForArc: ', minValForArc, 'maxValForArc: ', maxValForArc, 'valUsedToCreateArc: ', valForGaugeArc)
 // if efficiencyGauge marked true, inverts min and max vals
 if (efficiencyGauge) var [minVal,maxVal] = [maxVal,minVal];
 
@@ -98,11 +98,11 @@ const gaugeArcGenerator = d3.arc()
     .outerRadius(gaugeArcOuterRadius)
     .cornerRadius('10'); // round edges of path
 
-const backgroundArcGenerator = d3.arc()
+const titleArcGenerator = d3.arc()
     .startAngle(startAngle)
     .endAngle(endAngle)
-    .innerRadius(gaugeArcInnerRadius)
-    .outerRadius(gaugeArcOuterRadius);
+    .innerRadius(borderCircleRadius)
+    .outerRadius(borderCircleRadius + borderCircleWidth);
 
 const unitsArcGenerator = d3.arc()
     .startAngle(endAngle)
@@ -119,13 +119,15 @@ const arcTween = newAngle => datum => t => {
 
 
 /* APPEND D3 ELEMENTS INTO SVG */
-
+// const body = d3.select('body')
+//     .attr('width', width)
+//     .attr('height', height)
 
 const svg = d3.select('body').append('svg')
     .attr('width', width)
     .attr('height', height);
 
-const graphicGroup = svg.append('g')
+const graphicGroup = svg.append('g').attr('transform', 'translate(20, 10)')
 
 const backgroundRect = graphicGroup.append('rect')
   	.attr('id', 'background')
@@ -135,11 +137,20 @@ const backgroundRect = graphicGroup.append('rect')
   	.attr('height', '100%')
   	.attr('stroke-width', '0')
   	.attr('fill', backgroundColor);
+
+const borderCircle = graphicGroup.append('circle')  // TODO: Replace borderCircle with titlePath
+    .attr('id', 'borderCircle')
+    .attr('cx', cx)
+    .attr('cy', cy)
+    .attr('r', borderCircleRadius)
+    .attr('fill', borderCircleFillColor)
+    .attr('stroke', borderCircleColor)
+    .attr('stroke-width', borderCircleWidth);
     
 const valueOutput = graphicGroup.append('text')
     .attr('class', 'valueOutput')
     .attr('x', cx)
-    .attr('y', cy + valueSpacingFromMiddle)
+    .attr('y', cy)
     .attr('text-anchor', 'middle')
     .attr('dominant-baseline', 'middle')
     .attr('fill', valueColor)
@@ -150,12 +161,6 @@ const valueOutput = graphicGroup.append('text')
 const chartGroup = graphicGroup.append('g')
     .attr('class', 'chartGroup')
     .attr('transform', `translate(${cx}, ${cy})`);
-
-
-const backgroundPath = chartGroup.append('path')
-    .attr('id', 'backgroundPath')
-    .attr('d', backgroundArcGenerator())
-    .attr('fill', backgroundArcColor);
 
 const gaugeArc = chartGroup.append('path')
     .attr('id', 'gaugeArc')
@@ -170,27 +175,23 @@ const gaugeArc = chartGroup.append('path')
         // gradually transition end angle from minValForArc to true val angle
         .attrTween('d', arcTween(angleScale(valForGaugeArc)));
 
+const titlePath = chartGroup.append('path')
+    .attr('id', 'titlePath')
+    .attr('d', titleArcGenerator())
+    .attr('fill', 'none');
 
 const unitsPath = chartGroup.append('path')
     .attr('id', 'unitsPath')
     .attr('d', unitsArcGenerator())
     .attr('fill', 'none');
 
-const title1Output = chartGroup.append("text")
-    .attr('dominant-baseline', 'text-after-edge')
-    .attr('y', -(title1SpacingFromMiddle))
+const titleOutput = chartGroup.append("text").append("textPath")
+    .attr("xlink:href", "#titlePath") // ID of path text follows
     .style("text-anchor","middle")
+    .attr("startOffset", "20%")
     .style('font', titleFont)
     .attr('fill', titleColor)
-    .text(gaugeTitle1);
-
-const title2Output = chartGroup.append("text")
-    .attr('dominant-baseline', 'text-after-edge')
-    .attr('y', -(title2SpacingFromMiddle))
-    .style("text-anchor","middle")
-    .style('font', titleFont)
-    .attr('fill', titleColor)
-    .text(gaugeTitle2);
+    .text(gaugeTitle);
 
 const unitsOutput = chartGroup.append("text").append("textPath")
     .attr("xlink:href", "#unitsPath") // ID of path text follows

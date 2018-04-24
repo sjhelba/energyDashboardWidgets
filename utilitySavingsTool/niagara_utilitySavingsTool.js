@@ -164,7 +164,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		categoriesData.forEach((categoryData, categoryIndex) => {
 			categoryData.forEach(monthlyDatum => {
 				// if (months set to all OR current month matches) && (category is baseline or projected OR year matches)
-				if(((month === 'All' && availableDates[year][monthlyDatum.month]) || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)){
+				if(((month === 'All' && availableDates[year] && availableDates[year][monthlyDatum.month]) || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)){
 					equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
 						// set kwh vals
 						equipmentGroup.kwh[categoryIndex].value = monthlyDatum.equipmentKwhs[equipmentHistoryNames[egIndex]] || 0;	//default to 0 if missing data for date
@@ -717,6 +717,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 					data.availableYears = Object.keys(data.availableDates).sort((a,b) => b - a);
 					data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
+					if(!data.availableDates[widget.yearDropDownSelected]) widget.yearDropDownSelected = data.availableYears[data.availableYears.length - 1];
+					
 					widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDatesWithMonthObjs)
 					// eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
 
@@ -738,7 +740,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 						const selectionForCheck = widget.svg.selectAll(elementsToReset)
 						if (!selectionForCheck.empty()) selectionForCheck.remove();
 					};
-					if(!data.availableDates[widget.yearDropDownSelected]) widget.yearDropDownSelected = data.availableYears[data.availableYears.length - 1];
 
 
 
@@ -940,6 +941,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		const x1Scale = d3.scaleBand()
 			.domain(categories.map(cat => cat.name))
+			.paddingInner(0.15)
 			.rangeRound([0, x0Scale.bandwidth()]);
 
 		const trhXScale = d3.scaleBand()
@@ -1161,6 +1163,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.data(d => d.kwh)
 			.enter().append("rect")
 				.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+				.attr('rx', 1)
+				.attr('ry', 1)
 				.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
 				.attr("y", d => widget.activeChartType === 'grouped' ? kwhYScale(d.value) : kwhYScale(d.accumulated))
 				.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
@@ -1333,6 +1337,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		.data(d => d.utilityRate)
 		.enter().append("rect")
 			.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+			.attr('rx', 1)
+			.attr('ry', 1)
 			.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
 			.attr("y", d => widget.activeChartType === 'grouped' ? costYScale(d.cost) : costYScale(d.accumulatedCost))
 			.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
@@ -1528,6 +1534,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.data(trhCategoryDataForDate)
 			.enter().append("rect")
 				.attr('class', d => `trhCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+				.attr('rx', 1)
+				.attr('ry', 1)
 				.attr("x", d => trhXScale(d.category))
 				.attr("y", d => trhYScale(d.trh))
 				.attr("width", trhXScale.bandwidth())
