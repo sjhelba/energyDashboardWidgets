@@ -50,7 +50,7 @@ const jqHeight = 150;
 const jqWidth = 150;
 
   // SIZING //
-data.margin = {top: 5, left: 5, right: 5, bottom: (jqHeight * 0.02) + 5};
+data.margin = {top: 5, left: 5, right: 5, bottom: 5};
 data.graphicHeight = jqHeight - (data.margin.top + data.margin.bottom);
 data.graphicWidth = jqWidth - (data.margin.left + data.margin.right);
 
@@ -79,10 +79,12 @@ if (!widget.percentIsHovered) widget.percentIsHovered = false;
 const outerDiv = d3.select('#outer')
 	.style('height', jqHeight + 'px')
 	.style('width', jqWidth + 'px');
+
 widget.svg = outerDiv.append('svg')
 	.attr('class', 'log')
 	.attr('width', '100%')
-	.attr('height', '98%');
+	.attr('height', '100%');
+	
 d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
 
 

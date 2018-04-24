@@ -1,4 +1,4 @@
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/d3/d3.min'], function (Widget, subscriberMixIn, d3) {
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/d3/d3.min', 'css!nmodule/tekScratch/rc/web/ModernEfficiencyGraph/style'], function (Widget, subscriberMixIn, d3) {
     "use strict";
 
     ////////////////////////////////////////////////////////////////
@@ -24,12 +24,57 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                 typeSpec: 'gx:Color'
             },
             {
+                name: 'measuredStrokeColor',
+                value: 'rgb(39, 176, 71)',
+                typeSpec: 'gx:Color'
+            },
+            {
+                name: 'measuredDataPointStrokeColor',
+                value: 'white',
+                typeSpec: 'gx:Color'
+            },
+            {
+                name: 'measuredDataPointFillColor',
+                value: 'rgb(39, 176, 71)',
+                typeSpec: 'gx:Color'
+            },
+            {
                 name: 'baselineColor',
                 value: 'rgb(44, 139, 246)',
                 typeSpec: 'gx:Color'
             },
             {
+                name: 'baselineStrokeColor',
+                value: 'rgb(44, 139, 246)',
+                typeSpec: 'gx:Color'
+            },
+            {
+                name: 'baselineDataPointStrokeColor',
+                value: 'white',
+                typeSpec: 'gx:Color'
+            },
+            {
+                name: 'baselineDataPointFillColor',
+                value: 'rgb(44, 139, 246)',
+                typeSpec: 'gx:Color'
+            },
+            {
                 name: 'projectedColor',
+                value: 'rgb(246, 159, 44)',
+                typeSpec: 'gx:Color'
+            },
+            {
+                name: 'projectedStrokeColor',
+                value: 'rgb(246, 159, 44)',
+                typeSpec: 'gx:Color'
+            },
+            {
+                name: 'projectedDataPointStrokeColor',
+                value: 'white',
+                typeSpec: 'gx:Color'
+            },
+            {
+                name: 'projectedDataPointFillColor',
                 value: 'rgb(246, 159, 44)',
                 typeSpec: 'gx:Color'
             },
@@ -135,10 +180,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             {
                 name: 'tooltipRectHeight',
                 value: 66
-            },
-            { 
-                name: 'systemName',
-                value: 'SystemName'
             }
         ]);
 
@@ -158,7 +199,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
     const widgetProperties = [
         'measuredColor','baselineColor','projectedColor','measuredFillOpacity','baselineFillOpacity','projectedFillOpacity','backgroundColor',
         'dataPointRadius','dataPointStrokeWidth','areaPathStrokeWidth','unitsColor','unitsFont','xAxisFontColor','yAxisFontColor','legendFontColor',
-        'xAxisFont','yAxisFont','legendFont','tooltipFont','tooltipPadding','legendPadding','legendSquareSize', 'systemName', 'tooltipFill', 'yAxisTitlePadding', 'tooltipRectWidth', 'tooltipRectHeight'
+        'xAxisFont','yAxisFont','legendFont','tooltipFont','tooltipPadding','legendPadding','legendSquareSize', 'tooltipFill', 'yAxisTitlePadding', 'tooltipRectWidth', 'tooltipRectHeight'
     ];
 
     const setupDefinitions = widget => {
@@ -221,7 +262,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
         
 
         // GET HISTORY DATA //
-        return widget.resolve(`history:^${data.systemName}_MeasuredEfficiency`)
+        return widget.resolve(`history:^System_MsEffMr`)
             .then(measuredTable => {
                 // get facets off of 'measured' table
                 const facets = measuredTable.getCol('value').getFacets();
@@ -246,7 +287,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                     }
                   });
             })
-            .then(() => widget.resolve(`history:^${data.systemName}_BaselineEfficiency`)) 
+            .then(() => widget.resolve(`history:^System_BlEffMr`)) 
             .then(baselineTrendTable => {
                 return baselineTrendTable.cursor({
                     limit: 700000,  // default is 10
@@ -264,7 +305,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                     }
                 });
             })
-            .then(() => widget.resolve(`history:^${data.systemName}_ProjectedEfficiency`)) 
+            .then(() => widget.resolve(`history:^System_PrEffMr`)) 
             .then(projectedTrendTable => {
                 return projectedTrendTable.cursor({
                     limit: 700000,  // default is 10
@@ -301,9 +342,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                 data.yTickValues = [0, data.yTickInterval, data.yTickInterval * 2, data.yTickInterval * 3, highestYtick];
 
                 data.enterData = [
-                    {category: 'baseline', displayName: 'Baseline', color: data.baselineColor, opacity: data.baselineFillOpacity, data: data.baselineData},
-                    {category: 'projected', displayName: 'Projected', color: data.projectedColor, opacity: data.projectedFillOpacity, data: data.projectedData},
-                    {category: 'measured', displayName: 'Measured', color: data.measuredColor, opacity: data.measuredFillOpacity, data: data.measuredData}
+                    {category: 'baseline', displayName: 'Baseline', color: data.baselineColor, strokeColor: data.baselineStrokeColor, dataPointStrokeColor: data.baselineDataPointStrokeColor, dataPointFillColor: data.baselineDataPointFillColor, opacity: data.baselineFillOpacity, data: data.baselineData},
+                    {category: 'projected', displayName: 'Projected', color: data.projectedColor, strokeColor: data.projectedStrokeColor, dataPointStrokeColor: data.projectedDataPointStrokeColor, dataPointFillColor: data.projectedDataPointFillColor, opacity: data.projectedFillOpacity, data: data.projectedData},
+                    {category: 'measured', displayName: 'Measured', color: data.measuredColor, strokeColor: data.measuredStrokeColor, dataPointStrokeColor: data.measuredDataPointStrokeColor, dataPointFillColor: data.measuredDataPointFillColor, opacity: data.measuredFillOpacity, data: data.measuredData}
                 ];
             
             
@@ -336,7 +377,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
     const renderWidget = (widget, data) => {
         /* RENDER INITIALIZATION */
 
-        const svg = widget.svg;
+        const svg = widget.svg
+            .attr('width', data.graphicWidth)
+            .attr('height', data.graphicHeight);
         
         d3.select(svg.node().parentNode).style('background-color', data.backgroundColor)
 
@@ -400,7 +443,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
         categoryGroups.append('path')   
             .attr('d', d => topBorderPathGenerator(d.data))
             .attr('class', d => d.category + ' path')
-            .attr('stroke', d => d.color)
+            .attr('stroke', d => d.strokeColor)
             .attr('stroke-width', data.areaPathStrokeWidth)
             .attr('opacity', d => widget.active && widget.active[d.category] || !widget.active ? 0.92 : 0)
             .attr('fill', 'none');
@@ -465,6 +508,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 
 
+
+
         /* DATAPOINTS */
         // groups of datapoints
         const dataPointsGroups = chartGroup.selectAll('circle')
@@ -477,9 +522,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
         dataPointsGroups.selectAll('.circle')
             .data(d => d.data) //get data arrays within each 'enterData' array element
             .enter().append('circle')
-                .attr('class', (d, i, node) => `${node[i].parentNode.__data__.category}Circle ${d.month} circle`)
-                .attr('fill', (d, i, node) => node[i].parentNode.__data__.color)
-                .attr('stroke', 'white')
+                .attr('class', (d, i, nodes) => `${nodes[i].parentNode.__data__.category}Circle ${d.month} circle`)
+                .attr('fill', (d, i, nodes) => nodes[i].parentNode.__data__.dataPointFillColor)
+                .attr('stroke', (d, i, nodes) => nodes[i].parentNode.__data__.dataPointStrokeColor)
                 .attr('stroke-width', data.dataPointStrokeWidth)
                 .attr('cx', (d, i) => xScale(parseDate(d.month + '-' + data.measuredData[i].year)))
                 .attr('cy', d => yScale(d.value))
@@ -605,12 +650,14 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
         var that = this;
         element.addClass("ModernEfficiencyGraphOuter");
 
-        that.svg = d3.select(element[0]).append('svg')
+        const outerEl = d3.select(element[0])
+            .style('overflow', 'hidden')
+
+        that.svg = outerEl.append('svg')
             .attr('class', 'ModernEfficiencyGraph')
+            .style('overflow', 'hidden')
             .attr('top', 0)
             .attr('left', 0)
-            .attr('width', "95%")
-            .attr('height', "95%");
 
         that.active = undefined;
         that.getSubscriber().attach("changed", function (prop, cx) { render(that) });

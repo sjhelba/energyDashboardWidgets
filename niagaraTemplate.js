@@ -149,13 +149,16 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	MyWidget.prototype.doInitialize = function (element) {
 		var that = this;
 		element.addClass("MyWidgetOuter");
+		const outerEl = d3.select(element[0])
+			.style('overflow', 'hidden')
 
-		that.svg = d3.select(element[0]).append('svg')
+		that.svg = outerEl.append('svg')
 			.attr('class', 'MyWidget')
+			.style('overflow', 'hidden')
 			.attr('top', 0)
 			.attr('left', 0)
 			.attr('width', "100%")
-			.attr('height', "98%");
+			.attr('height', "100%");
 
 		that.getSubscriber().attach("changed", function (prop, cx) { render(that) });
 	};
