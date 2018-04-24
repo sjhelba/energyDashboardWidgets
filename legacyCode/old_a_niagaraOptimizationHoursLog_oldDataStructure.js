@@ -17,7 +17,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	const percentageDescription = '% of System Run Hours Logged in Optimization Mode';
 	const percentDescriptionRectOpacity = 0.8
 	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
-	const moduleNamesForHistories = ['Chillers', 'Pcwps', 'Scwps', 'Twps', 'Towers'];
 
 
 
@@ -48,23 +47,23 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			// if data not able to be pulled upon async try, will change values of these bools
 
 			{
-				name: 'includeChillers',
+				name: 'includeCHs',
 				value: true
 			},
 			{
-				name: 'includePcwps',
+				name: 'includePCPs',
 				value: true
 			},
 			{
-				name: 'includeScwps',
+				name: 'includeSCPs',
 				value: true
 			},
 			{
-				name: 'includeTwps',
+				name: 'includeCDPs',
 				value: true
 			},
 			{
-				name: 'includeTowers',
+				name: 'includeCTFs',
 				value: true
 			},
 			{
@@ -180,6 +179,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				value: 30
 			},
 			{
+				name: 'systemName',
+				value: 'SystemName'
+			},
+			{
 				name: 'percentDescriptionRectHeight',
 				value: 35
 			}
@@ -229,51 +232,72 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			{ type: 'CDPs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CDPs },
 			//Chiller Towers
 			{ type: 'CTFs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CTFs }
+
 		];
 		
-		// get hours' histories, then add to data.modulesData
-		const today = new Date();
-		const currentFullYear = today.getFullYear();
-		// const currentMonthIndex = today.getMonth();
-		
-		function resolveHistoriesAndAddDataToModulesData(moduleType, moduleTypeIndex){
-			console.log('inside resolveHistoriesAndAddDataToModulesData for ' + moduleType)
-			function resolveHistoryDataUtil (isStd){
-				let thisYearHrs = 0;
-				return widget.resolve(`history:^${moduleType}_${isStd ? 'StdhMr' : 'OpthMr'}`)
-				.then(hoursHistory => {
-					console.log(moduleType, 'history resolved')
-					return hoursHistory.cursor({
-					limit: 5000000,
-					each: function(row, index){
-						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-						const rowYear = timestamp.getFullYear();
-						if(rowYear === currentFullYear){
-						console.log(moduleType, 'row year matched. value is ' + row.get('value'))
-
-						thisYearHrs = +row.get('value');
-						}
+		// iterate through system folders looking for specific data types, use those folder names to get hours' histories, then add to data.modulesData
+		return widget.resolve(`station:|slot:/tekWorxCEO/${data.systemName}`)	// get system folder
+			.then(system => system.getNavChildren())	// get children folders of system folder
+			.then(folders => {
+				const folderNames = {chillers: [], pcwps: [], scwps: [], twps: [], ctfs: []};	// TODO: CHANGE INFO FOR CTFs ONCE LARRY ADDS THESE
+				folders.forEach(folder => {
+					const folderType = folder.getNavTypeSpec();
+					if (data.includeCHs && folderType === 'ceoCore:CeoChillersFolder') {
+						folderNames.chillers.push(folder.getNavName());
+					} else if (data.includePCPs && folderType === 'ceoCore:CeoPcwpsFolder') {
+						folderNames.pcwps.push(folder.getNavName());
+					} else if (data.includeSCPs && folderType === 'ceoCore:CeoScwpsFolder') {
+						folderNames.scwps.push(folder.getNavName());
+					} else if (data.includeCDPs && folderType === 'ceoCore:CeoTwpsFolder') {
+						folderNames.twps.push(folder.getNavName());
+					} else if (data.includeCTFs && folderType === 'ceoCore:CeoCtfsFolder') {		//TODO: Change this for whatever Larry calls CTFs once Larry adds
+						folderNames.ctfs.push(folder.getNavName());
 					}
-					});
 				})
-				.then(() => {
-					// due to corresponding index being used here, important that ordering of modules is consistent btwn modulesData and moduleNamesForHistories being iterated below in forEach()
-					data.modulesData[moduleTypeIndex][isStd ? 'standardHours' : 'optimizedHours'] += thisYearHrs;	// adds hrs from histories matching the data type
-					thisYearHrs = 0;
-				})
-				.catch(err => { console.error('Likely no properly named optimized/standard hrs history for ' + moduleType + ':\n' + err)});
-			}
-			return resolveHistoryDataUtil(true)
-				.then(() => resolveHistoryDataUtil(false));
-		}
 
-		const promisesForEachModuleType = [];
-		moduleNamesForHistories.forEach((moduleType, moduleTypeIndex) => {
-			console.log('inside for each for ' + moduleType + ' and include is set to: ' + data[`include${moduleType}`]);
-			if (data[`include${moduleType}`]) promisesForEachModuleType.push(resolveHistoriesAndAddDataToModulesData(moduleType, moduleTypeIndex));
-		});
+				return folderNames;
+			})
+			.then(folderNames => {
+				const today = new Date();
+				const currentFullYear = today.getFullYear();
+				// const currentMonthIndex = today.getMonth();
+				
+				function resolveHistoriesAndAddDataToModulesData(folderName, moduleTypeIndex){
 
-		return Promise.all(promisesForEachModuleType)
+					function resolveHistoryDataUtil (isStd){
+					  let thisYearHrs = 0;
+					  return widget.resolve(`history:^${data.systemName}_${folderName}_${isStd ? 'StdHrs' : 'OptHrs'}`)
+						.then(hoursHistory => {
+						  return hoursHistory.cursor({
+							limit: 5000000,
+							each: function(row, index){
+							  const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+							  const rowYear = timestamp.getFullYear();
+							  if(rowYear === currentFullYear){
+								thisYearHrs = row.get('value');
+							  }
+							}
+						  });
+						})
+						.then(() => {
+							// due to corresponding index being used here, important that ordering of modules is consistent btwn modulesData and folderNames being iterated below in outer forEach
+						  data.modulesData[moduleTypeIndex][isStd ? 'standardHours' : 'optimizedHours'] += thisYearHrs;	// adds hrs from each folder matching the data type
+						  thisYearHrs = 0;
+						})
+						.catch(err => { console.error('Likely no properly named optimized/standard hrs history for ' + folderName + ':\n' + err)});
+					}
+
+					return resolveHistoryDataUtil(true)
+					  .then(() => resolveHistoryDataUtil(false));
+				}
+
+				const promisesForEachFolder = [];
+				// hard coded array of folder names used here rather than Object.keys(folderNames) to ensure index order remains consistent
+				['chillers', 'pcwps', 'scwps', 'twps', 'ctfs'].forEach((moduleType, moduleTypeIndex) => {		// TODO: CORRECT element FOR CTFs ONCE LARRY ADDS THESE]
+					folderNames[moduleType].forEach(folderName => promisesForEachFolder.push(resolveHistoriesAndAddDataToModulesData(folderName, moduleTypeIndex)));
+				});
+				return Promise.all(promisesForEachFolder);
+			})
 			.catch(() => {})
 			.then(() => {
 				// calculated without ords
@@ -295,7 +319,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				data.overallInnerRadius = data.overallOuterRadius - data.overallArcThickness;
 				data.tooltipDiameter = (data.overallInnerRadius * 2) - data.tooltipPadding || 180;
 
-				console.log('modulesData is: ', data.modulesData);
 				// calculated with ords
 					//set totalHours
 				data.modulesData.forEach(mod => mod.totalHours = mod.optimizedHours + mod.standardHours)
