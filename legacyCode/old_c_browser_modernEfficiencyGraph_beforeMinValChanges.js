@@ -35,7 +35,7 @@ tooltipFont = 'bold 10pt Nirmala UI'
 
 tooltipPadding = 15
 legendPadding = 5
-legendSquareSize = 11
+legendCircleSize = 11
 
 
 /* FROM widget.jq height and width minus some margin */
@@ -382,7 +382,7 @@ const legendCategories = legend.selectAll('g')
   .data(enterData)
   .enter().append('g')
     .attr('class', d => `${d.category}Legend category`)
-    .attr('transform', (d, i) => `translate(5, ${-legendHeight + (legendSquareSize * i) + (legendPadding * (i + 1)) })`)
+    .attr('transform', (d, i) => `translate(5, ${-legendHeight + (legendCircleSize * i) + (legendPadding * (i + 1)) })`)
     .on('click', (d, i) => {
       const categoryOpacity = d.active ? 0 : 1
       const legendLineDecoration = d.active ? 'line-through' : 'none'
@@ -392,24 +392,28 @@ const legendCategories = legend.selectAll('g')
     })
     .on('mouseover', function(d){
       d3.select(`#${d.category}Text`).style('font-weight', 'bold')
+      d3.select(`#${d.category}Circle`).style('stroke', 'darkGray')
     })
     .on('mouseout', function(d){
       d3.select(`#${d.category}Text`).style('font-weight', 'normal')
+      d3.select(`#${d.category}Circle`).style('stroke', 'none')
     })
 
 
 // append rect for each category group
-legendCategories.append('rect')
-  .attr('height', legendSquareSize)
-  .attr('width', legendSquareSize)
+legendCategories.append('circle')
+  .attr('id', d => `${d.category}Circle`)
+  .attr('r', legendCircleSize / 2)
+  .attr('cy', legendCircleSize / 2)
+  .attr('cx', legendCircleSize / 2)
   .attr('fill', d => d.color)
 
 // append text for each category group
 legendCategories.append('text')
   .attr('id', d => `${d.category}Text`)
   .text(d => d.displayName)
-  .attr('x', legendSquareSize + 10)
-  .attr('y', legendSquareSize - 1)
+  .attr('x', legendCircleSize + 10)
+  .attr('y', legendCircleSize - 1)
   .attr('fill', legendFontColor)
   .style('font', legendFont);
 

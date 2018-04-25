@@ -1,3 +1,12 @@
+const getTextWidth = (text, font) => {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  context.font = font;
+  const width = context.measureText(text).width;
+  d3.select(canvas).remove()
+  return width;
+};
+
 /* EXPOSED PROPERTIES */
 actualTrendColor = 'rgb(39, 176, 71)'
 baselineColor = 'rgb(44, 139, 246)'
@@ -63,25 +72,16 @@ const data = {
     {"month":"Oct","year":"2017","value":0.78},{"month":"Nov","year":"2017","value":0.80},{"month":"Dec","year":"2017","value":0.76}],
 
     actualData: [{"month":"Jan","year":"2017","value":0.55},{"month":"Feb","year":"2017","value":0.65},{"month":"Mar","year":"2017","value":0.62},
-    {"month":"Apr","year":"2017","value":0.65},{"month":"May","year":"2017","value":0.69},{"month":"Jun","year":"2017","value":0.61},
+    {"month":"Apr","year":"2017","value":0.65},{"month":"May","year":"2017","value": null},{"month":"Jun","year":"2017","value": null},
     {"month":"Jul","year":"2017","value":0.68},{"month":"Aug","year":"2017","value":0.72},{"month":"Sep","year":"2017","value":0.68},
     {"month":"Oct","year":"2017","value":0.78},{"month":"Nov","year":"2017","value":0.67},{"month":"Dec","year":"2017","value":0.56},
   
-    {"month":"Jan","year":"2018","value":0.55},{"month":"Feb","year":"2018","value":0.65},{"month":"Mar","year":"2018","value":0.62},
+    {"month":"Jan","year":"2018","value":0.9},{"month":"Feb","year":"2018","value":0.65},{"month":"Mar","year":"2018","value":0.62},
     {"month":"Apr","year":"2018","value":0.68}
   ]
 }
 
 
-
-
-
-/* DEFINITION SETUP */
-const legendHeight = 0.166 * graphicHeight || 50
-const legendWidth = 0.128 * graphicWidth || 80
-
-const chartHeight = 0.66 * graphicHeight || 200
-const chartWidth = 0.88 * graphicWidth || 550
 
 // if '/' in units name, format xAxisUnitsLabel to have spaces around '/' and unitsLabel (for tooltip) not to
 let indexOfSlash = unitsLabel.indexOf('/');
@@ -98,7 +98,6 @@ if (indexOfSlash > 0) {
 
 const colors = {baseline: baselineColor, target: targetColor, actual: actualTrendColor}
 
-const margin = {left: 50, right: 50, top: 5 + legendHeight, bottom: 0}  //will be used in terms of pixels (convention to call margin)
 
 
 // function that makes '3 digit month'-'4 digit year' into JS date
@@ -116,29 +115,77 @@ const currentMonthIndex = today.getMonth();
 const getDatesOfLast12Months = (monthIndex, currentYear) => {
   const monthsArray = [];
   const datesArray = [];
+  const yrPerMonthObj = {};
   let pointer = monthIndex;
   for (let count = 12; count > 0; count--) {
     if (pointer >= 0) {
       monthsArray.unshift(months[pointer]);
       datesArray.unshift(months[pointer] + '-' + currentYear);
+      yrPerMonthObj[months[pointer]] = currentYear;
     } else {
-      monthsArray.unshift(months[months.length + pointer])
-      datesArray.unshift(months[months.length + pointer] + '-' + (currentYear - 1))
+      monthsArray.unshift(months[months.length + pointer]);
+      datesArray.unshift(months[months.length + pointer] + '-' + (currentYear - 1));
+      yrPerMonthObj[months[months.length + pointer]] = currentYear - 1;
     }
     pointer--;
   }
-  return [monthsArray, datesArray];
+  return [monthsArray, datesArray, yrPerMonthObj];
 };
 
 
-const [last12Months, last12Dates] = getDatesOfLast12Months(currentMonthIndex, currentFullYear);  // formatted [['Dec', 'Jan', ...etc], ['Dec-2017', 'Jan-2018', ...etc]]
+const [last12Months, last12Dates, yrPerMonth] = getDatesOfLast12Months(currentMonthIndex, currentFullYear);  // formatted [['Dec', 'Jan', ...etc], ['Dec-2017', 'Jan-2018', ...etc]]
 
 const sortUpToCurrentMonth = (a, b) => last12Months.indexOf(a.month) - last12Months.indexOf(b.month)
 
+/* DEFINITION SETUP */
 
-const actualData = data.actualData.slice(-12)
-const baselineData = data.baselineData.sort(sortUpToCurrentMonth)
-const targetData = data.targetData.sort(sortUpToCurrentMonth)
+const legendHeight = 0.166 * graphicHeight || 50
+const legendWidth = 0.128 * graphicWidth || 80
+
+const margin = {left: 5, right: 50, top: 5 + legendHeight, bottom: 0}  //will be used in terms of pixels (convention to call margin)
+const tickPadding = 5;
+const tickSize = 10;
+const yAxisWidth = tickPadding + tickSize + getTextWidth(88.88, data.yAxisFont);
+const chartHeight = 0.66 * graphicHeight || 200
+const chartWidth = graphicWidth - (yAxisWidth + (getTextWidth(last12Dates[11], data.xAxisFont) / 1.5));
+
+
+// CALC FROM HISTORY DATA
+let actualData = data.actualData.slice(-12)
+let baselineData = data.baselineData.sort(sortUpToCurrentMonth)
+let targetData = data.targetData.sort(sortUpToCurrentMonth)
+
+// used for determining hovering rect width and tooltip data
+let actualDataWMissingData = actualData.slice(0)
+let baselineDataWMissingData = baselineData.slice(0)
+let targetDataWMissingData = targetData.slice(0)
+
+let baselineIndicesRemoved = 0;
+let targetIndicesRemoved = 0;
+let actualIndicesRemoved = 0;
+
+//remove leading missing data from data
+while (baselineData[0].value === null){
+  baselineData = baselineData.slice(1);
+  baselineIndicesRemoved++;
+}
+
+while (targetData[0].value === null){
+  targetData = targetData.slice(1);
+  targetIndicesRemoved++;
+}
+
+while (actualData[0].value === null){
+  actualData = actualData.slice(1);
+  actualIndicesRemoved++;
+}
+
+console.log(actualIndicesRemoved)
+const changeNullsToZeroes = datum => {if (datum.value === null) datum.value = 0};
+baselineData.forEach(changeNullsToZeroes)
+targetData.forEach(changeNullsToZeroes)
+actualData.forEach(changeNullsToZeroes)
+
 
 const actualTrendsValues = actualData.map(data => data.value);
 const baselineValues = baselineData.map(data => data.value);
@@ -149,9 +196,10 @@ const range = d3.extent(allValues);
 
 
 const highestYtick = range[1] + 0.2;
-const yTickInterval = highestYtick / 4;
+const lowestYtick = range[0] - 0.2;
+const yTickInterval = (highestYtick - lowestYtick) / 4;
 
-const yTickValues = [0, yTickInterval, yTickInterval * 2, yTickInterval * 3, highestYtick];
+const yTickValues = [lowestYtick, (yTickInterval) + lowestYtick, (yTickInterval * 2) + lowestYtick, (yTickInterval * 3) + lowestYtick, highestYtick];
 
 
 const enterData = [
@@ -163,13 +211,15 @@ const enterData = [
 
 
 
-
+console.log('baseline: ', baselineData)
+console.log('target/projected: ', targetData)
+console.log('actual/measured: ', actualData)
 
 
 
 /* SCALES AND GENERATORS */
 const yScale = d3.scaleLinear()  // scaling function
-  .domain([0, 0.2 + range[1]]) //can be whatever you want the axis to cover
+  .domain([lowestYtick, highestYtick]) //can be whatever you want the axis to cover
   .range([chartHeight, 0])
 
 const xScale = d3.scaleTime()  // scaling function
@@ -178,21 +228,21 @@ const xScale = d3.scaleTime()  // scaling function
 
 const yAxisGenerator = d3.axisLeft(yScale)  // axis generator (axis labels can be left, right, top, bottom in relation to line).
   .tickValues(yTickValues)  //Adding 'ticks' gives guidance to D3 for apprx number of ticks you want. It will generate a similar number of ticks that typically makes sense to humans (e.g. 5s or 10s). You can override this and tell it the exact number you want with a setting called tick values
-  .tickPadding(10)  // on axisLeft, moves labels further from ticks
-  .tickSize(10) //plenty more tick settings out there
+  .tickPadding(tickPadding)  // on axisLeft, moves labels further from ticks
+  .tickSize(tickSize) //plenty more tick settings out there
   .tickFormat(d => d3.format(`,.${precision}f`)(d));
 
 const xAxisGenerator = d3.axisBottom(xScale) //axis generator
   .tickFormat(d3.timeFormat('%b-%y'))
 
 const areaPathGenerator = d3.area()  // area generator (generates path element)
-  .x((d, i) => xScale(parseDate(d.month + '-' + actualData[i].year)))  //data points on chart will be determined by scaling func, passing in date-parsed data element (i of dataYears) -- so that it matches up with x-axis scale
+  .x((d, i) => xScale(parseDate(d.month + '-' + yrPerMonth[d.month])))  //data points on chart will be determined by scaling func, passing in date-parsed data element (i of dataYears) -- so that it matches up with x-axis scale
   .y0(chartHeight) //bottom line of area ( where x axis would go for most area charts)
   .y1((d, i) => yScale(d.value)) //top line of area (we'd take d off of the height because y works upside down by default if we did this w/o scale). y(d) is outputting the literal y position the datapoint should be in
   .curve(d3.curveCardinal)
 
 const topBorderPathGenerator = d3.line()
-  .x((d, i) => xScale(parseDate(d.month + '-' + actualData[i].year)))
+  .x((d, i) => xScale(parseDate(d.month + '-' + yrPerMonth[d.month])))
   .y((d, i) => yScale(d.value))
   .curve(d3.curveCardinal)
 
@@ -202,7 +252,7 @@ const topBorderPathGenerator = d3.line()
 /* INITIALIZATION */
 const svg = d3.select('body').append('svg').attr('height', graphicHeight).attr('width', graphicWidth)
 const backgroundRect = svg.append('rect').attr('height', graphicHeight).attr('width', graphicWidth).attr('fill', backgroundColor).attr('stroke', 'black')
-const chartGroup = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`)  //We shifted the whole chart because otherwise the y axis labels were to the left of 0px x, and so we needed to push the axis over (also we wanted to push it further down so it'd be easier to see).
+const chartGroup = svg.append('g').attr('transform', `translate(${margin.left + yAxisWidth}, ${margin.top})`)  //We shifted the whole chart because otherwise the y axis labels were to the left of 0px x, and so we needed to push the axis over (also we wanted to push it further down so it'd be easier to see).
 
 
 
@@ -234,26 +284,31 @@ categoryGroups.append('path')
 
 /* TOOLTIPS */
 // (note event listeners that define many tooltip properties are in datapoints section)
+const leftPaddingOfTooltip = yAxisWidth + (chartWidth * 0.06);
+
 const tooltipRectWidth = chartWidth * 0.19 || 105;
 const tooltipRectHeight = chartHeight * 0.35 || 70;
-const tooltipGroup = d3.select('svg').append('g')
+const tooltipGroup = d3.select('svg').append('g').attr('transform', `translate(${leftPaddingOfTooltip},${legendHeight / 2})`)
 const tooltipRect = tooltipGroup.append('rect')
   .attr('display', 'none')
   .style('position', 'absolute')
   .attr('fill', 'white')
-  .attr('fill-opacity', '.9')
+  .attr('fill-opacity', '0.9')
   .attr('width', tooltipRectWidth)
   .attr('height', tooltipRectHeight)
 
+
+
 // tooltips text
 const tooltipText = tooltipGroup.append('text').attr('dominant-baseline', 'hanging').style('font', tooltipFont)
-const monthTspan = tooltipText.append('tspan').attr('id', 'monthTspan')
+const monthTspan = tooltipText.append('tspan').attr('id', 'monthTspan').attr('y', -2).attr('x', 0)
 tooltipText.selectAll('.value')
   .data(enterData)
   .enter().append('tspan')
     .attr('class', 'value')
     .attr('id', d => `${d.category}Tspan`)
-    .attr('fill', d => d.color);
+    .attr('fill', d => d.color)
+    .attr('x', 0);
 const baselineTspan = d3.select('#baselineTspan');
 const targetTspan = d3.select('#targetTspan');
 const actualTspan = d3.select('#actualTspan');
@@ -305,14 +360,14 @@ dataPointsGroups.selectAll('.circle')
     .attr('fill', (d, i, nodes) => nodes[i].parentNode.__data__.dataPointFillColor)
     .attr('stroke', (d, i, nodes) => nodes[i].parentNode.__data__.dataPointStrokeColor)
     .attr('stroke-width', dataPointStrokeWidth)
-    .attr('cx', (d, i) => xScale(parseDate(d.month + '-' + actualData[i].year)))
+    .attr('cx', (d, i) => xScale(parseDate(d.month + '-' + yrPerMonth[d.month])))
     .attr('cy', d => yScale(d.value))
     .attr('r', dataPointRadius);
 
 // rectangles for each month with event listeners to toggle TOOLTIPS and to toggle datapoints' highlighting
-const monthRectWidth = xScale(parseDate(actualData[1].month + '-' + actualData[1].year)) - xScale(parseDate(actualData[0].month + '-' + actualData[0].year));
+const monthRectWidth = xScale(parseDate(actualDataWMissingData[1].month + '-' + actualDataWMissingData[1].year)) - xScale(parseDate(actualDataWMissingData[0].month + '-' + actualDataWMissingData[0].year));
 chartGroup.selectAll('.monthRect')
-  .data(actualData)
+  .data(actualDataWMissingData)
   .enter().append('rect')
     .attr('class', d => `monthRect ${d.month}Rect`)
     .attr('height', chartHeight)
@@ -321,29 +376,24 @@ chartGroup.selectAll('.monthRect')
     .attr('y', 0)
     .style('opacity', '0')
     .on('mouseover', function (d, i) {
-      let xPos = Number(d3.select(this).attr('x')) + (tooltipRectWidth / 2.5);
-      xPos = xPos < margin.left ? margin.left + 5: xPos;
-      xPos = xPos + tooltipRectWidth > margin.left + chartWidth ? margin.left + chartWidth - tooltipRectWidth : xPos;
-      const yPos = chartHeight + margin.top - tooltipRectHeight;
       d3.selectAll('.' + d.month)
         .attr('r', dataPointRadius * 1.5)
         .attr('stroke-width', dataPointStrokeWidth * 1.5)
       tooltipRect
         .attr('display', 'block')
-        .attr('x', xPos - 5) 
-        .attr('y', yPos - 2)
       monthTspan.text(`${d.month}:`)
-        .attr('x', xPos)
-        .attr('y', yPos - 2)
-      baselineTspan.text(`BL: ${baselineData[i].value} ${unitsLabel}`)
-        .attr('x', xPos)
-        .attr('y', yPos + tooltipPadding)
-      targetTspan.text(`TG: ${targetData[i].value} ${unitsLabel}`)
-        .attr('x', xPos)
-        .attr('y', yPos + (tooltipPadding * 2))
-      actualTspan.text(`AC: ${actualData[i].value} ${unitsLabel}`)
-        .attr('x', xPos)
-        .attr('y', yPos + (tooltipPadding * 3))
+      if (i >= baselineIndicesRemoved){
+        baselineTspan.text(`BL: ${baselineDataWMissingData[i].value} ${unitsLabel}`)
+          .attr('y', tooltipPadding)
+      }
+      if (i >= targetIndicesRemoved) {
+        targetTspan.text(`TG: ${targetDataWMissingData[i].value} ${unitsLabel}`)
+          .attr('y', tooltipPadding * (i >= baselineIndicesRemoved ? 2 : 1))
+      }
+      if (i >= actualIndicesRemoved) {
+        actualTspan.text(`AC: ${actualDataWMissingData[i].value} ${unitsLabel}`)
+          .attr('y', tooltipPadding * (i >= baselineIndicesRemoved && i >= targetIndicesRemoved ? 3 : (i >= targetIndicesRemoved || i >= baselineIndicesRemoved ? 2 : 1) ))
+      }
     })
     .on('mouseout', function(d, i) {
       d3.selectAll('.' + d.month)
@@ -367,7 +417,7 @@ chartGroup.selectAll('.monthRect')
 /* LEGEND */
 const legend = chartGroup.append('g')
   .attr('class', 'legend')
-  .attr('transform', `translate(${0, chartWidth - legendWidth})`)
+  .attr('transform', `translate(${chartWidth - legendWidth}, 0)`)
 
 // legend box
 legend.append('rect')
