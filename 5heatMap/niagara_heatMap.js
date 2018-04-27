@@ -3,16 +3,25 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 ////////// Hard Coded Defs //////////
 
-	const getTextWidth = (text, font) => {
-		const canvas = document.createElement('canvas');
-		const context = canvas.getContext('2d');
-		context.font = font;
-		const width = context.measureText(text).width;
-		d3.select(canvas).remove();
-		return width;
-	};
-	const formatIntoPercentage = d3.format('.0%');
-	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
+const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
+const formatIntoPercentage = d3.format('.0%');
+const getTextWidth = (text, font) => {
+	const canvas = document.createElement('canvas');
+	const context = canvas.getContext('2d');
+	context.font = font;
+	const width = context.measureText(text).width;
+	d3.select(canvas).remove()
+	return width;
+};
+const getTextHeight = font => {
+	let num = '';
+	const indexOfLastDigit = font.indexOf('pt') - 1;
+	for(let i = 0; i <= indexOfLastDigit; i++){
+		if(!isNaN(font[i]) || font[i] === '.') num += font[i];
+	}
+	num = +num;
+	return num * 1.33333333333;
+};
 
 
 
