@@ -350,6 +350,10 @@ function defineFuncForTabSpacing () {
 			name: 'paddingRightOfTooltipHrs',				
 			value: 15
 		},
+		{
+			name: 'paddingBetweenModalInputs',
+			value: 20
+		},
 	/* OTHER */
 		{
 			name: 'overrideDefaultTempPrecisionWFacets',
@@ -508,6 +512,8 @@ function defineFuncForTabSpacing () {
 				data.ttEffWidth;
 			data.settingsBtnSize = data.cellWidth;
 			data.modalWidth = data.gridWidth * 0.75;
+			data.modalInputTitlesWidth = getTextWidth('Min Bin TempMax Bin Temp', data.dropdownTitleFont) + data.paddingBetweenModalInputs;
+
 
 
 
@@ -638,6 +644,7 @@ function defineFuncForTabSpacing () {
 				widget.yearDropdownHovered = false;
 				d3.select(this).style('background-color', widget.yearDropdownHovered ? 'white' : data.dropdownFillColor)
 			})
+			.on('mousedown', unpinAll)
 			.selectAll('option')
 				.data(data.availableYears).enter()
 					.append('option')
@@ -733,7 +740,7 @@ function defineFuncForTabSpacing () {
 			.attr('width', data.gridWidth)
 			.attr('stroke', data.gridStrokeColor)
 			.attr('fill', data.gridFillColor)
-			.style('stroke-weight', '0.5pt')
+			.attr('stroke-width', '0.5pt')
 			
 		
 		const monthlyGroups = gridGroup.selectAll('.monthlyGroup')
@@ -751,7 +758,7 @@ function defineFuncForTabSpacing () {
 				.attr('y', d => yScale(d.thisTempBin.display))
 				.attr('fill', d => colorScale(d.colorScaleVal))
 				.attr('stroke', data.gridStrokeColor)
-				.attr('stroke-width', (d, i) => widget.hoveredRectIndex === i ? '1.5pt' : '0.5pt')
+				.attr('stroke-width', (d, i) => widget.hoveredRectIndex === i ? '2pt' : '0.5pt')
 				.style('fill-opacity', d => d.opacity)
 				.on('mousedown', function(){
 					d3.event.stopPropagation()
@@ -888,6 +895,7 @@ function defineFuncForTabSpacing () {
 			.attr('transform', 	`translate(${(data.graphicWidth / 2) - (data.modalWidth / 2)},${(data.graphicHeight / 2) - (data.modalHeight / 2)})`)
 
 		function removeModal (rerenderAfter) {
+			resetElements(widget.outerDiv, '.modalDiv')
 			widget.svg.select('.modalBackgroundRect')
 				.transition()
 					.attr('height', 0)
@@ -901,6 +909,7 @@ function defineFuncForTabSpacing () {
 		}
 
 		function renderModal () {
+			// modal background rect
 			modalGroup.append('rect')
 				.attr('class', 'modalBackgroundRect')
 				.attr('fill', 'white')
@@ -919,110 +928,157 @@ function defineFuncForTabSpacing () {
 					.attr('y', 0)
 					.attr('height', data.modalHeight)
 					.attr('width', data.modalWidth)
+					.on('end', function () {
+						renderModalDiv()
+					})
 
-			const modalDiv = widget.outerDiv.append('div')
-				.attr('class', 'modalDiv')
-				.style('position', 'absolute')
-				.style('left', (data.paddingLeftOfDropdown + (data.graphicWidth / 2) - (data.modalWidth / 2)) + 'px')
-				.style('top', ((data.graphicHeight / 2) - (data.modalHeight / 2)) + 'px')
-		
-			const form = modalDiv.append('form')
-				.attr('class', 'modalForm')
-				.on('submit', function () {
-					handleSubmit()
-				})
+			function renderModalDiv() {
+
+				//modal div
+				const modalDiv = widget.outerDiv.append('div')
+					.attr('class', 'modalDiv')
+					.style('position', 'absolute')
+					.style('width', data.modalWidth)
+					.style('left', (data.paddingLeftOfDropdown + (data.graphicWidth / 2) - (data.modalWidth / 2)) + 'px')
+					.style('top', ((data.graphicHeight / 2) - (data.modalHeight / 2)) + 'px')
 			
-			form.append('input')
-				.attr('type', 'text')
-				.attr('name', 'minTempBinInput')
-				.attr('value', widget.tempMinSelection)
-				.style('width', data.dropdownWidth / 2 + 'px')
-				.style('border-radius', data.dropdownBorderRadius / 2 + 'px')
-				.style('font', data.dropdownTextFont)
-				.style('color', data.dropdownTextColor)
-				.style('border', `1.5px solid ${data.dropdownStrokeColor}`)
-				.style('padding', '5px')
-				.style('background-color', widget.minInputHovered ? 'white' : data.dropdownFillColor)
-				.on('mouseover', function () {
-					widget.minInputHovered = true;
-					d3.select(this).style('background-color','white')
-				})
-				.on('mouseout', function () {
-					widget.minInputHovered = false;
-					d3.select(this).style('background-color', data.dropdownFillColor)
-				})
-				.on('change', function () {
-					widget.tempMinSelection = +d3.select(this).property("value");
-				});
+				const form = modalDiv.append('form')
+					.attr('class', 'modalForm')
+					.style('position', 'relative')
+					.style('width', data.modalWidth + 'px')
+					.on('submit', function () {
+						handleSubmit()
+					})
+				
+				form.append('h4')
+					.text('Min Bin Temp')
+					.style('color', data.dropdownTitleColor)
+					.style('font', data.dropdownTitleFont)
+					.style('left', ((data.modalWidth - (data.paddingBetweenModalInputs + getTextWidth('Min Bin TempMax Bin Temp', data.dropdownTitleFont))) / 2) + 'px')
+					.style('position', 'absolute')
 
-			form.append('input')
-				.attr('type', 'text')
-				.attr('name', 'maxTempBinInput')
-				.attr('value', widget.tempMaxSelection)
-				.style('width', data.dropdownWidth / 2 + 'px')
-				.style('border-radius', data.dropdownBorderRadius / 2 + 'px')
-				.style('font', data.dropdownTextFont)
-				.style('color', data.dropdownTextColor)
-				.style('border', `1.5px solid ${data.dropdownStrokeColor}`)
-				.style('padding', '5px')
-				.style('background-color', widget.maxInputHovered ? 'white' : data.dropdownFillColor)
-				.on('mouseover', function () {
-					widget.maxInputHovered = true;
-					d3.select(this).style('background-color', 'white')
-				})
-				.on('mouseout', function () {
-					widget.maxInputHovered = false;
-					d3.select(this).style('background-color', data.dropdownFillColor)
-				})
-				.on('change', function () {
-					widget.tempMaxSelection = +d3.select(this).property("value");
-				});
+				form.append('h4')
+					.text('Max Bin Temp')
+					.style('color', data.dropdownTitleColor)
+					.style('font', data.dropdownTitleFont)
+					.style('right', ((data.modalWidth - (data.paddingBetweenModalInputs + getTextWidth('Min Bin TempMax Bin Temp', data.dropdownTitleFont))) / 2) + 'px')
+					.style('position', 'absolute')
 
-			form.append('select')
-				.attr('name', 'numOfBinsSelect')
-				.style('width', data.dropdownWidth / 2 + 'px')
-				.style('border-radius', data.dropdownBorderRadius + 'px')
-				// .style('position', 'absolute')
-				// .style('top', (data.margin.top + getTextHeight(data.dropdownTitleFont) + data.paddingAboveDropdown) + 'px')
-				// .style('left', data.paddingLeftOfDropdown + data.margin.left + 'px')
-				.style('font', data.dropdownTextFont)
-				.style('color', data.dropdownTextColor)
-				.style('border', `1.5px solid ${data.dropdownStrokeColor}`)
-				.style('padding', '5px')
-				.style('background-color', widget.modalDropdownHovered ? 'white' : data.dropdownFillColor)
-				.on('mouseover', function () {
-					widget.modalDropdownHovered = true;
-					d3.select(this).style('background-color', 'white')
-				})
-				.on('mouseout', function () {
-					widget.modalDropdownHovered = false;
-					d3.select(this).style('background-color', data.dropdownFillColor)
-				})
-				.on('change', function(){
-					widget.tempNumOfBins = +d3.event.target.value;
-				})
-				.selectAll('option')
-					.data([12, 11, 10, 9, 8, 7, 6, 5, 4]).enter()
-						.append('option')
-							.property('selected', d => d == widget.tempNumOfBins)
-							.text(d => d);
 
-			form.append('button')
-				.attr('type', 'submit')
-				.text('Submit')
-				.style('border-radius', data.dropdownBorderRadius + 'px')
-				.style('font', data.dropdownTextFont)
-				.style('border', `1.5px solid ${data.dropdownStrokeColor}`)
-				.style('padding', '5px')
-				.style('background-color', widget.modalSubmitHovered ? 'white' : data.dropdownFillColor)
-				.on('mouseover', function () {
-					widget.modalSubmitHovered = true;
-					d3.select(this).style('background-color', 'white')
-				})
-				.on('mouseout', function () {
-					widget.modalSubmitHovered = false;
-					d3.select(this).style('background-color', data.dropdownFillColor)
-				})
+				form.append('input')
+					.attr('type', 'text')
+					.attr('name', 'minTempBinInput')
+					.attr('value', widget.tempMinSelection)
+					.style('width', data.dropdownWidth / 2 + 'px')
+					.style('border-radius', data.dropdownBorderRadius / 2 + 'px')
+					.style('font', data.dropdownTextFont)
+					.style('color', data.dropdownTextColor)
+					.style('border', `1.5px solid ${data.dropdownStrokeColor}`)
+					.style('padding', '5px')
+					.style('background-color', widget.minInputHovered ? 'white' : data.dropdownFillColor)
+					.style('left', ((data.modalWidth - (data.paddingBetweenModalInputs + getTextWidth('Min Bin TempMax Bin Temp', data.dropdownTitleFont))) / 2) + 'px')
+					.style('top', (getTextHeight(data.dropdownTextFont) + 30) + 'px')
+					.style('position', 'absolute')
+					.style('text-align', 'center')
+					.on('mouseover', function () {
+						widget.minInputHovered = true;
+						d3.select(this).style('background-color','white')
+					})
+					.on('mouseout', function () {
+						widget.minInputHovered = false;
+						d3.select(this).style('background-color', data.dropdownFillColor)
+					})
+					.on('change', function () {
+						widget.tempMinSelection = +d3.select(this).property("value");
+					});
+
+				form.append('input')
+					.attr('type', 'text')
+					.attr('name', 'maxTempBinInput')
+					.attr('value', widget.tempMaxSelection)
+					.style('width', data.dropdownWidth / 2 + 'px')
+					.style('border-radius', data.dropdownBorderRadius / 2 + 'px')
+					.style('font', data.dropdownTextFont)
+					.style('color', data.dropdownTextColor)
+					.style('border', `1.5px solid ${data.dropdownStrokeColor}`)
+					.style('padding', '5px')
+					.style('background-color', widget.maxInputHovered ? 'white' : data.dropdownFillColor)
+					.style('right', ((data.modalWidth - (data.paddingBetweenModalInputs + getTextWidth('Min Bin TempMax Bin Temp', data.dropdownTitleFont))) / 2) + 'px')
+					.style('top', (getTextHeight(data.dropdownTextFont) + 30) + 'px')
+					.style('position', 'absolute')
+					.style('text-align', 'center')
+					.on('mouseover', function () {
+						widget.maxInputHovered = true;
+						d3.select(this).style('background-color', 'white')
+					})
+					.on('mouseout', function () {
+						widget.maxInputHovered = false;
+						d3.select(this).style('background-color', data.dropdownFillColor)
+					})
+					.on('change', function () {
+						widget.tempMaxSelection = +d3.select(this).property("value");
+					});
+
+				form.append('h4')
+					.text('Number of Temp Bins')
+					.attr('dominant-baseline', 'hanging')
+					.style('color', data.dropdownTitleColor)
+					.style('font', data.dropdownTitleFont)
+					.style('position', 'absolute')
+					.style('left', ((data.modalWidth / 2) - (getTextWidth('Number of Temp Bins', data.dropdownTitleFont) / 2)) + 'px')
+					.style('top', (getTextHeight(data.dropdownTextFont) + 30 + 20) + 'px')
+
+				form.append('select')
+					.attr('name', 'numOfBinsSelect')
+					.style('width', data.dropdownWidth / 2 + 'px')
+					.style('border-radius', data.dropdownBorderRadius + 'px')
+					.style('top', (getTextHeight(data.dropdownTextFont) + 30 + 20 + 50) + 'px')
+					.style('left', ((data.modalWidth / 2) - (data.dropdownWidth / 4)) + 'px')
+					.style('font', data.dropdownTextFont)
+					.style('color', data.dropdownTextColor)
+					.style('border', `1.5px solid ${data.dropdownStrokeColor}`)
+					.style('padding', '5px')
+					.style('background-color', widget.modalDropdownHovered ? 'white' : data.dropdownFillColor)
+					.style('position', 'absolute')
+					.style('text-align', 'center')
+					.on('mouseover', function () {
+						widget.modalDropdownHovered = true;
+						d3.select(this).style('background-color', 'white')
+					})
+					.on('mouseout', function () {
+						widget.modalDropdownHovered = false;
+						d3.select(this).style('background-color', data.dropdownFillColor)
+					})
+					.on('change', function(){
+						widget.tempNumOfBins = +d3.event.target.value;
+					})
+					.selectAll('option')
+						.data([12, 11, 10, 9, 8, 7, 6, 5, 4]).enter()
+							.append('option')
+								.property('selected', d => d == widget.tempNumOfBins)
+								.text(d => d);
+
+				form.append('button')
+					.attr('type', 'submit')
+					.text('OK')
+					.style('border-radius', data.dropdownBorderRadius + 'px')
+					.style('font', data.dropdownTextFont)
+					.style('border', `1.5px solid ${data.dropdownStrokeColor}`)
+					.style('padding', '5px')
+					.style('background-color', widget.modalSubmitHovered ? 'white' : data.dropdownFillColor)
+					.style('position', 'absolute')
+					.style('text-align', 'center')
+					.style('left', ((data.modalWidth / 2) - ((getTextWidth('OK', data.dropdownTitleFont) + 10) / 2)) + 'px')
+					.style('top', (getTextHeight(data.dropdownTextFont) + 30 + 20 + 50 + 40) + 'px')
+					.on('mouseover', function () {
+						widget.modalSubmitHovered = true;
+						d3.select(this).style('background-color', 'white')
+					})
+					.on('mouseout', function () {
+						widget.modalSubmitHovered = false;
+						d3.select(this).style('background-color', data.dropdownFillColor)
+					})
+			}
 		}
 
 		function toggleModal (rerenderAfter) {
@@ -1035,7 +1091,7 @@ function defineFuncForTabSpacing () {
 			}
 		}
 
-		function handleSubmit () {	//TODO: fix
+		function handleSubmit () {
 			d3.event.preventDefault()
 			if (widget.minTempCategory === widget.tempMinSelection && widget.maxTempCategory === widget.tempMaxSelection && widget.numOfTempBins === widget.tempNumOfBins){
 				toggleModal();
@@ -1068,7 +1124,7 @@ function defineFuncForTabSpacing () {
 				function hoverRect (d, i, nodes, that) {
 					widget.hoveredRectIndex = i;
 					d3.select(that)
-						.attr('stroke-width', '1.5pt')
+						.attr('stroke-width', '2pt')
 					widget.tooltipActive = true;
 					widget.ttMonth = nodes[i].parentNode.__data__.thisMonth +':';
 					widget.ttTemp = d.thisTempBin.display + data.tempUnits;
