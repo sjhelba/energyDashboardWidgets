@@ -2,14 +2,34 @@ tempHistory = [];
 effHistory = [];
 
 const getRandomInt = (min, max) => Math.floor(Math.random()*(max-min+1)+min);
-const tempMin = 25;
-const tempMax = 85;
+// const tempMin = 25;
+// const tempMax = 85;
 
-const effMin = 200;
-const effMax = 1300;
+// const effMin = 200;
+// const effMax = 1300;
 
-const getRandomTemp = () => getRandomInt(tempMin, tempMax);
-const getRandomEff = () => getRandomInt(effMin, effMax) / 1000;
+const tempRangesPerMonth = {
+  Jan: {min: 42, max: 62},
+  Feb: {min: 45, max: 65},
+  Mar: {min: 51, max: 72},
+  Apr: {min: 59, max: 80},
+  May: {min: 67, max: 87},
+  Jun: {min: 72, max: 92},
+  Jul: {min: 74, max: 96},
+  Aug: {min: 75, max: 97},
+  Sep: {min: 69, max: 82},
+  Oct: {min: 61, max: 71},
+  Nov: {min: 51, max: 63},
+  Dec: {min: 42, max: 80}
+};
+const effRangePerTempThreshold = {
+  lowTemp: {min: 200, max: 750},
+  midTemp: {min: 500, max: 1050},
+  highTemp: {min: 700, max: 1300}
+}
+
+const getRandomTemp = month => getRandomInt(tempRangesPerMonth[month].min, tempRangesPerMonth[month].max);
+const getRandomEff = tempRange => getRandomInt(effRangePerTempThreshold[tempRange].min, effRangePerTempThreshold[tempRange].max) / 1000;
 
 
 let jsToday = new Date();
@@ -36,13 +56,13 @@ for (let year = jsThisYear; year >= jsLastYear; year--) {
           year: year,
           month: jsMonths[monthIndex],
           dateHr: [dayOfMonth, hour],
-          value: getRandomTemp()
+          value: getRandomTemp(jsMonths[monthIndex])
         };
         let effEntry = {
           year: year,
           month: jsMonths[monthIndex],
           dateHr: [dayOfMonth, hour],
-          value: getRandomEff()
+          value: getRandomEff(tempEntry.value < 50 ? 'lowTemp' : (tempEntry.value < 75 ? 'midTemp' : 'highTemp'))
         };
 
         // newest entries later in indices
