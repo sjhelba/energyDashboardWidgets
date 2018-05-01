@@ -532,6 +532,7 @@ function defineFuncForTabSpacing () {
 			data.tempBins = [];
 			data.tempBins.push({min: Number.NEGATIVE_INFINITY, max: widget.minTempCategory - 0.00000000000000000000000000000001, display: '<' + data.formatTemp(widget.minTempCategory)})
 			data.tempBinsInterval = (widget.maxTempCategory - widget.minTempCategory) / (widget.numOfTempBins - 2);	// 10 if 12 bins
+			console.log('data.tempBinsInterval', data.tempBinsInterval)
 			for (let i = 0; i <= (widget.numOfTempBins - 3); i++) { // 9 if 12 bins
 				let bin = {};
 				bin.min = widget.minTempCategory + (data.tempBinsInterval * i);
@@ -951,7 +952,7 @@ function defineFuncForTabSpacing () {
 					d3.select(this).style('background-color', data.dropdownFillColor)
 				})
 				.on('change', function () {
-					widget.tempMinSelection = d3.select(this).property("value");
+					widget.tempMinSelection = +d3.select(this).property("value");
 				});
 
 			form.append('input')
@@ -974,7 +975,7 @@ function defineFuncForTabSpacing () {
 					d3.select(this).style('background-color', data.dropdownFillColor)
 				})
 				.on('change', function () {
-					widget.tempMaxSelection = d3.select(this).property("value");
+					widget.tempMaxSelection = +d3.select(this).property("value");
 				});
 
 			form.append('select')
@@ -998,7 +999,7 @@ function defineFuncForTabSpacing () {
 					d3.select(this).style('background-color', data.dropdownFillColor)
 				})
 				.on('change', function(){
-					widget.tempNumOfBins = d3.event.target.value;
+					widget.tempNumOfBins = +d3.event.target.value;
 				})
 				.selectAll('option')
 					.data([12, 11, 10, 9, 8, 7, 6, 5, 4]).enter()
@@ -1022,7 +1023,6 @@ function defineFuncForTabSpacing () {
 					widget.modalSubmitHovered = false;
 					d3.select(this).style('background-color', data.dropdownFillColor)
 				})
-
 		}
 
 		function toggleModal (rerenderAfter) {
