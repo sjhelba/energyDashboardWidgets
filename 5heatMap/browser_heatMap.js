@@ -153,21 +153,21 @@ function defineFuncForTabSpacing () {
 			value: '#D33227',
 			typeSpec: 'gx:Color'
 		},
-		{
-			name: 'minKwTrColor',
-			value: '#1F77B9',
-			typeSpec: 'gx:Color'
-		},
+		// {
+		// 	name: 'minKwTrColor',
+		// 	value: '#1F77B9',
+		// 	typeSpec: 'gx:Color'
+		// },
 		// {
 		// 	name: 'maxKwTrColor',
 		// 	value: 'rgb(21,67,96)',
 		// 	typeSpec: 'gx:Color'
 		// },
-		// {
-		// 	name: 'minKwTrColor',
-		// 	value: '#FFA500',
-		// 	typeSpec: 'gx:Color'
-		// },
+		{
+			name: 'minKwTrColor',
+			value: '#FFA500',
+			typeSpec: 'gx:Color'
+		},
 		{
 			name: 'dropdownFillColor',
 			value: 'white',
@@ -506,6 +506,7 @@ function defineFuncForTabSpacing () {
 			data.legendWidth = + data.paddingRightOfGrid + getTextHeight(data.legendTitleFont) + data.paddingRightOfLegendTitle + data.legendBarWidth + data.paddingRightOfLegendBar + getTextWidth(`>${data.formatKwTr(8.8888)}`, data.legendTicksTextFont);
 			data.gridWidth = data.graphicWidth - (data.yAxisTextAreaWidth + data.legendWidth)
 			data.cellWidth = data.gridWidth / 12;
+			data.hoveredCellWidth = data.cellWidth * 1.25;
 			data.ttMonthWidth = getTextWidth('May:', data.tooltipMonthFont);
 			data.ttTempWidth = getTextWidth(`${data.formatTemp(-888.888)}-${data.formatTemp(88.888)}${data.tempUnits}`, data.tooltipTempFont);
 			data.ttHoursWidth = getTextWidth('888 Hours', data.tooltipHrsFont);
@@ -529,6 +530,7 @@ function defineFuncForTabSpacing () {
 			data.headerAreaHeight = data.dropdownGroupHeight + data.paddingBelowDropdown;
 			data.gridHeight = data.graphicHeight - (data.headerAreaHeight + getTextHeight(data.xAxisTicksTextFont) + data.paddingAboveXAxisTicks);
 			data.cellHeight = data.gridHeight / widget.numOfTempBins;
+			data.hoveredCellHeight = data.cellHeight * 1.25;
 			data.tooltipHeight = getTextHeight(data.tooltipMonthFont) + 10 //5 padding top and bottom
 			data.paddingBetweenLegendTicks = (data.gridHeight - (getTextHeight(data.legendTicksTextFont) * 5)) / 4;
 			data.legendTickSpaceHeight = getTextHeight(data.legendTicksTextFont) + data.paddingBetweenLegendTicks;
@@ -763,8 +765,9 @@ function defineFuncForTabSpacing () {
 				.attr('class', 'cell')
 				.attr('width', data.cellWidth)
 				.attr('height', data.cellHeight)
+				.attr('x', 0)
 				.attr('y', d => yScale(d.thisTempBin.display))
-				.attr('fill', d => colorScale(d.colorScaleVal))
+				.attr('fill', d => d.opacity === 0 ? data.gridFillColor : colorScale(d.colorScaleVal))
 				.attr('stroke', data.gridStrokeColor)
 				.attr('stroke-width', (d, i) => widget.hoveredRectIndex === i ? '2pt' : '0.5pt')
 				.style('fill-opacity', d => d.opacity)
@@ -772,7 +775,11 @@ function defineFuncForTabSpacing () {
 					d3.event.stopPropagation()
 				})
 				.on('click', function (d, i, nodes) {
-					pinRect(d, i, nodes, this);
+					if (widget.pinnedRectIndex === i) {
+						unpinAll();
+					} else {
+						pinRect(d, i, nodes, this);
+					}
 				})
 				.on('mouseover', function (d, i, nodes) {
 					attemptHoverRect(d, i, nodes, this)
@@ -956,7 +963,7 @@ function defineFuncForTabSpacing () {
 					})
 
 			function renderModalDiv() {
-				const verticalModalPadding = (data.modalHeight - ( (data.paddingAboveDropdown * 4) + (getTextHeight(data.modalInputFont) * 3) + (32) + (getTextHeight(data.modalLabelsFont) * 2) )) / 4
+				const verticalModalPadding = (data.modalHeight - ( (data.paddingAboveDropdown * 4) + (getTextHeight(data.modalInputFont) * 3) + (25) + (getTextHeight(data.modalLabelsFont) * 2) )) / 4
 
 				//modal div
 				const modalDiv = widget.outerDiv.append('div')
@@ -970,8 +977,18 @@ function defineFuncForTabSpacing () {
 					.attr('class', 'modalForm')
 					.style('position', 'relative')
 					.style('width', data.modalWidth + 'px')
+					.style('height', data.modalHeight + 'px')
 					.on('submit', function () {
 						handleSubmit()
+					})
+					.on('reset', function () {
+						d3.select(this).select('.maxTempBinInput')
+							.attr('value', 80)
+						d3.select(this).select('.minTempBinInput')
+							.attr('value', 30)
+						widget.tempMinSelection = 30;
+						widget.tempMaxSelection = 80;
+						widget.tempNumOfBins = 12;
 					})
 				
 				// ROW ONE
@@ -995,7 +1012,7 @@ function defineFuncForTabSpacing () {
 
 				// ROW TWO
 				form.append('input')
-					.attr('class', 'formElement')
+					.attr('class', 'formElement minTempBinInput')
 					.attr('type', 'text')
 					.attr('name', 'minTempBinInput')
 					.attr('value', widget.tempMinSelection)
@@ -1023,7 +1040,7 @@ function defineFuncForTabSpacing () {
 					});
 
 				form.append('input')
-					.attr('class', 'formElement')
+					.attr('class', 'formElement maxTempBinInput')
 					.attr('type', 'text')
 					.attr('name', 'maxTempBinInput')
 					.attr('value', widget.tempMaxSelection)
@@ -1098,30 +1115,59 @@ function defineFuncForTabSpacing () {
 					.attr('class', 'formElement')
 					.attr('type', 'submit')
 					.text('OK')
-					.style('width', getTextWidth('OK', data.modalInputFont) + 20 + 'px')
+					.style('width', getTextWidth('OK', data.modalInputFont) + 30 + 'px')
 					.style('border-radius', ((getTextWidth('OK', data.modalInputFont) + 20) * 0.1) + 'px')
 					.style('font', data.modalInputFont)
 					.style('font-weight', 'bold')
 					.style('border', widget.modalSubmitHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : 'none')
-					.style('padding', '7px')
+					.style('padding-top', '2.5px')
+					.style('padding-bottom', '2.5px')
 					.style('background-color', data.hoveredInputStrokeColor)
 					.style('position', 'absolute')
 					.style('text-align', 'center')
-					.style('left', ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 20) / 2)) + 'px')
+					.style('left', ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
 					.style('top', ( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
 					.on('mouseover', function () {
 						widget.modalSubmitHovered = true;
 						d3.select(this)
-							.style('border', widget.modalSubmitHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : 'none')
-							.style('left', (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 20) / 2)) - 0.75) + 'px')
+							.style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
+							.style('left', (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) - 0.75) + 'px')
 							.style('top', (( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px')
 						})
 					.on('mouseout', function () {
 						widget.modalSubmitHovered = false;
 						d3.select(this)
-							.style('border', widget.modalSubmitHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : 'none')
-							.style('left', ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 20) / 2)) + 'px')
+							.style('border', 'none')
+							.style('left', ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
 							.style('top', ( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
+						})
+
+				form.append('button')
+					.attr('class', 'formElement')
+					.attr('type', 'reset')
+					.text('reset')
+					.style('width', getTextWidth('reset', data.modalInputFont) + 20 + 'px')
+					.style('border', 'none')
+					.style('border-radius', ((getTextWidth('reset', data.modalInputFont) + 10) * 0.1) + 'px')
+					.style('font', data.modalInputFont)
+					.style('padding-top', '2px')
+					.style('padding-bottom', '2px')
+					.style('background-color', data.tooltipFillColor)
+					.style('position', 'absolute')
+					.style('text-align', 'center')
+					.style('left', (data.margin.left + 0.75) + 'px')
+					.style('bottom', (data.margin.bottom) + 'px')
+					.on('mouseover', function () {
+						d3.select(this)
+							.style('border', `1.5px solid ${data.tooltipFillColor}`)
+							.style('left', (data.margin.left) + 'px')
+							.style('bottom', (data.margin.bottom - 0.75) + 'px')	
+						})
+					.on('mouseout', function () {
+						d3.select(this)
+							.style('border', 'none')
+							.style('left', (data.margin.left + 0.75) + 'px')
+							.style('bottom', (data.margin.bottom) + 'px')
 						})
 
 				widget.outerDiv.selectAll('.formElement')
@@ -1164,15 +1210,29 @@ function defineFuncForTabSpacing () {
 
 
 
-
+			
 		// ********************************************* FUNCS ******************************************************* //
 				function attemptHoverRect (d, i, nodes, that) {
 					if (widget.pinnedRectIndex === 'none') hoverRect(d, i, nodes, that)
 				}
 				function hoverRect (d, i, nodes, that) {
+					unhoverRects();
 					widget.hoveredRectIndex = i;
 					d3.select(that)
 						.attr('stroke-width', '2pt')
+						.transition()
+							.duration(100)
+							.attr('width', data.hoveredCellWidth)
+							.attr('height', data.hoveredCellHeight)
+							.attr('x', (data.cellWidth - data.hoveredCellWidth) / 2)
+							.attr('y', d => yScale(d.thisTempBin.display) + ((data.cellHeight - data.hoveredCellHeight) / 2))
+						.transition()
+							.duration(100)
+							.attr('width', data.cellWidth)
+							.attr('height', data.cellHeight)
+							.attr('x', 0)
+							.attr('y', d => yScale(d.thisTempBin.display))
+
 					widget.tooltipActive = true;
 					widget.ttMonth = nodes[i].parentNode.__data__.thisMonth +':';
 					widget.ttTemp = d.thisTempBin.display + data.tempUnits;
@@ -1188,10 +1248,12 @@ function defineFuncForTabSpacing () {
 			function attemptUnhoverRects (d, i, nodes, that) {
 				if (widget.pinnedRectIndex === 'none') unhoverRects(d, i, nodes, that)
 			}
-			function unhoverRects (d, i, nodes, that) {
+			function unhoverRects () {
 				widget.hoveredRectIndex = 'none';
 				widget.svg.selectAll('.cell')
 					.attr('stroke-width', '0.5pt')
+
+
 				widget.tooltipActive = false;
 				widget.ttMonth = '';
 				widget.ttTemp = '';
