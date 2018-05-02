@@ -521,7 +521,7 @@ function defineFuncForTabSpacing () {
 				data.ttEffWidth;
 			data.settingsBtnSize = data.cellWidth * 0.6;
 			data.modalWidth = data.gridWidth * 0.6;
-			const modalInputTitlesWidth = getTextWidth('Min Bin TempMax Bin Temp', data.modalLabelsFont);
+			const modalInputTitlesWidth = getTextWidth('Min TemperatureMax Temperature', data.modalLabelsFont);
 			data.paddingBetweenModalInputs = (data.modalWidth - modalInputTitlesWidth) / 3;
 
 
@@ -554,14 +554,14 @@ function defineFuncForTabSpacing () {
 				bin.min = widget.minTempCategory + (data.tempBinsInterval * i);
 				bin.max = (bin.min + data.tempBinsInterval) - 0.00000000000000000000000000000000000001;
 				bin.display = data.formatTemp(bin.min) + '-' + data.formatTemp(((bin.min + data.tempBinsInterval) - smallestNumOfPrecision));
-				data.tempBins.push(bin)
+				data.tempBins.push(bin);
 			}
 			data.tempBins.push({min: widget.maxTempCategory, max: Number.POSITIVE_INFINITY, display: '≥' + data.formatTemp(widget.maxTempCategory)})
 			console.log('tempBins: ', data.tempBins)
 
 			// legend range and ticks
-			data.legendRange = [data.minKwTrCategory, data.maxKwTrCategory]
-			const legendInterval = (data.maxKwTrCategory - data.minKwTrCategory) / 4 // to get 5 ticks
+			data.legendRange = [data.minKwTrCategory, data.maxKwTrCategory];
+			const legendInterval = (data.maxKwTrCategory - data.minKwTrCategory) / 4; // to get 5 ticks
 			data.legendTicks = [data.maxKwTrCategory, data.minKwTrCategory + (legendInterval * 3), data.minKwTrCategory + (legendInterval * 2), data.minKwTrCategory + (legendInterval), data.minKwTrCategory]
 				.map((el, i) => {
 					el = data.formatKwTr(el);
@@ -886,16 +886,6 @@ function defineFuncForTabSpacing () {
 
 
 		// ********************************************* MODAL ******************************************************* //
-// make box of background color with slight opacity to blur background and then add modal on top
-		const overlay = widget.svg.append('rect')
-			.attr('height', data.jqHeight)
-			.attr('width', data.jqWidth)
-			.attr('fill', widget.modalActive ? data.backgroundColor : 'none')
-			.style('opacity', 0.65)
-			.on('mousedown', function(){
-				d3.event.stopPropagation()
-				toggleModal()
-			})
 
 		const halfOfDifferenceInSizeForPosGrowth = (((data.settingsBtnSize * 1.2) - (data.settingsBtnSize)) / 2)
 		const settingsButton = widget.svg.append('svg:image')
@@ -927,6 +917,7 @@ function defineFuncForTabSpacing () {
 
 		function removeModal (rerenderAfter) {
 			resetElements(widget.outerDiv, '.modalDiv')
+			resetElements(widget.outerDiv, '.overlayDiv')
 			widget.svg.select('.modalBackgroundRect')
 				.transition()
 					.attr('height', 0)
@@ -940,11 +931,27 @@ function defineFuncForTabSpacing () {
 		}
 
 		function renderModal () {
+			// make box of background color with slight opacity to blur background and then add modal on top
+			const overlay = widget.outerDiv.append('div')
+				.attr('class', 'overlayDiv')
+				.style('position', 'absolute')
+				.style('top', data.margin.top + 'px')
+				.style('height', data.jqHeight + 'px')
+				.style('width', data.jqWidth + 'px')
+				.style('background-color', widget.modalActive ? data.backgroundColor : 'none')
+				.style('opacity', 0)
+				.on('mousedown', function(){
+					d3.event.stopPropagation()
+					toggleModal()
+				})
+				.transition()
+					.style('opacity', 0.7)
+
 			// modal background rect
 			modalGroup.append('rect')
 				.attr('class', 'modalBackgroundRect')
 				.attr('fill', data.backgroundColor)
-				.attr('stroke', 'grey')
+				.attr('stroke', 'black')
 				.attr('stroke-width', '2pt')
 				.attr('rx', data.modalWidth * 0.05)
 				.on('mousedown', function(){d3.event.stopPropagation()})
@@ -979,7 +986,12 @@ function defineFuncForTabSpacing () {
 					.style('width', data.modalWidth + 'px')
 					.style('height', data.modalHeight + 'px')
 					.on('submit', function () {
-						handleSubmit()
+						d3.event.preventDefault()
+						if (widget.tempMaxSelection - widget.tempMinSelection < 20) {
+							alert('Temperature range between minimum and maximum must be at least 20°. Please input a lower minimum or higher maximum temperature.')
+						} else {
+							handleSubmit()
+						}
 					})
 					.on('reset', function () {
 						d3.select(this).select('.maxTempBinInput')
@@ -994,7 +1006,7 @@ function defineFuncForTabSpacing () {
 				// ROW ONE
 				form.append('h4')
 					.attr('class', 'formElement')
-					.text('Min Bin Temp')
+					.text('Min Temperature')
 					.style('color', data.dropdownTitleColor)
 					.style('font', data.modalLabelsFont)
 					.style('left', (data.paddingBetweenModalInputs) + 'px')
@@ -1003,7 +1015,7 @@ function defineFuncForTabSpacing () {
 
 				form.append('h4')
 					.attr('class', 'formElement')
-					.text('Max Bin Temp')
+					.text('Max Temperature')
 					.style('color', data.dropdownTitleColor)
 					.style('font', data.modalLabelsFont)
 					.style('right', (data.paddingBetweenModalInputs) + 'px')
@@ -1070,12 +1082,12 @@ function defineFuncForTabSpacing () {
 				// ROW THREE
 				form.append('h4')
 					.attr('class', 'formElement')
-					.text('Number of Temp Bins')
+					.text('# of Temperature Bins')
 					.attr('dominant-baseline', 'hanging')
 					.style('color', data.dropdownTitleColor)
 					.style('font', data.modalLabelsFont)
 					.style('position', 'absolute')
-					.style('left', ((data.modalWidth / 2) - (getTextWidth('Number of Temp Bins', data.modalLabelsFont) / 2)) + 'px')
+					.style('left', ((data.modalWidth / 2) - (getTextWidth('# of Temperature Bins', data.modalLabelsFont) / 2)) + 'px')
 					.style('top', ( (verticalModalPadding * 2) + (getTextHeight(data.modalLabelsFont)) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 2) ) + 'px')
 
 				// ROW FOUR
@@ -1125,8 +1137,8 @@ function defineFuncForTabSpacing () {
 					.style('background-color', data.hoveredInputStrokeColor)
 					.style('position', 'absolute')
 					.style('text-align', 'center')
-					.style('left', ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
-					.style('top', ( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
+					.style('left', widget.modalSubmitHovered ? (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) - 0.75) + 'px' : ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
+					.style('top', widget.modalSubmitHovered ? (( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px' : ( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
 					.on('mouseover', function () {
 						widget.modalSubmitHovered = true;
 						d3.select(this)
@@ -1177,7 +1189,6 @@ function defineFuncForTabSpacing () {
 
 		function toggleModal (rerenderAfter) {
 			widget.modalActive = !widget.modalActive;
-			overlay.attr('fill', widget.modalActive ? data.backgroundColor : 'none')
 			if (widget.modalActive) {
 				renderModal()
 			} else {
@@ -1186,7 +1197,6 @@ function defineFuncForTabSpacing () {
 		}
 
 		function handleSubmit () {
-			d3.event.preventDefault()
 			if (widget.minTempCategory === widget.tempMinSelection && widget.maxTempCategory === widget.tempMaxSelection && widget.numOfTempBins === widget.tempNumOfBins){
 				toggleModal();
 			} else {
