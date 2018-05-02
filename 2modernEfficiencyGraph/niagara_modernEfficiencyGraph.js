@@ -580,7 +580,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                 .attr('class', d => `monthRect ${d.month}Rect`)
                 .attr('height', data.chartHeight)
                 .attr('width', monthRectWidth)
-                .attr('x', d => xScale(parseDate(d.month + '-' + d.year)) - (monthRectWidth / 2))
+                .attr('x', d => xScale(parseDate(d.month + '-' + data.yrPerMonth[d.month])) - (monthRectWidth / 2))
                 .attr('y', 20)      // 20 rather than 0 so as to include the x axis tick values
                 .style('opacity', '0')
                 .on('mouseover', function (d, i) {

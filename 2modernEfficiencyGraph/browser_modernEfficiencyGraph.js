@@ -134,7 +134,7 @@ const getDatesOfLast12Months = (monthIndex, currentYear) => {
 
 
 const [last12Months, last12Dates, yrPerMonth] = getDatesOfLast12Months(currentMonthIndex, currentFullYear);  // formatted [['Dec', 'Jan', ...etc], ['Dec-2017', 'Jan-2018', ...etc]]
-
+console.log('last12dates', last12Dates)
 const sortUpToCurrentMonth = (a, b) => last12Months.indexOf(a.month) - last12Months.indexOf(b.month)
 
 /* DEFINITION SETUP */
@@ -372,7 +372,7 @@ chartGroup.selectAll('.monthRect')
     .attr('class', d => `monthRect ${d.month}Rect`)
     .attr('height', chartHeight)
     .attr('width', monthRectWidth)
-    .attr('x', d => xScale(parseDate(d.month + '-' + d.year)) - (monthRectWidth / 2))
+    .attr('x', d => xScale(parseDate(d.month + '-' + yrPerMonth[d.month])) - (monthRectWidth / 2))
     .attr('y', 0)
     .style('opacity', '0')
     .on('mouseover', function (d, i) {
