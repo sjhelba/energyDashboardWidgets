@@ -531,7 +531,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
         chartGroup.append('g')
             .attr('class', 'axisX')
             .attr('transform', `translate(0,${data.chartHeight})`)
-            .call(xAxisGenerator);
+            .call(xAxisGenerator)
+                .selectAll('text')
+                    .attr('text-anchor', 'end')
+                    .attr('transform', 'rotate(-25)');
   
         svg.selectAll('.axisY text').style('fill', data.yAxisFontColor).style('font', data.yAxisFont);
         svg.selectAll('.axisX text').style('fill', data.xAxisFontColor).style('font', data.xAxisFont);
@@ -589,7 +592,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                         .attr('stroke-width', data.dataPointStrokeWidth * 1.5);
                     tooltipRect
                         .attr('display', 'block')
-                    monthTspan.text(`${d.month}:`)
+                    monthTspan.text(`${d.month + ' ' + data.yrPerMonth[d.month]}:`)
                     if (i >= data.baselineIndicesRemoved){
                       baselineTspan.text(`B: ${d3.format(`,.${data.precision}f`)(data.baselineDataWMissingData[i].value)} ${data.unitsLabel}`)
                         .attr('y', data.tooltipPadding);

@@ -326,7 +326,10 @@ chartGroup.append('g')
 chartGroup.append('g')
   .attr('class', 'axisX')
   .attr('transform', `translate(0,${chartHeight})`)
-  .call(xAxisGenerator);
+  .call(xAxisGenerator)
+    .selectAll('text')
+      .attr('text-anchor', 'end')
+      .attr('transform', 'rotate(-25)');
 
 d3.selectAll('.axisY text').style('fill', yAxisFontColor).style('font', yAxisFont)
 d3.selectAll('.axisX text').style('fill', xAxisFontColor).style('font', xAxisFont)
@@ -381,17 +384,17 @@ chartGroup.selectAll('.monthRect')
         .attr('stroke-width', dataPointStrokeWidth * 1.5)
       tooltipRect
         .attr('display', 'block')
-      monthTspan.text(`${d.month}:`)
+      monthTspan.text(`${d.month + ' ' + yrPerMonth[d.month]}:`)
       if (i >= baselineIndicesRemoved){
-        baselineTspan.text(`BL: ${baselineDataWMissingData[i].value} ${unitsLabel}`)
+        baselineTspan.text(`BL: ${d3.format(`,.${precision}f`)(baselineDataWMissingData[i].value)} ${unitsLabel}`)
           .attr('y', tooltipPadding)
       }
       if (i >= targetIndicesRemoved) {
-        targetTspan.text(`TG: ${targetDataWMissingData[i].value} ${unitsLabel}`)
+        targetTspan.text(`TG: ${d3.format(`,.${precision}f`)(targetDataWMissingData[i].value)} ${unitsLabel}`)
           .attr('y', tooltipPadding * (i >= baselineIndicesRemoved ? 2 : 1))
       }
       if (i >= actualIndicesRemoved) {
-        actualTspan.text(`AC: ${actualDataWMissingData[i].value} ${unitsLabel}`)
+        actualTspan.text(`AC: ${d3.format(`,.${precision}f`)(actualDataWMissingData[i].value)} ${unitsLabel}`)
           .attr('y', tooltipPadding * (i >= baselineIndicesRemoved && i >= targetIndicesRemoved ? 3 : (i >= targetIndicesRemoved || i >= baselineIndicesRemoved ? 2 : 1) ))
       }
     })
