@@ -1,65 +1,66 @@
-////ONLY FOR BROWSER /////
 
+////ONLY FOR BROWSER /////
+/* global blendedRates, baselineData, projectedData, measuredData */
 const widget = {};
 
 
 ////////// Hard Coded Defs //////////
-const small = {width: 880, height: 440};
-const medium = {width: 1200, height: 700};
-const large = {width: 1600, height: 850};	
+const small = { width: 880, height: 440 };
+const medium = { width: 1200, height: 700 };
+const large = { width: 1600, height: 850 };
 const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 const getTextWidth = (text, font) => {
 	const canvas = document.createElement('canvas');
 	const context = canvas.getContext('2d');
 	context.font = font;
 	const width = context.measureText(text).width;
-	d3.select(canvas).remove()
+	d3.select(canvas).remove();
 	return width;
 };
 const getTextHeight = font => {
-  let num = '';
-  const indexOfLastDigit = font.indexOf('pt') - 1;
-  for(let i = 0; i <= indexOfLastDigit; i++){
-    if(!isNaN(font[i]) || font[i] === '.') num += font[i];
+	let num = '';
+	const indexOfLastDigit = font.indexOf('pt') - 1;
+	for (let i = 0; i <= indexOfLastDigit; i++) {
+		if (!isNaN(font[i]) || font[i] === '.') num += font[i];
 	}
 	num = +num;
-  return num * 1.33333333333;
+	return num * 1.33333333333;
 };
 
 const unhoveredOpacity = 0.25;
 const barsTransitionDuration = 1500;
 
-const categories = [{name: 'baseline', displayName: 'Baseline'}, {name: 'projected', displayName: 'Projected'}, {name: 'measured', displayName: 'Measured'}];
+const categories = [{ name: 'baseline', displayName: 'Baseline' }, { name: 'projected', displayName: 'Projected' }, { name: 'measured', displayName: 'Measured' }];
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const indexOfMonth = {Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11}
+const indexOfMonth = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
 
 const getNextNiceVal = uglyMaxNum => {
-	const innerFunc = (origVal) => {
+	const innerFunc = origVal => {
 		origVal = Math.ceil(origVal);
 
 		let arr = origVal.toString().split('').map(str => +str);
-		const digits = arr.length
+		const digits = arr.length;
 		if (digits === 1) return origVal >= 5 ? 10 : 5;
-		for (let i = 2; i < digits; i++){
+		for (let i = 2; i < digits; i++) {
 			arr[i] = 0;
 		}
-		if (arr[1] < 5){
+		if (arr[1] < 5) {
 			arr[1] = '5';
 		} else {
 			arr[0] = arr[0] + 1;
 			arr[1] = '0';
 		}
 
-		return arr.join('')
+		return arr.join('');
 	};
 	return innerFunc(uglyMaxNum - 1) === uglyMaxNum ? uglyMaxNum : innerFunc(uglyMaxNum);
 };
 
 const getRateForDate = (selectedMonth, selectedYear, rates) => {
-	for(let i = rates.length - 1; i >= 0; i--) {
-		let pointedRate = rates[i]
-		if ( pointedRate.year < selectedYear || (pointedRate.year === selectedYear && indexOfMonth[pointedRate.month] <= indexOfMonth[selectedMonth]) ) return pointedRate.rate;
-	};
+	for (let i = rates.length - 1; i >= 0; i--) {
+		let pointedRate = rates[i];
+		if (pointedRate.year < selectedYear || (pointedRate.year === selectedYear && indexOfMonth[pointedRate.month] <= indexOfMonth[selectedMonth])) return pointedRate.rate;
+	}
 	return 0;
 };
 
@@ -158,40 +159,40 @@ const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rate
 	categoriesData.forEach((categoryData, categoryIndex) => {
 		categoryData.forEach(monthlyDatum => {
 			// if (months set to all OR current month matches) && (category is baseline or projected OR year matches)
-			if((month === 'All' || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)){
+			if ((month === 'All' || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)) {
 				equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
 					// set kwh vals
 					equipmentGroup.kwh[categoryIndex].value = monthlyDatum.equipmentKwhs[equipmentGroup.type] || 0;	//default to 0 if missing data for date
 					// set utility rates for baseline and measured
 					if (categoryIndex !== 1) {
-						const monthlyDatumRate = getRateForDate(monthlyDatum.month, monthlyDatum.year, rates)
+						const monthlyDatumRate = getRateForDate(monthlyDatum.month, monthlyDatum.year, rates);
 						if (month === 'All') {
-							let currentObj = equipmentRatesAndWeights[egIndex].utilityRate[categoryIndex].ratesAndWeights
+							let currentObj = equipmentRatesAndWeights[egIndex].utilityRate[categoryIndex].ratesAndWeights;
 							if (!currentObj[monthlyDatum.rate]) currentObj[monthlyDatumRate] = 0;
-							currentObj[monthlyDatumRate]++
+							currentObj[monthlyDatumRate]++;
 						} else {
 							equipmentGroup.utilityRate[categoryIndex].rate = monthlyDatumRate;
 						}
 					}
-				})
+				});
 				// set system level trh vals for baseline and measured
 				if (categoryIndex !== 1) categoryDataForDate[categoryIndex].trh = monthlyDatum.trh || 0;	//default to 0 if missing data for date
 			}
-		})
-  })
-  equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
+		});
+	});
+	equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
 		//set accum kwh vals
-    equipmentGroup.kwh.forEach((category, catIndex) => {
-      category.accumulated += category.value;
-      if (egIndex > 0) {
-        category.accumulated += equipmentDataForDate[egIndex - 1].kwh[catIndex].accumulated;
+		equipmentGroup.kwh.forEach((category, catIndex) => {
+			category.accumulated += category.value;
+			if (egIndex > 0) {
+				category.accumulated += equipmentDataForDate[egIndex - 1].kwh[catIndex].accumulated;
 			}
 			categoryDataForDate[catIndex].kwh = category.accumulated;
-		})
+		});
 		//CALCULATE WEIGHTED AVERAGE RATES IF MULTIPLE MONTHS
 		if (month === 'All') {
 			equipmentRatesAndWeights[egIndex].utilityRate.forEach((category, catIndex) => {
-				if (catIndex !== 1){
+				if (catIndex !== 1) {
 					const rates = Object.keys(category.ratesAndWeights);
 					if (rates.length === 1) {
 						equipmentGroup.utilityRate[catIndex].rate = +rates[0];
@@ -208,8 +209,8 @@ const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rate
 						equipmentGroup.utilityRate[catIndex].rate = total;
 					}
 				}
-			})
-		};
+			});
+		}
 		//set projected rates to be equal to the baseline rates
 		equipmentGroup.utilityRate[1].rate = equipmentGroup.utilityRate[0].rate;
 		//set costs, accum costs, and system level rates
@@ -218,14 +219,14 @@ const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rate
 			category.accumulatedCost = category.rate * equipmentGroup.kwh[catIndex].accumulated;
 			categoryDataForDate[catIndex].cost = category.accumulatedCost;
 			categoryDataForDate[catIndex].rate = category.rate;
-		})
-  })
-	return {categoryDataForDate, equipmentDataForDate};
+		});
+	});
+	return { categoryDataForDate, equipmentDataForDate };
 };
 
 
 ////////////////////////////////////////////////////////////////
-	// Define Widget Constructor & Exposed Properties
+// Define Widget Constructor & Exposed Properties
 ////////////////////////////////////////////////////////////////
 const properties = [
 	{
@@ -271,22 +272,22 @@ const properties = [
 		name: 'projectedColor',
 		value: '#FF6633',
 		typeSpec: 'gx:Color'
-  },
+	},
 	{
 		name: 'unitsColor',
 		value: 'black',
 		typeSpec: 'gx:Color'
-  },
-  {
+	},
+	{
 		name: 'toolTitleColor',
 		value: '#333333',
 		typeSpec: 'gx:Color'
-  },
-  {
+	},
+	{
 		name: 'dropdownTextColor',
 		value: 'black',
 		typeSpec: 'gx:Color'
-  },
+	},
 	{
 		name: 'tickTextColor',
 		value: 'black',
@@ -364,18 +365,18 @@ const properties = [
 
 
 ////////////////////////////////////////////////////////////////
-	// /* SETUP DEFINITIONS AND DATA */
+// /* SETUP DEFINITIONS AND DATA */
 ////////////////////////////////////////////////////////////////
 const today = new Date();
 const thisYear = today.getFullYear();
 
-	// FROM USER // 
+// FROM USER //
 const data = {};
 properties.forEach(prop => data[prop.name] = prop.value);
 
-	// FROM JQ //	// TODO: change to actual JQ dimensions for Niagara
+// FROM JQ //	// TODO: change to actual JQ dimensions for Niagara
 //small
-const jqWidth = 881;	
+const jqWidth = 881;
 const jqHeight = 441;
 // //med
 // const jqWidth = 1201;	
@@ -391,19 +392,19 @@ data.activeEquipmentGroups = [
 	'CDPs',
 	'CTFs',
 ];
-if (!data.includeCTFs) {data.activeEquipmentGroups.splice(4, 1)}
-if (!data.includeCDPs) {data.activeEquipmentGroups.splice(3, 1)}
-if (!data.includeSCPs) {data.activeEquipmentGroups.splice(2, 1)}
-if (!data.includePCPs) {data.activeEquipmentGroups.splice(1, 1)}
+if (!data.includeCTFs) { data.activeEquipmentGroups.splice(4, 1) }
+if (!data.includeCDPs) { data.activeEquipmentGroups.splice(3, 1) }
+if (!data.includeSCPs) { data.activeEquipmentGroups.splice(2, 1) }
+if (!data.includePCPs) { data.activeEquipmentGroups.splice(1, 1) }
 
 
 
 
 
 
-	// SIZING //
-function chooseSize (jqH, jqW) {
-	if(jqW < 1200 || jqH < 700) {
+// SIZING //
+function chooseSize(jqH, jqW) {
+	if (jqW < 1200 || jqH < 700) {
 		return [small, 'small'];		//880, 440
 	} else if (jqW < 1600 || jqH < 850) {
 		return [medium, 'medium'];		// 1200, 700
@@ -414,7 +415,7 @@ function chooseSize (jqH, jqW) {
 const widgetDimensions = chooseSize(jqHeight, jqWidth)[0];
 data.widgetSize = chooseSize(jqHeight, jqWidth)[1];
 
-data.margin = {top: 5, left: 5, right: 0, bottom: 0};
+data.margin = { top: 5, left: 5, right: 0, bottom: 0 };
 data.graphicHeight = widgetDimensions.height - (data.margin.top + data.margin.bottom);
 data.graphicWidth = widgetDimensions.width - (data.margin.left + data.margin.right);
 //fonts
@@ -465,7 +466,7 @@ if (data.widgetSize === 'small') {
 
 
 
-	// GLOBALS PER INSTANCE //
+// GLOBALS PER INSTANCE //
 data.paddingBetweenTooltipText = data.widgetSize === 'large' ? 5 : (data.widgetSize === 'medium' ? 4 : 3);
 data.tooltipPadding = data.widgetSize === 'large' ? 12 : (data.widgetSize === 'medium' ? 7 : 5);
 data.paddingAfterLegendCat = 5;
@@ -488,68 +489,68 @@ if (!widget.monthDropDownSelected) widget.monthDropDownSelected = 'All';
 if (!widget.yearDropDownSelected) widget.yearDropDownSelected = thisYear;
 if (!widget.activeChartType) widget.activeChartType = 'stacked';	//alternative selection 'grouped'
 
-	// FAKE DATA //					// TODO: gather real data for Niagara
+// FAKE DATA //					// TODO: gather real data for Niagara
 data.blendedRates = blendedRates;
 data.baselineData = baselineData;
 data.projectedData = projectedData;
 data.measuredData = measuredData;
 data.currencySymbol = '$';
-data.currencyPrecision = '2'
+data.currencyPrecision = '2';
 
-	// CALCULATED DEFS //
+// CALCULATED DEFS //
 data.utilityRate = data.blendedRates[data.blendedRates.length - 1].rate;
-data.formatCurrency = d3.format(`,.${data.currencyPrecision}f`)
-data.formatAvgCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`)
+data.formatCurrency = d3.format(`,.${data.currencyPrecision}f`);
+data.formatAvgCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`);
 
-	//get dataForDate
-widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates)
+//get dataForDate
+widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates);
 
 // eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
 data.availableDates = {};
 data.measuredData.forEach(date => {
 	if (!data.availableDates[date.year]) data.availableDates[date.year] = [];
 	data.availableDates[date.year].push(date.month);
-})
-data.availableYears = Object.keys(data.availableDates).sort((a,b) => b - a);
+});
+data.availableYears = Object.keys(data.availableDates).sort((a, b) => b - a);
 data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
 
 
 // Funcs utilizing widget
 widget.updateDateWidgetRendering = () => {
-	widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates)
+	widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates);
 	renderWidget();
-}
+};
 
 widget.dropdownYearChanged = () => {
 	widget.yearDropDownSelected = d3.event.target.value;
 	widget.monthDropDownSelected = 'All';
-	widget.updateDateWidgetRendering()
+	widget.updateDateWidgetRendering();
 };
 
 widget.dropdownMonthChanged = () => {
 	widget.monthDropDownSelected = d3.event.target.value;
-	widget.updateDateWidgetRendering()
+	widget.updateDateWidgetRendering();
 };
 
 widget.resetElements = elementsToReset => {
-	const selectionForCheck = widget.svg.selectAll(elementsToReset)
-  if (!selectionForCheck.empty()) selectionForCheck.remove();
+	const selectionForCheck = widget.svg.selectAll(elementsToReset);
+	if (!selectionForCheck.empty()) selectionForCheck.remove();
 };
 
 
 
 ////////////////////////////////////////////////////////////////
-	// Render Widget (invoke setupDefinitions() and, using returned data, append D3 elements into SVG)
+// Render Widget (invoke setupDefinitions() and, using returned data, append D3 elements into SVG)
 ////////////////////////////////////////////////////////////////
 
- // INITIALIZATION //
-widget.outerDiv = d3.select('#outer')	
+// INITIALIZATION //
+widget.outerDiv = d3.select('#outer')
 	.attr('class', 'UtilitySavingsToolOuter')
 	.style('height', jqHeight + 'px')
 	.style('width', jqWidth + 'px');
 
- // RENDER //
-const renderWidget = () => { 
+// RENDER //
+const renderWidget = () => {
 	// delete leftover elements from versions previously rendered
 	if (!widget.outerDiv.empty()) widget.outerDiv.selectAll('*').remove();
 
@@ -557,26 +558,26 @@ const renderWidget = () => {
 	const paddingLeftOfTools = 20;
 	const dateDropdownWidth = data.widgetSize === 'small' ? 100 : 140;
 	const paddingBetweenDropdowns = data.widgetSize === 'large' ? 30 : 20;
-  const paddingUnderDropdownTitles = 8;
-	const dropdownBorderRadius = '100px'
+	const paddingUnderDropdownTitles = 8;
+	const dropdownBorderRadius = '100px';
 	const dropdownsWidth = paddingLeftOfTools + (dateDropdownWidth * 2) + paddingBetweenDropdowns;
 
 
 	const dropdownDiv = widget.outerDiv.append('div')
-		.attr('class', 'dropdownDiv')
+		.attr('class', 'dropdownDiv');
 
-		//Year Dropdown
+	//Year Dropdown
 	dropdownDiv.append('h4')
 		.attr('dominant-baseline', 'hanging')
 		.style('left', data.margin.left + paddingLeftOfTools + 'px')
 		.text('Year')
-    .style('top', data.margin.top)
-    .style('color', data.toolTitleColor)
-    .style('font', data.toolTitleFont)
+		.style('top', data.margin.top)
+		.style('color', data.toolTitleColor)
+		.style('font', data.toolTitleFont);
 
 	const yearSelect = dropdownDiv.append('select')
 		.style('width', dateDropdownWidth + 'px')
-    .attr('class', 'yearSelect UtilitySavingsToolDropdown')
+		.attr('class', 'yearSelect UtilitySavingsToolDropdown')
 		.style('border-radius', dropdownBorderRadius)
 		.style('left', data.margin.left + paddingLeftOfTools + 'px')
 		.style('top', data.margin.top + getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles + 'px')
@@ -585,10 +586,10 @@ const renderWidget = () => {
 		// .on('click', unhover)
 		.on('change', widget.dropdownYearChanged)
 		.selectAll('option')
-			.data(data.availableYears).enter()
-				.append('option')
-					.property('selected', d => d === widget.yearDropDownSelected)
-					.text(d => d)
+		.data(data.availableYears).enter()
+		.append('option')
+		.property('selected', d => d === widget.yearDropDownSelected)
+		.text(d => d);
 
 
 
@@ -597,12 +598,12 @@ const renderWidget = () => {
 		.attr('dominant-baseline', 'hanging')
 		.style('top', data.margin.top)
 		.style('left', data.margin.left + paddingLeftOfTools + dateDropdownWidth + paddingBetweenDropdowns + 'px')
-    .text('Month')
-    .style('color', data.toolTitleColor)
-    .style('font', data.toolTitleFont);
+		.text('Month')
+		.style('color', data.toolTitleColor)
+		.style('font', data.toolTitleFont);
 
 	const monthSelect = dropdownDiv.append('select')
-    .style('width', dateDropdownWidth + 'px')
+		.style('width', dateDropdownWidth + 'px')
 		.attr('class', 'monthSelect UtilitySavingsToolDropdown')
 		.style('border-radius', dropdownBorderRadius)
 		.style('left', data.margin.left + paddingLeftOfTools + dateDropdownWidth + paddingBetweenDropdowns + 'px')
@@ -612,12 +613,12 @@ const renderWidget = () => {
 		// .on('click', unhover)
 		.on('change', widget.dropdownMonthChanged)
 		.selectAll('option')
-			.data(d => data.availableDates[widget.yearDropDownSelected]).enter()
-				.append('option')
-					.property('selected', d => d === widget.monthDropDownSelected)
-					.text(d => d);
+		.data(d => data.availableDates[widget.yearDropDownSelected]).enter()
+		.append('option')
+		.property('selected', d => d === widget.monthDropDownSelected)
+		.text(d => d);
 
-					
+
 
 	// SVG INITIALIZATION //
 
@@ -626,7 +627,7 @@ const renderWidget = () => {
 		.attr('width', '100%')
 		.attr('height', '100%')
 		.on('mousedown', unpin);
-	d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor)
+	d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
 	d3.select(widget.svg.node().parentNode.parentNode).style('background-color', 'darkGray');	// TODO: delete for Niagara
 
 	// GENERAL GROUPS //
@@ -640,7 +641,7 @@ const renderWidget = () => {
 	const paddingBetweenToolsAndCharts = data.widgetSize === 'large' ? 50 : 30;
 	const paddingAboveUtilityRate = 15;
 	const toolsGroup = graphicGroup.append('g')
-		.attr('class', 'toolsGroup')
+		.attr('class', 'toolsGroup');
 
 	const paddingLeftOfButton = data.widgetSize === 'small' ? 20 : (data.widgetSize === 'medium' ? 30 : 60);
 	const utilityRateGroup = toolsGroup.append('g')
@@ -694,17 +695,17 @@ const renderWidget = () => {
 		.attr('class', 'trhChart')
 		.attr('transform', `translate(${(chartWidth * 2) + (paddingBetweenCharts * 2)}, 0)`);
 
-  //***************************************	SCALES, GENERATORS, AND TICKS FOR CHARTS ************************************************//
+	//***************************************	SCALES, GENERATORS, AND TICKS FOR CHARTS ************************************************//
 	//TICKS
 	const getMaxYTick = (groupedOrStacked, chartName) => {
 		let mapFuncForArrOfEquipVals = chartName === 'kwh' ?
 			modObj => modObj.kwh.map(cat => cat.value) :
-			modObj => modObj.utilityRate.map(cat => cat.cost); 
+			modObj => modObj.utilityRate.map(cat => cat.cost);
 
 		let allVals;
 
-		if (groupedOrStacked === 'grouped' && chartName !== 'trh'){
-			arraysOfVals = widget.dataForDate.equipmentDataForDate.map(mapFuncForArrOfEquipVals);
+		if (groupedOrStacked === 'grouped' && chartName !== 'trh') {
+			let arraysOfVals = widget.dataForDate.equipmentDataForDate.map(mapFuncForArrOfEquipVals);
 			allVals = [].concat(...arraysOfVals)
 		} else {
 			allVals = widget.dataForDate.categoryDataForDate.map(cat => cat[chartName]);
@@ -718,7 +719,7 @@ const renderWidget = () => {
 		let numOfTicks = 4;	// numOfTicks over 0;
 		const yTickInterval = highestVal / numOfTicks;
 		let yTickValues = [];
-		for (let i = 0; i <= numOfTicks; i++){
+		for (let i = 0; i <= numOfTicks; i++) {
 			yTickValues.push(yTickInterval * i)
 		}
 		return yTickValues;
@@ -765,12 +766,12 @@ const renderWidget = () => {
 		.scale(trhXScale)
 		.tickSize(0)
 		.tickFormat((d, i) => null);
-		
+
 	// y axis
 	const kwhYScale = d3.scaleLinear()
 		.range([barSectionHeight, 0])
 		.domain([0, kwhMaxYTick])
-	
+
 	const costYScale = d3.scaleLinear()
 		.range([barSectionHeight, 0])
 		.domain([0, costMaxYTick])
@@ -795,7 +796,7 @@ const renderWidget = () => {
 		.tickValues(trhYTicks)
 
 
-  //********************************************* CHART TRANSITIONS ***********************************************************//
+	//********************************************* CHART TRANSITIONS ***********************************************************//
 	//Kwh Chart Transition Func:
 	const transitionCharts = stackedOrGrouped => {
 
@@ -820,82 +821,82 @@ const renderWidget = () => {
 		costYScale.domain([0, costMaxYTick]);
 		kwhYAxisGenerator.tickValues(kwhYTicks);
 		costYAxisGenerator.tickValues(costYTicks);
-		
-		
+
+
 		function kwhChartTransition() {
 			//transition axes
 			kwhChart.select('.kwhXAxisTitle')
-			.transition()
+				.transition()
 				.delay(stackedOrGrouped === 'grouped' ? 0 : barsTransitionDuration / 2)
 				.duration(barsTransitionDuration / 2)
 				.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
-				// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
+			// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
 
 			kwhChart.select('.xAxis')
 				.transition()
-					.delay(stackedOrGrouped === 'grouped' ? barsTransitionDuration / 2 : 0)
-					.duration(barsTransitionDuration / 2)
-					.call(xAxisGenerator);
+				.delay(stackedOrGrouped === 'grouped' ? barsTransitionDuration / 2 : 0)
+				.duration(barsTransitionDuration / 2)
+				.call(xAxisGenerator);
 
 			kwhChart.select('.yAxis')
 				.transition()
-					.duration(barsTransitionDuration)
-					.call(kwhYAxisGenerator);
+				.duration(barsTransitionDuration)
+				.call(kwhYAxisGenerator);
 
 			kwhChart.select('.kwhYAxisTitle')
 				.style('opacity', (widget.activeChartType === 'grouped' && widget.equipmentHovered === 'none') || (widget.activeChartType === 'stacked' && !widget.systemIsHovered) ? 1 : 0)
-	
+
 
 			// transition bars
 			kwhChart.selectAll('.equipmentGroups')
 				.transition()
-					.duration(barsTransitionDuration)
-					.attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
-			
+				.duration(barsTransitionDuration)
+				.attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
+
 			kwhChart.selectAll('.categoryRects')	// .data(d => d.kwh)
 				.transition()
-					.duration(barsTransitionDuration - 500)
-					.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category): x0Scale(d.category))
-					.attr("y", d => kwhYScale(stackedOrGrouped === 'grouped' ? d.value : d.accumulated))
-					.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-					.attr("height", d => barSectionHeight - kwhYScale(d.value))   // run this to use changed kwhYScale
-					.attr('stroke', d => data[`${d.category}Color`])
-					.transition()
-						.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
+				.duration(barsTransitionDuration - 500)
+				.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
+				.attr("y", d => kwhYScale(stackedOrGrouped === 'grouped' ? d.value : d.accumulated))
+				.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+				.attr("height", d => barSectionHeight - kwhYScale(d.value))   // run this to use changed kwhYScale
+				.attr('stroke', d => data[`${d.category}Color`])
+				.transition()
+				.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 
 
 			if (stackedOrGrouped === 'grouped') {
-				appendHoverableKwhRects ()
+				appendHoverableKwhRects()
 			} else {
 				widget.resetElements('.hoverableKwhRects')
 			}
-						
+
 			//tick styling
 			kwhChart.selectAll('.tick text')
 				.style('fill', data.tickTextColor)
 				.style('font', data.tickFont)
-		};
+		}
 		kwhChartTransition()
 
 		function costChartTransition() {
 			//transition axes
 			costChart.select('.costXAxisTitle')
 				.transition()
-					.delay(stackedOrGrouped === 'grouped' ? 0 : barsTransitionDuration / 2)
-					.duration(barsTransitionDuration / 2)
-					.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
-					// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
+				.delay(stackedOrGrouped === 'grouped' ? 0 : barsTransitionDuration / 2)
+				.duration(barsTransitionDuration / 2)
+				.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
+			// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
 
 			costChart.select('.xAxis')
 				.transition()
-					.delay(stackedOrGrouped === 'grouped' ? barsTransitionDuration / 2 : 0)
-					.duration(barsTransitionDuration / 2)
-					.call(xAxisGenerator);
+				.delay(stackedOrGrouped === 'grouped' ? barsTransitionDuration / 2 : 0)
+				.duration(barsTransitionDuration / 2)
+				.call(xAxisGenerator);
 
 			costChart.select('.yAxis')
 				.transition()
-					.duration(barsTransitionDuration)
-					.call(costYAxisGenerator);
+				.duration(barsTransitionDuration)
+				.call(costYAxisGenerator);
 
 			costChart.select('.costYAxisTitle')
 				.style('opacity', (widget.activeChartType === 'grouped' && widget.equipmentHovered === 'none') || (widget.activeChartType === 'stacked' && !widget.systemIsHovered) ? 1 : 0)
@@ -904,27 +905,27 @@ const renderWidget = () => {
 			// transition bars
 			costChart.selectAll('.equipmentGroups')
 				.transition()
-					.duration(barsTransitionDuration)
-					.attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
-			
+				.duration(barsTransitionDuration)
+				.attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
+
 			costChart.selectAll('.categoryRects')	// .data(d => d.utilityRate)
 				.transition()
-					.duration(barsTransitionDuration - 500)
-					.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category): x0Scale(d.category))
-					.attr("y", d => costYScale(stackedOrGrouped === 'grouped' ? d.cost : d.accumulatedCost))
-					.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-					.attr("height", d => barSectionHeight - costYScale(d.cost))   // run this to use changed kwhYScale
-					.attr('stroke', d => data[`${d.category}Color`])
-					.transition()
-						.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
+				.duration(barsTransitionDuration - 500)
+				.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
+				.attr("y", d => costYScale(stackedOrGrouped === 'grouped' ? d.cost : d.accumulatedCost))
+				.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+				.attr("height", d => barSectionHeight - costYScale(d.cost))   // run this to use changed kwhYScale
+				.attr('stroke', d => data[`${d.category}Color`])
+				.transition()
+				.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 
-				if (stackedOrGrouped === 'grouped') {
-					appendHoverableCostRects ()
-				} else {
-					widget.resetElements('.hoverableCostRects')
-				}
+			if (stackedOrGrouped === 'grouped') {
+				appendHoverableCostRects()
+			} else {
+				widget.resetElements('.hoverableCostRects')
+			}
 
-				
+
 			//tick styling
 			costChart.selectAll('.tick text')
 				.style('fill', data.tickTextColor)
@@ -934,10 +935,10 @@ const renderWidget = () => {
 
 	}
 
-  //click handler for chart transitions
-  const transitionChartsClickFunction = () => {
+	//click handler for chart transitions
+	const transitionChartsClickFunction = () => {
 		unhoverAll();
-		widget.activeChartType === 'stacked' ?	widget.activeChartType = 'grouped' :	widget.activeChartType = 'stacked';
+		widget.activeChartType === 'stacked' ? widget.activeChartType = 'grouped' : widget.activeChartType = 'stacked';
 		transitionCharts(widget.activeChartType)
 		toggleButton();
 	};
@@ -955,93 +956,93 @@ const renderWidget = () => {
 
 
 
-  //********************************************* KWH CHART ***********************************************************//
-  // initialization
-  const kwhChart = chartsGroup.append('g')
-    .attr('class', 'kwhChart')
+	//********************************************* KWH CHART ***********************************************************//
+	// initialization
+	const kwhChart = chartsGroup.append('g')
+		.attr('class', 'kwhChart')
 
-  // chart group 
-  const kwhBarSection = kwhChart.append('g')
-    .attr('class', 'kwhBarSection')
-    .attr('transform', `translate(${yAxisWidth}, 0)`)
+	// chart group 
+	const kwhBarSection = kwhChart.append('g')
+		.attr('class', 'kwhBarSection')
+		.attr('transform', `translate(${yAxisWidth}, 0)`)
 
 
-  // bars
-  const equipmentGroups = kwhBarSection.selectAll('.equipmentGroups')
-    .data(widget.dataForDate.equipmentDataForDate)
-    .enter().append("g")
-      .attr('class', d => `equipmentGroups ${d.type}EquipmentGroup`)
-      .attr('transform', d => `translate(${widget.activeChartType === 'grouped' ? x0Scale(d.type) : 0},0)`)
-  
-  equipmentGroups.selectAll('.categoryRects')
-    .data(d => d.kwh)
-    .enter().append("rect")
-			.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+	// bars
+	const equipmentGroups = kwhBarSection.selectAll('.equipmentGroups')
+		.data(widget.dataForDate.equipmentDataForDate)
+		.enter().append("g")
+		.attr('class', d => `equipmentGroups ${d.type}EquipmentGroup`)
+		.attr('transform', d => `translate(${widget.activeChartType === 'grouped' ? x0Scale(d.type) : 0},0)`)
+
+	equipmentGroups.selectAll('.categoryRects')
+		.data(d => d.kwh)
+		.enter().append("rect")
+		.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+		.attr('rx', 1)
+		.attr('ry', 1)
+		.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
+		.attr("y", d => widget.activeChartType === 'grouped' ? kwhYScale(d.value) : kwhYScale(d.accumulated))
+		.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+		.attr("height", d => barSectionHeight - kwhYScale(d.value))
+		.attr("fill", d => data[`${d.category}Color`])
+		.style('fill-opacity', (innerD, innerI, innerNodes) => {
+			const myCat = innerD.category
+			const myEq = innerNodes[innerI].parentNode.__data__.type
+			if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+				return 1;
+			} else {
+				return unhoveredOpacity;
+			}
+		})
+		.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+			const myCat = innerD.category
+			const myEq = innerNodes[innerI].parentNode.__data__.type
+			if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+				return 1;
+			} else {
+				return 0;
+			}
+		})
+		.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
+		.on('mouseover', tryBarHoverFunc)
+		.on('mousedown', function () {
+			d3.event.stopPropagation()
+		})
+		.on('click', barPinFunc)
+		.on('mouseout', tryUnhover)
+
+	function appendHoverableKwhRects() {
+		widget.resetElements('.hoverableKwhRects');
+		equipmentGroups.selectAll('.hoverableKwhRects')
+			.data(d => d.kwh)
+			.enter().append("rect")
+			.attr('class', `hoverableKwhRects`)
 			.attr('rx', 1)
 			.attr('ry', 1)
-      .attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
-      .attr("y", d => widget.activeChartType === 'grouped' ? kwhYScale(d.value) : kwhYScale(d.accumulated))
-      .attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-      .attr("height", d => barSectionHeight - kwhYScale(d.value) )
-			.attr("fill", d => data[`${d.category}Color`])
-			.style('fill-opacity', (innerD, innerI, innerNodes) => {
-				const myCat = innerD.category
-				const myEq = innerNodes[innerI].parentNode.__data__.type
-				if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-					return 1;
-				} else {
-					return unhoveredOpacity;
-				}
+			.attr("x", d => x0Scale(d.category))
+			.attr("y", (d, i, nodes) => {
+				const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.value > accum.__data__.value ? curr : accum);
+				return kwhYScale(maxHeightForGroup.__data__.value)
 			})
-			.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-				const myCat = innerD.category
-				const myEq = innerNodes[innerI].parentNode.__data__.type
-				if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-					return 1;
-				} else {
-					return 0;
-				}
+			.attr("width", x0Scale.bandwidth())
+			.attr('opacity', 0)
+			.attr("height", (d, i, nodes) => {
+				const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.value > accum.__data__.value ? curr : accum);
+				return barSectionHeight - kwhYScale(maxHeightForGroup.__data__.value)
 			})
-			.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 			.on('mouseover', tryBarHoverFunc)
-			.on('mousedown', function(){
+			.on('mousedown', function () {
 				d3.event.stopPropagation()
 			})
 			.on('click', barPinFunc)
 			.on('mouseout', tryUnhover)
+	}
 
-			function appendHoverableKwhRects () {
-				widget.resetElements('.hoverableKwhRects');
-				equipmentGroups.selectAll('.hoverableKwhRects')
-					.data(d => d.kwh)
-					.enter().append("rect")
-						.attr('class', `hoverableKwhRects`)
-						.attr('rx', 1)
-						.attr('ry', 1)
-						.attr("x", d => x0Scale(d.category))
-						.attr("y", (d, i, nodes) => {
-							const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.value > accum.__data__.value ? curr : accum);
-							return kwhYScale(maxHeightForGroup.__data__.value)
-							})
-						.attr("width",  x0Scale.bandwidth())
-						.attr('opacity', 0)
-						.attr("height", (d, i, nodes) => {
-							const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.value > accum.__data__.value ? curr : accum);
-							return barSectionHeight - kwhYScale(maxHeightForGroup.__data__.value)
-						})
-						.on('mouseover', tryBarHoverFunc)
-						.on('mousedown', function(){
-							d3.event.stopPropagation()
-						})
-						.on('click', barPinFunc)
-						.on('mouseout', tryUnhover)
-			}
+	if (widget.activeChartType === 'grouped') appendHoverableKwhRects();
 
-			if (widget.activeChartType === 'grouped') appendHoverableKwhRects();
 
-			
-  // x axis
-  kwhBarSection.append('g')
+	// x axis
+	kwhBarSection.append('g')
 		.attr("class", "axis xAxis")
 		.attr("transform", `translate(0, ${barSectionHeight})`)
 		.call(xAxisGenerator);
@@ -1074,7 +1075,7 @@ const renderWidget = () => {
 	kwhBarSection.append('text')
 		.attr('class', 'kwhXAxisTitle')
 		.attr('dominant-baseline', 'hanging')
-		.attr('x', (barSectionWidth / 2) - (getTextWidth(data.systemName, data.tickFont) / 2) )
+		.attr('x', (barSectionWidth / 2) - (getTextWidth(data.systemName, data.tickFont) / 2))
 		.style('font', data.systemNameFont)
 		.attr('fill', data.tickTextColor)
 		.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
@@ -1084,15 +1085,15 @@ const renderWidget = () => {
 
 
 	// tooltip
-	function appendKwhTooltip () {
+	function appendKwhTooltip() {
 		widget.resetElements('.kwhTooltip')
 		const isStacked = widget.activeChartType === 'stacked'
 		const kwhDataForDate = widget.activeChartType === 'stacked' ? widget.dataForDate.categoryDataForDate : widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].kwh;
-		const maxWidthCat = kwhDataForDate.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${isStacked ? curr.kwh : curr.value}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${isStacked ? accum.kwh : accum.value}`, 'bold ' + data.tooltipFont) ?
+		const maxWidthCat = kwhDataForDate.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0, 1).toUpperCase()}:${isStacked ? curr.kwh : curr.value}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0, 1).toUpperCase()}:${isStacked ? accum.kwh : accum.value}`, 'bold ' + data.tooltipFont) ?
 			curr :
 			accum
 		);
-		const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}:`, 'bold ' + data.tooltipFont) + getTextWidth(`${isStacked ? maxWidthCat.kwh + ' kWh' : maxWidthCat.value + ' kWh'}`, data.tooltipFont) + (data.tooltipPadding * 2.5) + data.paddingAfterLegendCat
+		const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0, 1).toUpperCase()}:`, 'bold ' + data.tooltipFont) + getTextWidth(`${isStacked ? maxWidthCat.kwh + ' kWh' : maxWidthCat.value + ' kWh'}`, data.tooltipFont) + (data.tooltipPadding * 2.5) + data.paddingAfterLegendCat
 		const tooltipHeight = (data.tooltipPadding * 2) + (3 * getTextHeight(data.tooltipFont)) + (2 * data.paddingBetweenTooltipText);
 
 		const tooltip = kwhBarSection.append('g')
@@ -1111,14 +1112,14 @@ const renderWidget = () => {
 		const textGroups = tooltip.selectAll('.kwhTextGroup')
 			.data(kwhDataForDate)
 			.enter().append('g')
-				.attr('class', d => `kwhTextGroup ${d.category}KwhTextGroup tooltip`)
-				.attr('transform', (d, i) => `translate(${data.tooltipPadding},${(data.tooltipPadding * 1.5) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
-	
+			.attr('class', d => `kwhTextGroup ${d.category}KwhTextGroup tooltip`)
+			.attr('transform', (d, i) => `translate(${data.tooltipPadding},${(data.tooltipPadding * 1.5) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
+
 		textGroups.append('text')
-			.text((d, i) => d.category.slice(0,1).toUpperCase() +': ')
+			.text((d, i) => d.category.slice(0, 1).toUpperCase() + ': ')
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
-			.attr('fill', d => data[d.category + 'Color']|| data.tooltipFontColor)
+			.attr('fill', d => data[d.category + 'Color'] || data.tooltipFontColor)
 			.style('font-weight', 'bold')
 
 		textGroups.append('text')
@@ -1138,36 +1139,36 @@ const renderWidget = () => {
 
 
 	//*********************************** COST CHART ************************************//
-// initialization
+	// initialization
 
-// chart group
-const costBarSection = costChart.append('g')
-	.attr('class', 'costBarSection')
-	.attr('transform', `translate(${yAxisWidth}, 0)`)
+	// chart group
+	const costBarSection = costChart.append('g')
+		.attr('class', 'costBarSection')
+		.attr('transform', `translate(${yAxisWidth}, 0)`)
 
 
-// bars
-const costEquipmentGroups = costBarSection.selectAll('.equipmentGroups')
-	.data(widget.dataForDate.equipmentDataForDate)
-	.enter().append("g")
+	// bars
+	const costEquipmentGroups = costBarSection.selectAll('.equipmentGroups')
+		.data(widget.dataForDate.equipmentDataForDate)
+		.enter().append("g")
 		.attr('class', d => `equipmentGroups ${d.type}EquipmentGroup`)
 		.attr('transform', d => `translate(${widget.activeChartType === 'grouped' ? x0Scale(d.type) : 0},0)`)
 
-costEquipmentGroups.selectAll('.categoryRects')
-	.data(d => d.utilityRate)
-	.enter().append("rect")
+	costEquipmentGroups.selectAll('.categoryRects')
+		.data(d => d.utilityRate)
+		.enter().append("rect")
 		.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
 		.attr('rx', 1)
 		.attr('ry', 1)
 		.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
 		.attr("y", d => widget.activeChartType === 'grouped' ? costYScale(d.cost) : costYScale(d.accumulatedCost))
 		.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-		.attr("height", d => barSectionHeight - costYScale(d.cost) )
+		.attr("height", d => barSectionHeight - costYScale(d.cost))
 		.attr("fill", d => data[`${d.category}Color`])
 		.style('fill-opacity', (innerD, innerI, innerNodes) => {
 			const myCat = innerD.category
 			const myEq = innerNodes[innerI].parentNode.__data__.type
-			if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+			if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
 				return 1;
 			} else {
 				return unhoveredOpacity;
@@ -1176,7 +1177,7 @@ costEquipmentGroups.selectAll('.categoryRects')
 		.style('stroke-opacity', (innerD, innerI, innerNodes) => {
 			const myCat = innerD.category
 			const myEq = innerNodes[innerI].parentNode.__data__.type
-			if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+			if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
 				return 1;
 			} else {
 				return 0;
@@ -1184,41 +1185,39 @@ costEquipmentGroups.selectAll('.categoryRects')
 		})
 		.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 		.on('mouseover', tryBarHoverFunc)
-		.on('mousedown', function(){
+		.on('mousedown', function () {
 			d3.event.stopPropagation()
 		})
 		.on('click', barPinFunc)
 		.on('mouseout', tryUnhover)
 
 
-		function appendHoverableCostRects () {
-			widget.resetElements('.hoverableCostRects');
-			costEquipmentGroups.selectAll('.hoverableCostRects')
-				.data(d => d.utilityRate)
-				.enter().append("rect")
-					.attr('class', `hoverableCostRects`)
-					.attr("x", d => x0Scale(d.category))
-					.attr("y", (d, i, nodes) => {
-						const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.cost > accum.__data__.cost ? curr : accum);
-						return costYScale(maxHeightForGroup.__data__.cost);
-						})
-					.attr("width",  x0Scale.bandwidth())
-					.attr('opacity', 0)
-					.attr("height", (d, i, nodes) => {
-						const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.cost > accum.__data__.cost ? curr : accum);
-						return barSectionHeight - costYScale(maxHeightForGroup.__data__.cost)
-					})
-					.on('mouseover', tryBarHoverFunc)
-					.on('mousedown', function(){
-						d3.event.stopPropagation()
-					})
-					.on('click', barPinFunc)
-					.on('mouseout', tryUnhover)
-		}
+	function appendHoverableCostRects() {
+		widget.resetElements('.hoverableCostRects');
+		costEquipmentGroups.selectAll('.hoverableCostRects')
+			.data(d => d.utilityRate)
+			.enter().append("rect")
+			.attr('class', `hoverableCostRects`)
+			.attr("x", d => x0Scale(d.category))
+			.attr("y", (d, i, nodes) => {
+				const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.cost > accum.__data__.cost ? curr : accum);
+				return costYScale(maxHeightForGroup.__data__.cost);
+			})
+			.attr("width", x0Scale.bandwidth())
+			.attr('opacity', 0)
+			.attr("height", (d, i, nodes) => {
+				const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.cost > accum.__data__.cost ? curr : accum);
+				return barSectionHeight - costYScale(maxHeightForGroup.__data__.cost)
+			})
+			.on('mouseover', tryBarHoverFunc)
+			.on('mousedown', function () {
+				d3.event.stopPropagation()
+			})
+			.on('click', barPinFunc)
+			.on('mouseout', tryUnhover)
+	}
 
-		if (widget.activeChartType === 'grouped') appendHoverableCostRects();
-
-
+	if (widget.activeChartType === 'grouped') appendHoverableCostRects();
 
 
 
@@ -1226,65 +1225,67 @@ costEquipmentGroups.selectAll('.categoryRects')
 
 
 
-// x axis
-costBarSection.append('g')
-	.attr("class", "axis xAxis")
-	.attr("transform", `translate(0, ${barSectionHeight})`)
-	.call(xAxisGenerator);
-
-// y axis
-costBarSection.append("g")
-	.attr("class", "axis yAxis")
-	.call(costYAxisGenerator)
 
 
-//tick styling
-costChart.selectAll('.tick text')
-	.style('fill', data.tickTextColor)
-	.style('font', data.tickFont)
+	// x axis
+	costBarSection.append('g')
+		.attr("class", "axis xAxis")
+		.attr("transform", `translate(0, ${barSectionHeight})`)
+		.call(xAxisGenerator);
+
+	// y axis
+	costBarSection.append("g")
+		.attr("class", "axis yAxis")
+		.call(costYAxisGenerator)
 
 
-// y axis units title
-costBarSection.append('text')
-	.attr('class', 'costYAxisTitle')
-	.text(data.currencyName)
-	.attr('transform', 'rotate(-90)')
-	.attr('y', 5)
-	.attr("text-anchor", "middle")
-	.attr('dominant-baseline', 'hanging')
-	.attr('fill', data.unitsColor)
-	.style('font', data.unitsFont)
-	.style('opacity', (widget.activeChartType === 'grouped' && widget.equipmentHovered === 'none') || (widget.activeChartType === 'stacked' && !widget.systemIsHovered) ? 1 : 0)
+	//tick styling
+	costChart.selectAll('.tick text')
+		.style('fill', data.tickTextColor)
+		.style('font', data.tickFont)
+
+
+	// y axis units title
+	costBarSection.append('text')
+		.attr('class', 'costYAxisTitle')
+		.text(data.currencyName)
+		.attr('transform', 'rotate(-90)')
+		.attr('y', 5)
+		.attr("text-anchor", "middle")
+		.attr('dominant-baseline', 'hanging')
+		.attr('fill', data.unitsColor)
+		.style('font', data.unitsFont)
+		.style('opacity', (widget.activeChartType === 'grouped' && widget.equipmentHovered === 'none') || (widget.activeChartType === 'stacked' && !widget.systemIsHovered) ? 1 : 0)
 
 
 
-// x axis systemName
-costBarSection.append('text')
-	.attr('class', 'costXAxisTitle')
-	.attr('dominant-baseline', 'hanging')
-	.attr('x', (barSectionWidth / 2) - (getTextWidth(data.systemName, data.tickFont) / 2) )
-	.style('font', data.systemNameFont)
-	.attr('fill', data.tickTextColor)
-	.text(data.systemName)
-	.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
+	// x axis systemName
+	costBarSection.append('text')
+		.attr('class', 'costXAxisTitle')
+		.attr('dominant-baseline', 'hanging')
+		.attr('x', (barSectionWidth / 2) - (getTextWidth(data.systemName, data.tickFont) / 2))
+		.style('font', data.systemNameFont)
+		.attr('fill', data.tickTextColor)
+		.text(data.systemName)
+		.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
 	// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
 	// .on('mouseover', unhover)
 
 
 
 	// tooltip
-	function appendCostTooltip () {
+	function appendCostTooltip() {
 		widget.resetElements('.costTooltip')
 		const costDataForDate = widget.activeChartType === 'stacked' ?
 			widget.dataForDate.categoryDataForDate :
 			widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].utilityRate;
 
-		const maxWidthCat = costDataForDate.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}${data.formatCurrency(curr.cost)}${data.formatAvgCurrency(curr.rate)}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}${data.formatCurrency(accum.cost)}${data.formatAvgCurrency(accum.rate)}`, data.tooltipFont) ?
+		const maxWidthCat = costDataForDate.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0, 1).toUpperCase()}${data.formatCurrency(curr.cost)}${data.formatAvgCurrency(curr.rate)}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0, 1).toUpperCase()}${data.formatCurrency(accum.cost)}${data.formatAvgCurrency(accum.rate)}`, data.tooltipFont) ?
 			curr :
 			accum
 		);
 
-		const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}:${data.currencySymbol}${data.formatCurrency(maxWidthCat.cost)}@ ${data.currencySymbol}${data.formatAvgCurrency(maxWidthCat.rate)}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2.5) + (data.paddingAfterLegendCat * 2)
+		const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0, 1).toUpperCase()}:${data.currencySymbol}${data.formatCurrency(maxWidthCat.cost)}@ ${data.currencySymbol}${data.formatAvgCurrency(maxWidthCat.rate)}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2.5) + (data.paddingAfterLegendCat * 2)
 		const tooltipHeight = (data.tooltipPadding * 2) + (costDataForDate.length * getTextHeight(data.tooltipFont)) + ((costDataForDate.length - 1) * data.paddingBetweenTooltipText);
 
 		const maxWidthCostCat = costDataForDate.reduce((accum, curr) => getTextWidth(data.formatCurrency(curr.cost), 'bold ' + data.tooltipFont) > getTextWidth(data.formatCurrency(accum.cost), 'bold ' + data.tooltipFont) ?
@@ -1309,14 +1310,14 @@ costBarSection.append('text')
 		const textGroups = tooltip.selectAll('.costTextGroup')
 			.data(costDataForDate)
 			.enter().append('g')
-				.attr('class', d => `costTextGroup ${d.category}CostTextGroup tooltip`)
-				.attr('transform', (d, i) => `translate(${data.tooltipPadding},${(data.tooltipPadding * 1.5) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
-	
+			.attr('class', d => `costTextGroup ${d.category}CostTextGroup tooltip`)
+			.attr('transform', (d, i) => `translate(${data.tooltipPadding},${(data.tooltipPadding * 1.5) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
+
 		textGroups.append('text')
-			.text((d, i) => d.category.slice(0,1).toUpperCase() +': ')
+			.text((d, i) => d.category.slice(0, 1).toUpperCase() + ': ')
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
-			.attr('fill', d => data[d.category + 'Color']|| data.tooltipFontColor)
+			.attr('fill', d => data[d.category + 'Color'] || data.tooltipFontColor)
 			.style('font-weight', 'bold')
 
 
@@ -1336,9 +1337,9 @@ costBarSection.append('text')
 			.attr('x', getTextWidth('M:', 'bold ' + data.tooltipFont) + maxWidthOfCost + (data.paddingAfterLegendCat * 2))
 
 	}
-	if (widget.systemIsHovered || widget.equipmentHovered !== 'none')	appendCostTooltip();
+	if (widget.systemIsHovered || widget.equipmentHovered !== 'none') appendCostTooltip();
 
-	
+
 
 
 
@@ -1359,40 +1360,40 @@ costBarSection.append('text')
 	trhBarSection.selectAll('.categoryRects')
 		.data(trhCategoryDataForDate)
 		.enter().append("rect")
-			.attr('class', d => `trhCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
-			.attr("x", d => trhXScale(d.category))
-			.attr("y", d => trhYScale(d.trh))
-			.attr("width", trhXScale.bandwidth())
-			.attr("height", d => barSectionHeight - trhYScale(d.trh) )
-			.attr("fill", d => data[`${d.category}Color`])
-			.style('opacity', d => widget.legendHovered === 'none' || widget.legendHovered === d.category ? 1 : unhoveredOpacity)
-			.attr('stroke', d => data[`${d.category}Color`])
-			.on('mouseover', function (){
-				widget.trhIsHovered = true;
-				appendTrhTooltip();
-				trhChart.selectAll('.trhYAxisTitle')
-					.style('opacity', 0)
-			})
-			.on('mousedown', function(){
-				d3.event.stopPropagation()
-			})
-			.on('click', function (){
-				widget.trhIsHovered = true;
-				widget.trhIsPinned = true;
-				appendTrhTooltip();
-				trhChart.selectAll('.trhYAxisTitle')
-					.style('opacity', 0)
-			})
-			.on('mouseout', function () {
-				if(!widget.trhIsPinned){
-					widget.trhIsHovered = false;
-					widget.svg.selectAll('.trhYAxisTitle')
-						.style('opacity', 1)
-					widget.resetElements('.trhTooltip');
-				}
-			})
+		.attr('class', d => `trhCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+		.attr("x", d => trhXScale(d.category))
+		.attr("y", d => trhYScale(d.trh))
+		.attr("width", trhXScale.bandwidth())
+		.attr("height", d => barSectionHeight - trhYScale(d.trh))
+		.attr("fill", d => data[`${d.category}Color`])
+		.style('opacity', d => widget.legendHovered === 'none' || widget.legendHovered === d.category ? 1 : unhoveredOpacity)
+		.attr('stroke', d => data[`${d.category}Color`])
+		.on('mouseover', function () {
+			widget.trhIsHovered = true;
+			appendTrhTooltip();
+			trhChart.selectAll('.trhYAxisTitle')
+				.style('opacity', 0)
+		})
+		.on('mousedown', function () {
+			d3.event.stopPropagation()
+		})
+		.on('click', function () {
+			widget.trhIsHovered = true;
+			widget.trhIsPinned = true;
+			appendTrhTooltip();
+			trhChart.selectAll('.trhYAxisTitle')
+				.style('opacity', 0)
+		})
+		.on('mouseout', function () {
+			if (!widget.trhIsPinned) {
+				widget.trhIsHovered = false;
+				widget.svg.selectAll('.trhYAxisTitle')
+					.style('opacity', 1)
+				widget.resetElements('.trhTooltip');
+			}
+		})
 
-			
+
 	// x axis
 	trhBarSection.append('g')
 		.attr("class", "axis xAxis")
@@ -1428,7 +1429,7 @@ costBarSection.append('text')
 	trhBarSection.append('text')
 		.attr('class', 'trhXAxisTitle')
 		.attr('dominant-baseline', 'hanging')
-		.attr('x', (trhBarSectionWidth / 2) - (getTextWidth(data.systemName, data.tickFont) / 2) )
+		.attr('x', (trhBarSectionWidth / 2) - (getTextWidth(data.systemName, data.tickFont) / 2))
 		.style('font', data.systemNameFont)
 		.attr('fill', data.tickTextColor)
 		.attr('y', barSectionHeight + 6)
@@ -1436,14 +1437,14 @@ costBarSection.append('text')
 
 
 	// tooltip
-	function appendTrhTooltip () {
+	function appendTrhTooltip() {
 		widget.resetElements('.trhTooltip')
 		const maxWidthCat = trhCategoryDataForDate
-			.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${curr.trh}`, data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${accum.trh}`, 'bold ' + data.tooltipFont) ?
+			.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0, 1).toUpperCase()}:${curr.trh}`, data.tooltipFont) > getTextWidth(`${accum.category.slice(0, 1).toUpperCase()}:${accum.trh}`, 'bold ' + data.tooltipFont) ?
 				curr :
 				accum
 			);
-		const trhTooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}: ${maxWidthCat.trh + ' tRh'}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2)
+		const trhTooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0, 1).toUpperCase()}: ${maxWidthCat.trh + ' tRh'}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2)
 		const trhTooltipHeight = data.widgetSize === 'medium' ? 40 : (data.widgetSize === 'small' ? 35 : 50);
 		const trhTooltip = trhBarSection.append('g')
 			.attr('class', 'trhTooltip')
@@ -1461,14 +1462,14 @@ costBarSection.append('text')
 		const trhTextGroups = trhTooltip.selectAll('.trhTextGroup')
 			.data(trhCategoryDataForDate)
 			.enter().append('g')
-				.attr('class', d => `trhTextGroup ${d.category}TrhTextGroup tooltip`)
-				.attr('transform', (d, i) => `translate(${(data.tooltipPadding)},${(data.tooltipPadding * 1.25) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
-	
+			.attr('class', d => `trhTextGroup ${d.category}TrhTextGroup tooltip`)
+			.attr('transform', (d, i) => `translate(${(data.tooltipPadding)},${(data.tooltipPadding * 1.25) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
+
 		trhTextGroups.append('text')
-			.text(d => `${d.category.slice(0,1).toUpperCase()}:`)
+			.text(d => `${d.category.slice(0, 1).toUpperCase()}:`)
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
-			.attr('fill', d => data[d.category + 'Color']|| data.tooltipFontColor)
+			.attr('fill', d => data[d.category + 'Color'] || data.tooltipFontColor)
 			.style('font-weight', 'bold')
 
 		trhTextGroups.append('text')
@@ -1483,7 +1484,7 @@ costBarSection.append('text')
 
 
 
-//************************************* LEGEND ******************************************//
+	//************************************* LEGEND ******************************************//
 	const getPrevLegendWidths = index => {
 		let sum = 0;
 		for (let i = index - 1; i >= 0; i--) { sum += legendWidths[i] }
@@ -1494,81 +1495,81 @@ costBarSection.append('text')
 	const legendGroup = graphicGroup.append('g')
 		.attr('class', 'legend')
 		.attr('transform', `translate(${(data.graphicWidth / 2) - (legendWidth / 2)}, ${data.graphicHeight - legendHeight})`)
-		
+
 	const legendCategories = legendGroup.selectAll('.legendCategories')
 		.data(categories)
 		.enter().append('g')
-			.attr('class', d => `legend${d.displayName}Group legendCategories`)
-			.attr('transform', (d, i) => `translate(${circleRadius + (i * paddingBetweenLegendCategories) + getPrevLegendWidths(i)}, ${circleRadius})`)
-			.on('mousedown', function(){
-				d3.event.stopPropagation()
-			})
-			.on('mouseover', function (d) {
-				widget.legendHovered = d.name;
-				widget.svg.selectAll(`.${d.name}LegendText`)
-					.style('font-weight', 'bold')
-				widget.svg.selectAll(`.${d.name}LegendCircle`)
-					.attr('r', hoveredCircleRadius)
-				widget.svg.selectAll(`.dynamicCategoryRects`)
-					.style('fill-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category;
-						const myEq = innerNodes[innerI].parentNode.__data__.type;
-						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-							return 1;
-						} else {
-							return unhoveredOpacity;
-						}
-					})
-					.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category
-						const myEq = innerNodes[innerI].parentNode.__data__.type
-						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-							return 1;
-						} else {
-							return 0;
-						}
-					})
-				widget.svg.selectAll('.trhCategoryRects')
-					.style('opacity', innerD => widget.legendHovered === 'none' || widget.legendHovered === innerD.category ? 1 : unhoveredOpacity)
-			})
-			.on('mouseout', function (d) {
-				widget.legendHovered = 'none';
+		.attr('class', d => `legend${d.displayName}Group legendCategories`)
+		.attr('transform', (d, i) => `translate(${circleRadius + (i * paddingBetweenLegendCategories) + getPrevLegendWidths(i)}, ${circleRadius})`)
+		.on('mousedown', function () {
+			d3.event.stopPropagation()
+		})
+		.on('mouseover', function (d) {
+			widget.legendHovered = d.name;
+			widget.svg.selectAll(`.${d.name}LegendText`)
+				.style('font-weight', 'bold')
+			widget.svg.selectAll(`.${d.name}LegendCircle`)
+				.attr('r', hoveredCircleRadius)
+			widget.svg.selectAll(`.dynamicCategoryRects`)
+				.style('fill-opacity', (innerD, innerI, innerNodes) => {
+					const myCat = innerD.category;
+					const myEq = innerNodes[innerI].parentNode.__data__.type;
+					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+						return 1;
+					} else {
+						return unhoveredOpacity;
+					}
+				})
+				.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+					const myCat = innerD.category;
+					const myEq = innerNodes[innerI].parentNode.__data__.type;
+					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+						return 1;
+					} else {
+						return 0;
+					}
+				})
+			widget.svg.selectAll('.trhCategoryRects')
+				.style('opacity', innerD => widget.legendHovered === 'none' || widget.legendHovered === innerD.category ? 1 : unhoveredOpacity)
+		})
+		.on('mouseout', function(d) {
+			widget.legendHovered = 'none';
 
-				widget.svg.selectAll(`.${d.name}LegendText`)
-					.style('font-weight', 'normal')
-					
-				widget.svg.selectAll(`.${d.name}LegendCircle`)
-					.attr('r', circleRadius)
+			widget.svg.selectAll(`.${d.name}LegendText`)
+				.style('font-weight', 'normal')
 
-				widget.svg.selectAll(`.dynamicCategoryRects`)
-					.style('fill-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category
-						const myEq = innerNodes[innerI].parentNode.__data__.type
-						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-							return 1;
-						} else {
-							return unhoveredOpacity;
-						}
-					})
-					.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category
-						const myEq = innerNodes[innerI].parentNode.__data__.type
-						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-							return 1;
-						} else {
-							return 0;
-						}
-					})
+			widget.svg.selectAll(`.${d.name}LegendCircle`)
+				.attr('r', circleRadius);
 
-				widget.svg.selectAll('.trhCategoryRects')
-					.style('opacity', innerD => widget.legendHovered === 'none' || widget.legendHovered === innerD.category ? 1 : unhoveredOpacity)
-			})
+			widget.svg.selectAll(`.dynamicCategoryRects`)
+				.style('fill-opacity', (innerD, innerI, innerNodes) => {
+					const myCat = innerD.category;
+					const myEq = innerNodes[innerI].parentNode.__data__.type;
+					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+						return 1;
+					} else {
+						return unhoveredOpacity;
+					}
+				})
+				.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+					const myCat = innerD.category;
+					const myEq = innerNodes[innerI].parentNode.__data__.type;
+					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+						return 1;
+					} else {
+						return 0;
+					}
+				});
+
+			widget.svg.selectAll('.trhCategoryRects')
+				.style('opacity', innerD => widget.legendHovered === 'none' || widget.legendHovered === innerD.category ? 1 : unhoveredOpacity)
+		});
 
 	legendCategories.append('circle')
 		.attr('class', d => `${d.name}LegendCircle`)
 		.attr('r', d => widget.legendHovered === d.name ? hoveredCircleRadius : circleRadius)
-		.attr('fill', d => data[d.name + 'Color'])
-		
+		.attr('fill', d => data[d.name + 'Color']);
+
 	legendCategories.append('text')
 		.attr('class', d => `legendText ${d.name}LegendText`)
 		.style('font', data.legendFont)
@@ -1576,20 +1577,20 @@ costBarSection.append('text')
 		.attr('fill', data.legendTextColor)
 		.attr('dominant-baseline', 'middle')
 		.attr('x', circleRadius + (circleRadius / 2))
-		.text(d => d.displayName)
+		.text(d => d.displayName);
 
 
 
-//************************************* TOOLS ******************************************//
+	//************************************* TOOLS ******************************************//
 
-	
+
 	// UTILITY RATE
 	const paddingAboveCurrencySymbol = 2;
 	const paddingRightOfCurrencySymbol = 5;
 	utilityRateGroup.append('text')
 		.text('Blended Utility Rate')
 		.attr('dominant-baseline', 'hanging')
-		.style('font', data.toolTitleFont)
+		.style('font', data.toolTitleFont);
 
 
 	const currencySymbol = utilityRateGroup.append('text')
@@ -1597,7 +1598,7 @@ costBarSection.append('text')
 		.attr('dominant-baseline', 'hanging')
 		.style('font', data.currencySymbolFont)
 		.attr('fill', data.currencySymbolColor)
-		.text(data.currencySymbol)
+		.text(data.currencySymbol);
 
 	const utilityRate = utilityRateGroup.append('text')
 		.attr('dominant-baseline', 'hanging')
@@ -1605,10 +1606,10 @@ costBarSection.append('text')
 		.attr('y', getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol)
 		.style('font', data.utilityRateFont)
 		.attr('fill', data.utilityRateColor)
-		.text(data.formatCurrency(data.utilityRate))
+		.text(data.formatCurrency(data.utilityRate));
 
 
-		// CHANGE TOOLS
+	// CHANGE TOOLS
 	const changeToolsPaddingTop = 0;
 	const getNiceChangePercent = (origVal, newVal) => {
 		const diff = Math.abs(origVal - newVal);
@@ -1626,16 +1627,16 @@ costBarSection.append('text')
 	const paddingBetweenChangeTools = data.widgetSize === 'large' ? imgCircleRadius + 15 : (data.widgetSize === 'medium' ? imgCircleRadius + 10 : imgCircleRadius + 5);
 
 
-	function getSystemOrHoveredData () {
+	function getSystemOrHoveredData() {
 		let kwh, cost, trh;
-		let kwhPercent = {last: [], new: []};
-		let costPercent = {last: [], new: []};
-		let trhPercent = {last: [], new: []};
+		let kwhPercent = { last: [], new: [] };
+		let costPercent = { last: [], new: [] };
+		let trhPercent = { last: [], new: [] };
 		if (widget.equipmentHovered !== 'none') {
 			const hoveredEquipmentDataForDate = widget.dataForDate.equipmentDataForDate.filter(equip => equip.type === widget.equipmentHovered)[0];
 
 			// set percentage arrays
-				//kwh
+			//kwh
 			kwhPercent.new = getNiceChangePercent(hoveredEquipmentDataForDate.kwh[0].value, hoveredEquipmentDataForDate.kwh[2].value).toString().split('').map(digit => +digit);
 			if (kwhPercent.new.length > 2) kwhPercent.new = [1, 9, 9];
 			if (kwhPercent.new.length === 1) kwhPercent.new.unshift(0, 0);
@@ -1643,7 +1644,7 @@ costBarSection.append('text')
 			kwhPercent.last = widget.lastKwhPercent ? widget.lastKwhPercent.slice() : kwhPercent.new.slice();
 			widget.lastKwhPercent = kwhPercent.new.slice();
 
-				//cost
+			//cost
 			costPercent.new = getNiceChangePercent(hoveredEquipmentDataForDate.utilityRate[0].cost, hoveredEquipmentDataForDate.utilityRate[2].cost).toString().split('').map(digit => +digit);
 			if (costPercent.new.length > 2) costPercent.new = [1, 9, 9];
 			if (costPercent.new.length === 1) costPercent.new.unshift(0, 0);
@@ -1671,25 +1672,25 @@ costBarSection.append('text')
 			};
 		} else {
 			// set percentage arrays
-				//kwh
-				kwhPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[2].kwh).toString().split('').map(digit => +digit);
-				if (kwhPercent.new.length > 2) kwhPercent.new = [1, 9, 9];
-				if (kwhPercent.new.length === 1) kwhPercent.new.unshift(0, 0);
-				if (kwhPercent.new.length === 2) kwhPercent.new.unshift(0);
-				kwhPercent.last = widget.lastKwhPercent ? widget.lastKwhPercent.slice() : kwhPercent.new.slice();
-				widget.lastKwhPercent = kwhPercent.new.slice();
-	
-					//cost
-				costPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].cost, widget.dataForDate.categoryDataForDate[2].cost).toString().split('').map(digit => +digit);
-				if (costPercent.new.length > 2) costPercent.new = [1, 9, 9];
-				if (costPercent.new.length === 1) costPercent.new.unshift(0, 0);
-				if (costPercent.new.length === 2) costPercent.new.unshift(0);
-				costPercent.last = widget.lastCostPercent ? widget.lastCostPercent.slice() : costPercent.new.slice();
-				widget.lastCostPercent = costPercent.new.slice();
-	
-	
-	
-				//create objects to iterate over
+			//kwh
+			kwhPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[2].kwh).toString().split('').map(digit => +digit);
+			if (kwhPercent.new.length > 2) kwhPercent.new = [1, 9, 9];
+			if (kwhPercent.new.length === 1) kwhPercent.new.unshift(0, 0);
+			if (kwhPercent.new.length === 2) kwhPercent.new.unshift(0);
+			kwhPercent.last = widget.lastKwhPercent ? widget.lastKwhPercent.slice() : kwhPercent.new.slice();
+			widget.lastKwhPercent = kwhPercent.new.slice();
+
+			//cost
+			costPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].cost, widget.dataForDate.categoryDataForDate[2].cost).toString().split('').map(digit => +digit);
+			if (costPercent.new.length > 2) costPercent.new = [1, 9, 9];
+			if (costPercent.new.length === 1) costPercent.new.unshift(0, 0);
+			if (costPercent.new.length === 2) costPercent.new.unshift(0);
+			costPercent.last = widget.lastCostPercent ? widget.lastCostPercent.slice() : costPercent.new.slice();
+			widget.lastCostPercent = costPercent.new.slice();
+
+
+
+			//create objects to iterate over
 			kwh = {
 				category: 'kwh',
 				value: Math.abs(widget.dataForDate.categoryDataForDate[2].kwh - widget.dataForDate.categoryDataForDate[0].kwh),
@@ -1707,7 +1708,7 @@ costBarSection.append('text')
 				label: data.currencySymbol
 			};
 		}
-	// set percentage arrays
+		// set percentage arrays
 		//trh
 		trhPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].trh, widget.dataForDate.categoryDataForDate[2].trh).toString().split('').map(digit => +digit);
 		if (trhPercent.new.length > 2) trhPercent.new = [1, 9, 9];
@@ -1716,7 +1717,7 @@ costBarSection.append('text')
 		trhPercent.last = widget.lastTrhPercent ? widget.lastTrhPercent.slice() : trhPercent.new.slice();
 		widget.lastTrhPercent = trhPercent.new.slice();
 
-	//create object to iterate over
+		//create object to iterate over
 		trh = {
 			category: 'trh',
 			value: Math.abs(widget.dataForDate.categoryDataForDate[2].trh - widget.dataForDate.categoryDataForDate[0].trh),
@@ -1725,34 +1726,34 @@ costBarSection.append('text')
 			imgPath: './images/Production Badge.svg',
 			label: ' tRh'
 		};
-		return [kwh, cost, trh]
-	};
+		return [kwh, cost, trh];
+	}
 
-	function renderChangeTools () {
-		widget.resetElements('.changeTools')
+	function renderChangeTools() {
+		widget.resetElements('.changeTools');
 
-		const changeToolsLeft = data.widgetSize === 'small' ? 300 : (data.widgetSize === 'medium' ? 400 : 475)
+		const changeToolsLeft = data.widgetSize === 'small' ? 300 : (data.widgetSize === 'medium' ? 400 : 475);
 		const changeTools = toolsGroup.append('g')
 			.attr('class', 'changeTools')
-			.attr('transform', 	`translate(${changeToolsLeft}, ${32})`)
+			.attr('transform', `translate(${changeToolsLeft}, ${32})`);
 
 		const systemOrHoveredData = getSystemOrHoveredData()
-		const leftOfChangeTools = data.widgetSize === 'large' ? 90 : (data.widgetSize === 'medium' ? 40 : 0)
+		const leftOfChangeTools = data.widgetSize === 'large' ? 90 : (data.widgetSize === 'medium' ? 40 : 0);
 
 		//append data to each changeToolGroup
 		const changeToolGroups = changeTools.selectAll('.changeToolGroups')
 			.data(systemOrHoveredData)
 			.enter().append('g')
-				.attr('class', d => `changeToolGroups ${d.category}ChangeToolGroup`)
-				.attr('transform', (d, i) => `translate(${leftOfChangeTools + imgCircleRadius + (i * (changeToolWidth + paddingBetweenChangeTools))}, 0)`)
-		
+			.attr('class', d => `changeToolGroups ${d.category}ChangeToolGroup`)
+			.attr('transform', (d, i) => `translate(${leftOfChangeTools + imgCircleRadius + (i * (changeToolWidth + paddingBetweenChangeTools))}, 0)`);
+
 		//append rects to each changeToolGroup
 		changeToolGroups.append('rect')
 			.attr('height', changeToolHeight)
 			.attr('width', changeToolWidth)
 			.attr('fill', data.changeToolRectColor)
 			.attr('rx', 5)
-			.attr('ry', 5)
+			.attr('ry', 5);
 
 		//append graphic circles to each changeToolGroup
 		changeToolGroups.append('svg:image')
@@ -1760,18 +1761,18 @@ costBarSection.append('text')
 			.attr('x', -imgCircleRadius + 'px')
 			.attr('y', -imgCircleRadius + 'px')
 			.attr('height', imgCircleRadius * 2)
-			.attr('width', imgCircleRadius * 2)
+			.attr('width', imgCircleRadius * 2);
 
 		const percentChangeGroups = changeToolGroups.append('g')
 			.attr('class', 'percentChangeGroups')
-			.attr('transform', d => `translate(${(changeToolWidth / 2) - (getWidthOfPercentArrowAndText('>88') / 2)},${changeToolsPaddingTop})`)
-		
+			.attr('transform', d => `translate(${(changeToolWidth / 2) - (getWidthOfPercentArrowAndText('>88') / 2)},${changeToolsPaddingTop})`);
+
 		//append arrows
 		percentChangeGroups.append('svg:image')
 			.attr('xlink:href', d => d.arrowPath)
 			.attr('y', '7')
 			.attr('height', getTextHeight(data.changePercentFont) - 7)
-			.attr('width', getTextWidth('W', data.changePercentFont))
+			.attr('width', getTextWidth('W', data.changePercentFont));
 
 
 
@@ -1796,47 +1797,47 @@ costBarSection.append('text')
 		const percentChangeTextGroup = changeToolSvg.append('g')
 			.attr('transform', `translate(5,${(getTextHeight(data.changePercentFont) - 5)})`)
 			.attr('class', (d, i) => `textGroupIndex${i}`)
-					
+
 		const percentChangeText1 = percentChangeTextGroup.selectAll('.digitBox1')
 			.data(d => d.percent.last)
-				.enter().append('text')
-					.attr('class', (d, i, nodes) => `digitBox1 g1DigitIndex${i}For${nodes[i].parentNode.__data__.category} digitIndex${i}For${nodes[i].parentNode.__data__.category}`)
-					.text((d, i) => {
-						return displayForIndex[i][d]
-					})
-					.attr('x', (d, i, nodes) => {
-						if(i === 1 && nodes[0].__data__ === 0) {
-							return getTextWidth('0', data.changePercentFont) / 2
-						} else if (i === 2 && nodes[0].__data__ === 0) {
-							return getTextWidth('0', data.changePercentFont) * 1.5;
-						} else {
-							return i * getTextWidth('0', data.changePercentFont);
-						}
-					})
-					.attr('y', 0)
-					.attr('fill', data.changePercentColor)
-					.style('font', data.changePercentFont)
+			.enter().append('text')
+			.attr('class', (d, i, nodes) => `digitBox1 g1DigitIndex${i}For${nodes[i].parentNode.__data__.category} digitIndex${i}For${nodes[i].parentNode.__data__.category}`)
+			.text((d, i) => {
+				return displayForIndex[i][d]
+			})
+			.attr('x', (d, i, nodes) => {
+				if (i === 1 && nodes[0].__data__ === 0) {
+					return getTextWidth('0', data.changePercentFont) / 2
+				} else if (i === 2 && nodes[0].__data__ === 0) {
+					return getTextWidth('0', data.changePercentFont) * 1.5;
+				} else {
+					return i * getTextWidth('0', data.changePercentFont);
+				}
+			})
+			.attr('y', 0)
+			.attr('fill', data.changePercentColor)
+			.style('font', data.changePercentFont)
 
 		const paddingHidingText = data.widgetSize === 'small' ? 30 : 40;
 
 		const percentChangeText2 = percentChangeTextGroup.selectAll('.digitBox2')
 			.data(d => d.percent.last)
-				.enter().append('text')
-					.attr('class', (d, i, nodes) => `digitBox2 g2DigitIndex${i}For${nodes[i].parentNode.__data__.category} digitIndex${i}For${nodes[i].parentNode.__data__.category}`)
-					.text((d, i) => displayForIndex[i][d])
-					.attr('x', (d, i, nodes) => {
-						if(i === 1 && nodes[0].__data__ === 0) {
-							return getTextWidth('0', data.changePercentFont) / 2
-						} else if (i === 2 && nodes[0].__data__ === 0) {
-							return getTextWidth('0', data.changePercentFont) * 1.5;
-						} else {
-							return i * getTextWidth('0', data.changePercentFont);
-						}
-					})
-					.attr('y', paddingHidingText)
-					.attr('fill', data.changePercentColor)
-					.style('font', data.changePercentFont)
-				
+			.enter().append('text')
+			.attr('class', (d, i, nodes) => `digitBox2 g2DigitIndex${i}For${nodes[i].parentNode.__data__.category} digitIndex${i}For${nodes[i].parentNode.__data__.category}`)
+			.text((d, i) => displayForIndex[i][d])
+			.attr('x', (d, i, nodes) => {
+				if (i === 1 && nodes[0].__data__ === 0) {
+					return getTextWidth('0', data.changePercentFont) / 2
+				} else if (i === 2 && nodes[0].__data__ === 0) {
+					return getTextWidth('0', data.changePercentFont) * 1.5;
+				} else {
+					return i * getTextWidth('0', data.changePercentFont);
+				}
+			})
+			.attr('y', paddingHidingText)
+			.attr('fill', data.changePercentColor)
+			.style('font', data.changePercentFont);
+
 		//append percent sign
 		percentChangeTextGroup.append('text')
 			.text('%')
@@ -1844,52 +1845,54 @@ costBarSection.append('text')
 			.attr('x', d => d.percent.last[0] === 1 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
 			.attr('fill', data.changePercentColor)
 			.style('font', data.changePercentFont)
-			.style('font-size', (getTextHeight(data.changePercentFont) / 2) + 'pt')
+			.style('font-size', (getTextHeight(data.changePercentFont) / 2) + 'pt');
 
 		const rollingPercentsChangeDuration = 275;
 
 
-		function increaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
+		function increaseDigit(category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
 			const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
 			const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
 			const thisDuration = rollingPercentsChangeDuration / numbersToGetThrough;
 
 			digitObjToChange1
 				.transition()
-					.delay(thisDuration * delayMultiplier)
-					.duration(0)
-					.attr('y', 0)
-					.attr('x', () => {
-						if (digitIndex === 1 && !newIsOver99) {
-							return getTextWidth('0', data.changePercentFont) / 2
-						} else if (digitIndex === 2 && !newIsOver99) {
-							return getTextWidth('0', data.changePercentFont) * 1.5;
-						} else {
-							return digitIndex * getTextWidth('0', data.changePercentFont);						}
-					})
+				.delay(thisDuration * delayMultiplier)
+				.duration(0)
+				.attr('y', 0)
+				.attr('x', () => {
+					if (digitIndex === 1 && !newIsOver99) {
+						return getTextWidth('0', data.changePercentFont) / 2
+					} else if (digitIndex === 2 && !newIsOver99) {
+						return getTextWidth('0', data.changePercentFont) * 1.5;
+					} else {
+						return digitIndex * getTextWidth('0', data.changePercentFont);
+					}
+				})
 				.transition()
-					.duration(thisDuration)
-					.attr('y', -paddingHidingText)
+				.duration(thisDuration)
+				.attr('y', -paddingHidingText)
 				.transition()
-					.duration(0)
-					.text(() => displayForIndex[digitIndex][+currentVal + 1])
-					.attr('y', 0);
+				.duration(0)
+				.text(() => displayForIndex[digitIndex][+currentVal + 1])
+				.attr('y', 0);
 
 
 			digitObjToChange2
 				.transition()
-					.delay(thisDuration * delayMultiplier)
-					.duration(0)
-					.text(() => displayForIndex[digitIndex][currentVal + 1])
-					.attr('y', paddingHidingText)
-					.attr('x', () => {
-						if (digitIndex === 1 && !newIsOver99) {
-							return getTextWidth('0', data.changePercentFont) / 2
-						} else if (digitIndex === 2 && !newIsOver99) {
-							return getTextWidth('0', data.changePercentFont) * 1.5;
-						} else {
-							return digitIndex * getTextWidth('0', data.changePercentFont);						}
-					})
+				.delay(thisDuration * delayMultiplier)
+				.duration(0)
+				.text(() => displayForIndex[digitIndex][currentVal + 1])
+				.attr('y', paddingHidingText)
+				.attr('x', () => {
+					if (digitIndex === 1 && !newIsOver99) {
+						return getTextWidth('0', data.changePercentFont) / 2;
+					} else if (digitIndex === 2 && !newIsOver99) {
+						return getTextWidth('0', data.changePercentFont) * 1.5;
+					} else {
+						return digitIndex * getTextWidth('0', data.changePercentFont);
+					}
+				})
 				.transition()
 					.duration(thisDuration)
 					.attr('y', 0)
@@ -1898,53 +1901,55 @@ costBarSection.append('text')
 					.attr('y', paddingHidingText);
 		}
 
-		function decreaseDigit (category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
+		function decreaseDigit(category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
 			const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
 			const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
 			const thisDuration = rollingPercentsChangeDuration / numbersToGetThrough;
 
 			digitObjToChange1
 				.transition()
-					.delay(thisDuration * delayMultiplier)
-					.duration(0)
-					.attr('y', 0)
-					.attr('x', () => {
-						if (digitIndex === 1 && !newIsOver99) {
-							return getTextWidth('0', data.changePercentFont) / 2
-						} else if (digitIndex === 2 && !newIsOver99) {
-							return getTextWidth('0', data.changePercentFont) * 1.5;
-						} else {
-							return digitIndex * getTextWidth('0', data.changePercentFont);						}
-					})
+				.delay(thisDuration * delayMultiplier)
+				.duration(0)
+				.attr('y', 0)
+				.attr('x', () => {
+					if (digitIndex === 1 && !newIsOver99) {
+						return getTextWidth('0', data.changePercentFont) / 2;
+					} else if (digitIndex === 2 && !newIsOver99) {
+						return getTextWidth('0', data.changePercentFont) * 1.5;
+					} else {
+						return digitIndex * getTextWidth('0', data.changePercentFont);
+					}
+				})
 				.transition()
-					.duration(thisDuration)
-					.attr('y', paddingHidingText)
+				.duration(thisDuration)
+				.attr('y', paddingHidingText)
 				.transition()
-					.duration(0)
-					.text(() => displayForIndex[digitIndex][+currentVal - 1])
-					.attr('y', 0);
+				.duration(0)
+				.text(() => displayForIndex[digitIndex][+currentVal - 1])
+				.attr('y', 0);
 
 
 			digitObjToChange2
 				.transition()
-					.delay(thisDuration * delayMultiplier)
-					.duration(0)
-					.text(() => displayForIndex[digitIndex][currentVal - 1])
-					.attr('y', -paddingHidingText)
-					.attr('x', () => {
-						if (digitIndex === 1 && !newIsOver99) {
-							return getTextWidth('0', data.changePercentFont) / 2
-						} else if (digitIndex === 2 && !newIsOver99) {
-							return getTextWidth('0', data.changePercentFont) * 1.5;
-						} else {
-							return digitIndex * getTextWidth('0', data.changePercentFont);						}
-					})
+				.delay(thisDuration * delayMultiplier)
+				.duration(0)
+				.text(() => displayForIndex[digitIndex][currentVal - 1])
+				.attr('y', -paddingHidingText)
+				.attr('x', () => {
+					if (digitIndex === 1 && !newIsOver99) {
+						return getTextWidth('0', data.changePercentFont) / 2
+					} else if (digitIndex === 2 && !newIsOver99) {
+						return getTextWidth('0', data.changePercentFont) * 1.5;
+					} else {
+						return digitIndex * getTextWidth('0', data.changePercentFont);
+					}
+				})
 				.transition()
-					.duration(thisDuration)
-					.attr('y', 0)
+				.duration(thisDuration)
+				.attr('y', 0)
 				.transition()
-					.duration(0)
-					.attr('y', paddingHidingText);
+				.duration(0)
+				.attr('y', paddingHidingText);
 		}
 
 
@@ -1962,44 +1967,45 @@ costBarSection.append('text')
 			if (from < to) {
 				differenceBtwOldAndNewVal = to - from;
 				for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
-					increaseDigit (category, digitIndex, i, differenceBtwOldAndNewVal, from + i, lastWasOver99, newIsOver99);
+					increaseDigit(category, digitIndex, i, differenceBtwOldAndNewVal, from + i, lastWasOver99, newIsOver99);
 				}
 			} else {
 				differenceBtwOldAndNewVal = from - to;
 				for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
-					decreaseDigit (category, digitIndex, i, differenceBtwOldAndNewVal, from - i, lastWasOver99, newIsOver99);
+					decreaseDigit(category, digitIndex, i, differenceBtwOldAndNewVal, from - i, lastWasOver99, newIsOver99);
 				}
 			}
 		}
 
-		function changeDigits (currentArr, newArr, category) {
+		function changeDigits(currentArr, newArr, category) {
 			currentArr = currentArr.slice();
 			newArr = newArr.slice();
 			const currentFirstDigit = +currentArr[0];
 			const newFirstDigit = +newArr[0];
 
-				currentArr.forEach((currentDigit, digitIndex) => {
-					if(+newArr[digitIndex] !== +currentDigit) {
-						loopFromTo(category, digitIndex, +currentDigit, +newArr[digitIndex], currentFirstDigit > 0, newFirstDigit > 0)
-					} else if (currentFirstDigit !== newFirstDigit) {	//change placement of any otherwise unchanging digits if need be
-						widget.svg.selectAll(`.digitIndex${digitIndex}For${category}`)
-							.attr('x', () => {
-								if (digitIndex === 1 && newFirstDigit === 0) {
-									return getTextWidth('0', data.changePercentFont) / 2
-								} else if (digitIndex === 2 && newFirstDigit === 0) {
-									return getTextWidth('0', data.changePercentFont) * 1.5;
-								} else {
-									return digitIndex * getTextWidth('0', data.changePercentFont);						}
-							});
-					}
-				})
-
-				// change percent sign placement if necessary
-				if (currentFirstDigit !== newFirstDigit){					
-					widget.svg.select(`.${category}PercentSign`).attr('x', newFirstDigit === 1 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
+			currentArr.forEach((currentDigit, digitIndex) => {
+				if (+newArr[digitIndex] !== +currentDigit) {
+					loopFromTo(category, digitIndex, +currentDigit, +newArr[digitIndex], currentFirstDigit > 0, newFirstDigit > 0)
+				} else if (currentFirstDigit !== newFirstDigit) {	//change placement of any otherwise unchanging digits if need be
+					widget.svg.selectAll(`.digitIndex${digitIndex}For${category}`)
+						.attr('x', () => {
+							if (digitIndex === 1 && newFirstDigit === 0) {
+								return getTextWidth('0', data.changePercentFont) / 2
+							} else if (digitIndex === 2 && newFirstDigit === 0) {
+								return getTextWidth('0', data.changePercentFont) * 1.5;
+							} else {
+								return digitIndex * getTextWidth('0', data.changePercentFont);
+							}
+						});
 				}
+			})
+
+			// change percent sign placement if necessary
+			if (currentFirstDigit !== newFirstDigit) {
+				widget.svg.select(`.${category}PercentSign`).attr('x', newFirstDigit === 1 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
+			}
 		}
-		
+
 		changeDigits(kwhPercentObj.last, kwhPercentObj.new, 'kwh');
 		changeDigits(costPercentObj.last, costPercentObj.new, 'cost');
 		changeDigits(trhPercentObj.last, trhPercentObj.new, 'trh');
@@ -2016,10 +2022,10 @@ costBarSection.append('text')
 
 		//append value change
 		valueChangeGroup.append('text')
-			.text((d, i) => i === 1 ? d.label + d.value : d.value + d.label)	
+			.text((d, i) => i === 1 ? d.label + d.value : d.value + d.label)
 			.style('font', data.changeValueFont)
 			.attr('fill', data.changeValueColor)
-			
+
 	}
 	renderChangeTools()
 
@@ -2036,28 +2042,28 @@ costBarSection.append('text')
 
 
 
-//************************************* BUTTON ******************************************//
-const buttonMargin = 5;
-const buttonWidth = data.widgetSize === 'small' ? 80 - (buttonMargin * 2) : (data.widgetSize === 'medium' ? 110 - (buttonMargin * 2) : 120 - (buttonMargin * 2))
-const endCircleRadius = buttonWidth / 6
-const rectHeight = endCircleRadius * 2
-const rectWidth = endCircleRadius * 3.5
-const buttonBackgroundFill = () => widget.activeChartType === 'stacked' ? data.sysBtnBackgroundColor : data.eqBtnBackgroundColor;
-const cy = getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol + rectHeight / 2 + buttonMargin
-const rectLeftX = buttonMargin + endCircleRadius;
-const rectRightX = rectLeftX + rectWidth
-const buttonTransitionDuration = 666 // (just 2/3 of sec --nothing satanical intended)
+	//************************************* BUTTON ******************************************//
+	const buttonMargin = 5;
+	const buttonWidth = data.widgetSize === 'small' ? 80 - (buttonMargin * 2) : (data.widgetSize === 'medium' ? 110 - (buttonMargin * 2) : 120 - (buttonMargin * 2))
+	const endCircleRadius = buttonWidth / 6
+	const rectHeight = endCircleRadius * 2
+	const rectWidth = endCircleRadius * 3.5
+	const buttonBackgroundFill = () => widget.activeChartType === 'stacked' ? data.sysBtnBackgroundColor : data.eqBtnBackgroundColor;
+	const cy = getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol + rectHeight / 2 + buttonMargin
+	const rectLeftX = buttonMargin + endCircleRadius;
+	const rectRightX = rectLeftX + rectWidth
+	const buttonTransitionDuration = 666 // (just 2/3 of sec --nothing satanical intended)
 
 
 	const toggleButton = () => {
 		buttonGroup.select('.knob')
 			.transition()
-				.duration(buttonTransitionDuration)	// (2/3 of sec --nothing satanical intended)
-				.attr('cx', widget.activeChartType === 'grouped' ? rectRightX: rectLeftX);
+			.duration(buttonTransitionDuration)	// (2/3 of sec --nothing satanical intended)
+			.attr('cx', widget.activeChartType === 'grouped' ? rectRightX : rectLeftX);
 		buttonGroup.selectAll('.buttonBackground')
 			.transition()
-				.duration(buttonTransitionDuration)	// (2/3 of sec --nothing satanical intended)
-				.attr('fill', buttonBackgroundFill());
+			.duration(buttonTransitionDuration)	// (2/3 of sec --nothing satanical intended)
+			.attr('fill', buttonBackgroundFill());
 		renderButtonText(true);
 	}
 
@@ -2071,7 +2077,7 @@ const buttonTransitionDuration = 666 // (just 2/3 of sec --nothing satanical int
 		.attr('x', ((buttonWidth) - getTextWidth('View', data.toolTitleFont)) / 2)
 
 
-		// BUTTON BACKGROUND //
+	// BUTTON BACKGROUND //
 
 	buttonGroup.append('rect')
 		.attr('class', 'buttonBackground')
@@ -2127,10 +2133,10 @@ const buttonTransitionDuration = 666 // (just 2/3 of sec --nothing satanical int
 			.attr('opacity', changed ? 0 : 1)
 			.on('click', transitionChartsClickFunction)
 			.transition()
-				.duration(buttonTransitionDuration)
-				.text(widget.activeChartType === 'stacked' ? 'SYS' : 'EQ')
-				.attr('fill', widget.activeChartType === 'stacked' ? data.sysBtnTextColor : data.eqBtnTextColor)
-				.attr('opacity', 1);
+			.duration(buttonTransitionDuration)
+			.text(widget.activeChartType === 'stacked' ? 'SYS' : 'EQ')
+			.attr('fill', widget.activeChartType === 'stacked' ? data.sysBtnTextColor : data.eqBtnTextColor)
+			.attr('opacity', 1);
 	}
 	renderButtonText()
 
@@ -2150,102 +2156,102 @@ const buttonTransitionDuration = 666 // (just 2/3 of sec --nothing satanical int
 
 
 
-		//************************ UNHOVER & UNPIN FUNCTIONS *************************//
-		function tryUnhover (d, i, nodes) {
-			if ((widget.activeChartType === 'stacked' && !widget.systemIsPinned) || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')){
-				unhoverDynamic();
-			}
-			if (!widget.trhIsPinned){
-				unhoverTrh();
-			}
-		}
-		function unhoverDynamic () {
-			d3.event.stopPropagation()
-			widget.equipmentHovered = 'none';
-			widget.systemIsHovered = false;
-			widget.svg.selectAll('.dynamicCategoryRects')
-				.style('fill-opacity', 1)
-				.style('stroke-opacity', 1)
-			widget.svg.selectAll('.kwhYAxisTitle')
-				.style('opacity', 1);
-			widget.svg.selectAll('.costYAxisTitle')
-				.style('opacity', 1);
-			widget.resetElements('.costTooltip');
-			widget.resetElements('.kwhTooltip');
-			renderChangeTools();
-		}
-		function unhoverTrh () {
-			widget.trhIsHovered = false;
-			widget.svg.selectAll('.trhYAxisTitle')
-				.style('opacity', 1)
-			widget.resetElements('.trhTooltip');
-		}
-		function unhoverAll () {
+	//************************ UNHOVER & UNPIN FUNCTIONS *************************//
+	function tryUnhover(d, i, nodes) {
+		if ((widget.activeChartType === 'stacked' && !widget.systemIsPinned) || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')) {
 			unhoverDynamic();
+		}
+		if (!widget.trhIsPinned) {
 			unhoverTrh();
 		}
-		function unpin () {
-			widget.equipmentPinned = 'none';
-			widget.systemIsPinned = false;
-			widget.trhIsPinned = false;
-			unhoverAll();
-		}
+	}
+	function unhoverDynamic() {
+		d3.event.stopPropagation()
+		widget.equipmentHovered = 'none';
+		widget.systemIsHovered = false;
+		widget.svg.selectAll('.dynamicCategoryRects')
+			.style('fill-opacity', 1)
+			.style('stroke-opacity', 1);
+		widget.svg.selectAll('.kwhYAxisTitle')
+			.style('opacity', 1);
+		widget.svg.selectAll('.costYAxisTitle')
+			.style('opacity', 1);
+		widget.resetElements('.costTooltip');
+		widget.resetElements('.kwhTooltip');
+		renderChangeTools();
+	}
+	function unhoverTrh() {
+		widget.trhIsHovered = false;
+		widget.svg.selectAll('.trhYAxisTitle')
+			.style('opacity', 1);
+		widget.resetElements('.trhTooltip');
+	}
+	function unhoverAll() {
+		unhoverDynamic();
+		unhoverTrh();
+	}
+	function unpin() {
+		widget.equipmentPinned = 'none';
+		widget.systemIsPinned = false;
+		widget.trhIsPinned = false;
+		unhoverAll();
+	}
 
-		//************************ DYNAMIC BAR HOVER/PIN FUNCTIONS *************************//
-		function tryBarHoverFunc (d, i, nodes) {
-			if (widget.activeChartType === 'stacked' || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')) {
-				barHoverFunc (d, i, nodes)
-			}
+	//************************ DYNAMIC BAR HOVER/PIN FUNCTIONS *************************//
+	function tryBarHoverFunc(d, i, nodes) {
+		if (widget.activeChartType === 'stacked' || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')) {
+			barHoverFunc(d, i, nodes)
 		}
+	}
 
-		function barHoverFunc (d, i, nodes) {
-			if (widget.activeChartType === 'stacked'){
-				widget.systemIsHovered = true;
-			}
-			if (widget.activeChartType === 'grouped'){
-				//reset last hover
-				widget.resetElements('.costTooltip');
-				widget.resetElements('.kwhTooltip');
-				//change for this hover
-				widget.equipmentHovered = nodes[i].parentNode.__data__.type;
-				renderChangeTools();
-				widget.svg.selectAll('.dynamicCategoryRects')
-					.style('fill-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category
-						const myEq = innerNodes[innerI].parentNode.__data__.type
-						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-							return 1;
-						} else {
-							return unhoveredOpacity;
-						}
-					})
-					.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category
-						const myEq = innerNodes[innerI].parentNode.__data__.type
-						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
-							return 1;
-						} else {
-							return 0;
-						}
-					})
-				}
-			appendCostTooltip();
-			appendKwhTooltip();
-			kwhChart.selectAll('.kwhYAxisTitle')
-				.style('opacity', 0);
-			costChart.selectAll('.costYAxisTitle')
-				.style('opacity', 0);
+	function barHoverFunc(d, i, nodes) {
+		if (widget.activeChartType === 'stacked') {
+			widget.systemIsHovered = true;
 		}
+		if (widget.activeChartType === 'grouped') {
+			//reset last hover
+			widget.resetElements('.costTooltip');
+			widget.resetElements('.kwhTooltip');
+			//change for this hover
+			widget.equipmentHovered = nodes[i].parentNode.__data__.type;
+			renderChangeTools();
+			widget.svg.selectAll('.dynamicCategoryRects')
+				.style('fill-opacity', (innerD, innerI, innerNodes) => {
+					const myCat = innerD.category
+					const myEq = innerNodes[innerI].parentNode.__data__.type
+					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+						return 1;
+					} else {
+						return unhoveredOpacity;
+					}
+				})
+				.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+					const myCat = innerD.category
+					const myEq = innerNodes[innerI].parentNode.__data__.type
+					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+						return 1;
+					} else {
+						return 0;
+					}
+				})
+		}
+		appendCostTooltip();
+		appendKwhTooltip();
+		kwhChart.selectAll('.kwhYAxisTitle')
+			.style('opacity', 0);
+		costChart.selectAll('.costYAxisTitle')
+			.style('opacity', 0);
+	}
 
-		function barPinFunc  (d, i, nodes) {
-			if (widget.activeChartType === 'stacked'){
-				widget.systemIsPinned = true;
-			}
-			if (widget.activeChartType === 'grouped'){
-				widget.equipmentPinned = nodes[i].parentNode.__data__.type;
-			}
-			barHoverFunc(d, i, nodes);
+	function barPinFunc(d, i, nodes) {
+		if (widget.activeChartType === 'stacked') {
+			widget.systemIsPinned = true;
 		}
-}
+		if (widget.activeChartType === 'grouped') {
+			widget.equipmentPinned = nodes[i].parentNode.__data__.type;
+		}
+		barHoverFunc(d, i, nodes);
+	}
+};
 
 renderWidget();

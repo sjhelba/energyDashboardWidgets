@@ -27,6 +27,7 @@ backgroundColor = 'white'
 dataPointRadius = 5
 dataPointStrokeWidth = 2.5
 areaPathStrokeWidth = 3
+gridColor = 'grey';
 
 unitsColor = 'black'
 unitsFont = 'bold 10pt Nirmala UI'
@@ -264,11 +265,11 @@ const categoryGroups = chartGroup.selectAll('path')
   .data(enterData)
   .enter().append('g').attr('class', d => d.category);
 
-// Area Paths
-categoryGroups.append('path')
-  .attr('d', d => areaPathGenerator(d.data)) 
-  .attr('fill', d => d.color)
-  .attr('fill-opacity', d => d.opacity)
+// // Area Paths
+// categoryGroups.append('path')
+//   .attr('d', d => areaPathGenerator(d.data)) 
+//   .attr('fill', d => d.color)
+//   .attr('fill-opacity', d => d.opacity)
 
 // Top Border For Area Paths
 categoryGroups.append('path')   
@@ -278,7 +279,17 @@ categoryGroups.append('path')
   .attr('stroke-opacity', '0.92')
   .attr('fill', 'none')
 
-
+// grid lines
+chartGroup.selectAll('.grid')
+  .data(yTickValues)
+    .enter().append('line') 
+      .attr('class', 'grid')  
+      .attr('x1', 0)
+      .attr('x2', chartWidth)
+      .attr('y1', d => yScale(d))
+      .attr('y2', d => yScale(d))
+      .attr('stroke', gridColor)
+      .attr('stroke-width', 0.5)
 
 
 

@@ -1,0 +1,23 @@
+{
+  "name": "niagarawidgets",
+  "version": "1.0.0",
+  "description": "\"# niagaraWidgets\"",
+  "main": "d3.v4.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sjhelba/niagaraWidgets.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sjhelba/niagaraWidgets/issues"
+  },
+  "homepage": "https://github.com/sjhelba/niagaraWidgets#readme",
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-plugin-react": "^7.7.0"
+  }
+}

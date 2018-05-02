@@ -86,6 +86,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                 typeSpec: 'gx:Color'
             },
             {
+                name: 'gridColor',
+                value: 'grey',
+                typeSpec: 'gx:Color'
+            },
+            {
                 name: 'measuredFillOpacity',
                 value: 0.42
             },
@@ -474,12 +479,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             .data(data.enterData)
             .enter().append('g').attr('class', d => d.category);
   
-        // Area Paths
-        categoryGroups.append('path')
-            .attr('d', d => areaPathGenerator(d.data))
-            .attr('class', d => d.category + ' area')
-            .attr('fill', d => d.color)
-            .attr('opacity', d => widget.active && widget.active[d.category] || !widget.active ? d.opacity : 0);
+        // // Area Paths
+        // categoryGroups.append('path')
+        //     .attr('d', d => areaPathGenerator(d.data))
+        //     .attr('class', d => d.category + ' area')
+        //     .attr('fill', d => d.color)
+        //     .attr('opacity', d => widget.active && widget.active[d.category] || !widget.active ? d.opacity : 0);
             
         // Top Border For Area Paths
         categoryGroups.append('path')   
@@ -491,6 +496,17 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             .attr('fill', 'none');
   
   
+        // grid lines
+        chartGroup.selectAll('.grid')
+        .data(data.yTickValues)
+        .enter().append('line') 
+            .attr('class', 'grid')  
+            .attr('x1', 0)
+            .attr('x2', data.chartWidth)
+            .attr('y1', d => yScale(d))
+            .attr('y2', d => yScale(d))
+            .attr('stroke', data.gridColor)
+            .attr('stroke-width', 0.5)
   
   
   
