@@ -5,6 +5,50 @@ const widget = {};
 
 
 ////////// Hard Coded Defs //////////
+const areScalarArrsSame = (arr1, arr2) => arr1.length === arr2.length && arr1.every((el, idx) => el === arr2[idx]);
+const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
+const needToRedrawWidget = (widget, newData) => {
+	const lastData = widget.data;
+	// check primitives for equivalence
+	if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
+	
+	// check relevant scalarArrs for equivalence
+	if (!areScalarArrsSame(lastData.blendedRates, newData.blendedRates))	return true;
+	
+	// check objs for equivalence
+		//baselineData
+	if (lastData.baselineData.length !== newData.baselineData.length) return true;
+	const isDiscrepencyInBaselineObjs = lastData.baselineData.some((monthObj, idx) => {
+		const newMonthObj = newData.baselineData[idx];
+		if (!arePrimitiveValsInObjsSame(monthObj, newMonthObj)) return true;
+		if (!arePrimitiveValsInObjsSame(monthObj.equipmentKwhs, newMonthObj.equipmentKwhs)) return true;
+		return false; // for some func
+	});
+	if (isDiscrepencyInBaselineObjs) return true;
+	
+		//projectedData
+	if (lastData.projectedData.length !== newData.projectedData.length) return true;
+	const isDiscrepencyInProjectedObjs = lastData.projectedData.some((monthObj, idx) => {
+		const newMonthObj = newData.projectedData[idx];
+		if (!arePrimitiveValsInObjsSame(monthObj, newMonthObj)) return true;
+		if (!arePrimitiveValsInObjsSame(monthObj.equipmentKwhs, newMonthObj.equipmentKwhs)) return true;
+		return false; // for some func
+	});
+	if (isDiscrepencyInProjectedObjs) return true;
+	
+		//measuredData
+	if (lastData.measuredData.length !== newData.measuredData.length) return true;
+	const isDiscrepencyInMeasuredObjs = lastData.measuredData.some((monthObj, idx) => {
+		const newMonthObj = newData.measuredData[idx];
+		if (!arePrimitiveValsInObjsSame(monthObj, newMonthObj)) return true;
+		if (!arePrimitiveValsInObjsSame(monthObj.equipmentKwhs, newMonthObj.equipmentKwhs)) return true;
+		return false; // for some func
+	});
+	if (isDiscrepencyInMeasuredObjs) return true;
+	
+	//return false if nothing prompted true
+	return false;
+};
 const small = { width: 880, height: 440 };
 const medium = { width: 1200, height: 700 };
 const large = { width: 1600, height: 850 };
@@ -2200,7 +2244,7 @@ const renderWidget = () => {
 	//************************ DYNAMIC BAR HOVER/PIN FUNCTIONS *************************//
 	function tryBarHoverFunc(d, i, nodes) {
 		if (widget.activeChartType === 'stacked' || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')) {
-			barHoverFunc(d, i, nodes)
+			barHoverFunc(d, i, nodes);
 		}
 	}
 
@@ -2217,8 +2261,8 @@ const renderWidget = () => {
 			renderChangeTools();
 			widget.svg.selectAll('.dynamicCategoryRects')
 				.style('fill-opacity', (innerD, innerI, innerNodes) => {
-					const myCat = innerD.category
-					const myEq = innerNodes[innerI].parentNode.__data__.type
+					const myCat = innerD.category;
+					const myEq = innerNodes[innerI].parentNode.__data__.type;
 					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
 						return 1;
 					} else {
@@ -2226,8 +2270,8 @@ const renderWidget = () => {
 					}
 				})
 				.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-					const myCat = innerD.category
-					const myEq = innerNodes[innerI].parentNode.__data__.type
+					const myCat = innerD.category;
+					const myEq = innerNodes[innerI].parentNode.__data__.type;
 					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
 						return 1;
 					} else {
@@ -2252,6 +2296,7 @@ const renderWidget = () => {
 		}
 		barHoverFunc(d, i, nodes);
 	}
+	console.log('data: ', data);
 };
 
 renderWidget();

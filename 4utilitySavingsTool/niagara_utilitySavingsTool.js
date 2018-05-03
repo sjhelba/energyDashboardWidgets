@@ -1,9 +1,57 @@
 "use strict";
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/d3/d3.min', 'css!nmodule/tekScratch/rc/web/UtilitySavingsTool/style'], function (Widget, subscriberMixIn, d3) {
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/d3/d3.min', 'css!nmodule/tekScratch/rc/web/UtilitySavingsTool/style'], function(Widget, subscriberMixIn, d3) {
 
 
 ////////// Hard Coded Defs //////////
-
+const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
+const needToRedrawWidget = (widget, newData) => {
+	const lastData = widget.data;
+	// check primitives for equivalence
+	if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
+	
+	// check objs for equivalence
+		//blendedRates
+	if (lastData.blendedRates.length !== newData.blendedRates.length) return true;
+	const isDiscrepencyInBlendedRateObjs = lastData.blendedRates.some((monthObj, idx) => {
+		const newMonthObj = newData.blendedRates[idx];
+		if (!arePrimitiveValsInObjsSame(monthObj, newMonthObj)) return true;
+		return false; // for some func
+	});
+	if (isDiscrepencyInBlendedRateObjs) return true;
+	
+		//baselineData
+	if (lastData.baselineData.length !== newData.baselineData.length) return true;
+	const isDiscrepencyInBaselineObjs = lastData.baselineData.some((monthObj, idx) => {
+		const newMonthObj = newData.baselineData[idx];
+		if (!arePrimitiveValsInObjsSame(monthObj, newMonthObj)) return true;
+		if (!arePrimitiveValsInObjsSame(monthObj.equipmentKwhs, newMonthObj.equipmentKwhs)) return true;
+		return false; // for some func
+	});
+	if (isDiscrepencyInBaselineObjs) return true;
+	
+		//projectedData
+	if (lastData.projectedData.length !== newData.projectedData.length) return true;
+	const isDiscrepencyInProjectedObjs = lastData.projectedData.some((monthObj, idx) => {
+		const newMonthObj = newData.projectedData[idx];
+		if (!arePrimitiveValsInObjsSame(monthObj, newMonthObj)) return true;
+		if (!arePrimitiveValsInObjsSame(monthObj.equipmentKwhs, newMonthObj.equipmentKwhs)) return true;
+		return false; // for some func
+	});
+	if (isDiscrepencyInProjectedObjs) return true;
+	
+		//measuredData
+	if (lastData.measuredData.length !== newData.measuredData.length) return true;
+	const isDiscrepencyInMeasuredObjs = lastData.measuredData.some((monthObj, idx) => {
+		const newMonthObj = newData.measuredData[idx];
+		if (!arePrimitiveValsInObjsSame(monthObj, newMonthObj)) return true;
+		if (!arePrimitiveValsInObjsSame(monthObj.equipmentKwhs, newMonthObj.equipmentKwhs)) return true;
+		return false; // for some func
+	});
+	if (isDiscrepencyInMeasuredObjs) return true;
+	
+	//return false if nothing prompted true
+	return false;
+};
 	const small = {width: 880, height: 440};
 	const medium = {width: 1200, height: 700};
 	const large = {width: 1600, height: 850};	
@@ -19,8 +67,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	const getTextHeight = font => {
 		let num = '';
 		const indexOfLastDigit = font.indexOf('pt') - 1;
-		for(let i = 0; i <= indexOfLastDigit; i++){
-			if(!isNaN(font[i]) || font[i] === '.') num += font[i];
+		for (let i = 0; i <= indexOfLastDigit; i++) {
+			if (!isNaN(font[i]) || font[i] === '.') num += font[i];
 		}
 		num = +num;
 		return num * 1.33333333333;
@@ -41,16 +89,16 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	}
 
 	const getNextNiceVal = uglyMaxNum => {
-		const innerFunc = (origVal) => {
+		const innerFunc = origVal => {
 			origVal = Math.ceil(origVal);
 
 			let arr = origVal.toString().split('').map(str => +str);
 			const digits = arr.length
 			if (digits === 1) return origVal >= 5 ? 10 : 5;
-			for (let i = 2; i < digits; i++){
+			for (let i = 2; i < digits; i++) {
 				arr[i] = 0;
 			}
-			if (arr[1] < 5){
+			if (arr[1] < 5) {
 				arr[1] = '5';
 			} else {
 				arr[0] = arr[0] + 1;
@@ -63,7 +111,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	};
 
 	const getRateForDate = (selectedMonth, selectedYear, rates) => {
-		for(let i = rates.length - 1; i >= 0; i--) {
+		for (let i = rates.length - 1; i >= 0; i--) {
 			let pointedRate = rates[i]
 			if ( pointedRate.year < selectedYear || (pointedRate.year === selectedYear && indexOfMonth[pointedRate.month] <= indexOfMonth[selectedMonth]) ) return pointedRate.rate;
 		}
@@ -164,7 +212,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		categoriesData.forEach((categoryData, categoryIndex) => {
 			categoryData.forEach(monthlyDatum => {
 				// if (months set to all OR current month matches) && (category is baseline or projected OR year matches)
-				if(((month === 'All' && availableDates[year] && availableDates[year][monthlyDatum.month]) || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)){
+				if (((month === 'All' && availableDates[year] && availableDates[year][monthlyDatum.month]) || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)) {
 					equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
 						// set kwh vals
 						equipmentGroup.kwh[categoryIndex].value = monthlyDatum.equipmentKwhs[equipmentHistoryNames[egIndex]] || 0;	//default to 0 if missing data for date
@@ -235,7 +283,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	// Define Widget Constructor & Exposed Properties
 ////////////////////////////////////////////////////////////////
 
-	var UtilitySavingsTool = function () {
+	var UtilitySavingsTool = function() {
 		var that = this;
 		Widget.apply(this, arguments);
 		that.properties().addAll([
@@ -534,7 +582,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					if (data.facetsCurrencyPrecisionOverride === 'null') data.currencyPrecision = historyTable.getCol('value').getFacets().get('precision') || 2;
 					return historyTable.cursor({
 						limit: 5000000,
-						each: function(row, index){
+						each: function(row, index) {
 							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 							const rowValue = +row.get('value');
 							const rowMonth = timestamp.getMonth();
@@ -573,7 +621,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					const iterativePromises = [
 						baselineTable.cursor({
 						limit: 5000000,
-						each: function(row, index){
+						each: function(row, index) {
 							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 							const rowValue = +row.get('value');
 							const rowMonth = timestamp.getMonth();
@@ -586,7 +634,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					}),
 					measuredTable.cursor({
 						limit: 5000000,
-						each: function(row, index){
+						each: function(row, index) {
 							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 							const rowValue = +row.get('value');
 							const rowMonth = timestamp.getMonth();
@@ -612,7 +660,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 							const iterativeKwhPromises = [
 								baselineKwh.cursor({
 									limit: 5000000,
-									each: function(row, index){
+									each: function(row, index) {
 										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 										const rowValue = +row.get('value');
 										const rowMonth = timestamp.getMonth();
@@ -624,7 +672,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 								}),
 								projectedKwh.cursor({
 									limit: 5000000,
-									each: function(row, index){
+									each: function(row, index) {
 										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 										const rowValue = +row.get('value');
 										const rowMonth = timestamp.getMonth();
@@ -636,7 +684,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 								}),
 								measuredKwh.cursor({
 									limit: 5000000,
-									each: function(row, index){
+									each: function(row, index) {
 										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 										const rowValue = +row.get('value');
 										const rowMonth = timestamp.getMonth();
@@ -657,7 +705,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					return Promise.all(data.equipmentHistoryNames.map((eqType, eqIndex) => populateEquipmentTrendData(eqType, eqIndex)));
 					
 				})
-				.catch(err => {alert('error promising all active eqs: ' + err)})
+				.catch(err => {console.error('error promising all active eqs: ' + err)})
 				.then(() => {
 					// push kwhs and trhs into ordered arr formats
 					const baselineYears = Object.keys(baselineDates).sort((a, b) => a - b);
@@ -725,7 +773,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 						// Funcs utilizing widget
 					widget.updateDateWidgetRendering = () => {
 						widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDatesWithMonthObjs)
-						render(widget);
+						render(widget, true);
 					}
 					widget.dropdownYearChanged = () => {
 						widget.yearDropDownSelected = d3.event.target.value;
@@ -1543,7 +1591,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				.attr("fill", d => data[`${d.category}Color`])
 				.style('opacity', d => widget.legendHovered === 'none' || widget.legendHovered === d.category ? 1 : unhoveredOpacity)
 				.attr('stroke', d => data[`${d.category}Color`])
-				.on('mouseover', function (){
+				.on('mouseover', function(){
 					widget.trhIsHovered = true;
 					appendTrhTooltip();
 					trhChart.selectAll('.trhYAxisTitle')
@@ -1552,14 +1600,14 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				.on('mousedown', function(){
 					d3.event.stopPropagation()
 				})
-				.on('click', function (){
+				.on('click', function(){
 					widget.trhIsHovered = true;
 					widget.trhIsPinned = true;
 					appendTrhTooltip();
 					trhChart.selectAll('.trhYAxisTitle')
 						.style('opacity', 0)
 				})
-				.on('mouseout', function () {
+				.on('mouseout', function() {
 					if(!widget.trhIsPinned){
 						widget.trhIsHovered = false;
 						widget.svg.selectAll('.trhYAxisTitle')
@@ -1676,10 +1724,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.enter().append('g')
 				.attr('class', d => `legend${d.displayName}Group legendCategories`)
 				.attr('transform', (d, i) => `translate(${circleRadius + (i * paddingBetweenLegendCategories) + getPrevLegendWidths(i)}, ${circleRadius})`)
-				.on('mousedown', function(){
+				.on('mousedown', function() {
 					d3.event.stopPropagation()
 				})
-				.on('mouseover', function (d) {
+				.on('mouseover', function(d) {
 					widget.legendHovered = d.name;
 					widget.svg.selectAll(`.${d.name}LegendText`)
 						.style('font-weight', 'bold')
@@ -1707,7 +1755,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					widget.svg.selectAll('.trhCategoryRects')
 						.style('opacity', innerD => widget.legendHovered === 'none' || widget.legendHovered === innerD.category ? 1 : unhoveredOpacity)
 				})
-				.on('mouseout', function (d) {
+				.on('mouseout', function(d) {
 					widget.legendHovered = 'none';
 
 					widget.svg.selectAll(`.${d.name}LegendText`)
@@ -1804,7 +1852,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		const paddingBetweenChangeTools = data.widgetSize === 'large' ? imgCircleRadius + 15 : (data.widgetSize === 'medium' ? imgCircleRadius + 10 : imgCircleRadius + 5);
 
 
-		function getSystemOrHoveredData () {
+		function getSystemOrHoveredData() {
 			let kwh, cost, trh;
 			let kwhPercent = {last: [], new: []};
 			let costPercent = {last: [], new: []};
@@ -2339,17 +2387,17 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			}
 
 			// ************************ DYNAMIC BAR HOVER/PIN FUNCTIONS ************************* //
-			function tryBarHoverFunc (d, i, nodes) {
+			function tryBarHoverFunc(d, i, nodes) {
 				if (widget.activeChartType === 'stacked' || (widget.activeChartType === 'grouped' && widget.equipmentPinned === 'none')) {
 					barHoverFunc (d, i, nodes)
 				}
 			}
 
-			function barHoverFunc (d, i, nodes) {
-				if (widget.activeChartType === 'stacked'){
+			function barHoverFunc(d, i, nodes) {
+				if (widget.activeChartType === 'stacked') {
 					widget.systemIsHovered = true;
 				}
-				if (widget.activeChartType === 'grouped'){
+				if (widget.activeChartType === 'grouped') {
 					//reset last hover
 					widget.resetElements('.costTooltip');
 					widget.resetElements('.kwhTooltip');
@@ -2419,11 +2467,14 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	};
 
 
-	function render(widget) {
+	function render(widget, settingsChanged) {
 		// invoking setupDefinitions, then returning value from successful promise to renderWidget func
 		return setupDefinitions(widget)
 			.then(data => {
-				renderWidget(widget, data);
+				if (settingsChanged || !widget.data || needToRedrawWidget(widget, data)) {
+					widget.data = data;
+					renderWidget(widget, data);
+				}
 			})
 			.catch(err => console.error('render did not complete: ' + err));
 	}
@@ -2435,13 +2486,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	// Initialize Widget
 ////////////////////////////////////////////////////////////////
 
-	UtilitySavingsTool.prototype.doInitialize = function (element) {
+	UtilitySavingsTool.prototype.doInitialize = function(element) {
 		var that = this;
 		element.addClass("UtilitySavingsToolOuter");
 		that.outerDiv = d3.select(element[0]).append('div')
 			.attr('class', 'UtilitySavingsTool')
 
-		that.getSubscriber().attach("changed", function (prop, cx) { render(that) });
+		that.getSubscriber().attach("changed", function(prop, cx) { render(that, false) });
 	};
 
 
@@ -2449,16 +2500,16 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	// Extra Widget Methods
 ////////////////////////////////////////////////////////////////
 
-	UtilitySavingsTool.prototype.doLayout = UtilitySavingsTool.prototype.doChanged = UtilitySavingsTool.prototype.doLoad = function () { render(this); };
+	UtilitySavingsTool.prototype.doLayout = UtilitySavingsTool.prototype.doChanged = UtilitySavingsTool.prototype.doLoad = function() { render(this, false); };
 
 	/* FOR FUTURE NOTE: 
-	UtilitySavingsTool.prototype.doChanged = function (name, value) {
+	UtilitySavingsTool.prototype.doChanged = function(name, value) {
 		  if(name === "value") valueChanged += 'prototypeMethod - ';
 		  render(this);
 	};
 	*/
 
-	UtilitySavingsTool.prototype.doDestroy = function () {
+	UtilitySavingsTool.prototype.doDestroy = function() {
 		this.jq().removeClass("UtilitySavingsToolOuter");
 	};
 

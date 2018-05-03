@@ -23,7 +23,7 @@ function defineFuncForTabSpacing () {
 				const newTempBin = newMonthObj.tempBinsForMonth[tempBinIndex];
 				if (!arePrimitiveValsInObjsSame(lastTempBin, newTempBin) || lastTempBin.thisTempBin.display !== newTempBin.thisTempBin.display) return true;
 			})
-		  if (isDiscrepencyInTempBins) return true;
+			if (isDiscrepencyInTempBins) return true;
 			return false;
 		})
 		if (isDiscrepencyInMonthlyObjs) return true;
@@ -845,8 +845,8 @@ function defineFuncForTabSpacing () {
 			.attr("offset", "0%")
 			.attr("stop-color", data.minKwTrColor)
 			.attr("stop-opacity", 1);
-	 
-	 	colorGradient.append("stop")
+
+		colorGradient.append("stop")
 			.attr('class', 'end-top')
 			.attr("offset", "100%")
 			.attr("stop-color", data.maxKwTrColor)
@@ -1299,13 +1299,13 @@ function defineFuncForTabSpacing () {
 	////////////////////////////////////////////////////////////////
 		// Render Func
 	////////////////////////////////////////////////////////////////
-	const render = function (settingsChanged) {
+	const render = function(settingsChanged) {
 		let theData = setupDefinitions();
-		if(settingsChanged || !widget.data || needToRedrawWidget(widget, theData)){
-			widget.data = theData
+		if (settingsChanged || !widget.data || needToRedrawWidget(widget, theData)) {
+			widget.data = theData;
 			renderWidget(theData);
 		} else {
-			console.log('data not changed enough to redraw widget')
+			console.log('data not changed enough to redraw widget');
 		}
 	}
 
