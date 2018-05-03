@@ -27,7 +27,6 @@ const needToRedrawWidget = (widget, newData) => {
 }
 let widgetCount = 0;	// for generating unique ids
 const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
-const formatIntoPercentage = d3.format('.0%');
 const getTextWidth = (text, font) => {
 	const canvas = document.createElement('canvas');
 	const context = canvas.getContext('2d');
@@ -316,7 +315,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			},
 			{
 				name: 'paddingBelowDropdown',				
-				value: 5
+				value: 10
 			},
 			{
 				name: 'paddingRightOfYAxisTicks',
@@ -457,7 +456,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 							const rowValue = +row.get('value');
 							const rowYear = timestamp.getFullYear();
-							const rowMonth = timestamp.getMonth();
+							const rowMonth = months[timestamp.getMonth()];
 							const rowDate = timestamp.getDate();
 							const rowHour = timestamp.getHours();
 							const rowDateHr = [rowDate, rowHour];
@@ -479,7 +478,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 							const rowValue = +row.get('value');
 							const rowYear = timestamp.getFullYear();
-							const rowMonth = timestamp.getMonth();
+							const rowMonth = months[timestamp.getMonth()];
 							const rowDate = timestamp.getDate();
 							const rowHour = timestamp.getHours();
 							const rowDateHr = [rowDate, rowHour];
@@ -606,12 +605,6 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 ////////////////////////////////////////////////////////////////
 
 	const renderWidget = (widget, data) => {
-    d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
-		// delete leftover elements from versions previously rendered
-		if (!widget.svg.empty()) widget.svg.selectAll('*').remove();
-		const graphicGroup = widget.svg.append('g').attr('class', 'graphicGroup');
-
-
 		// ********************************************* DRAW ******************************************************* //
 		widget.outerDiv
 			.style('width', data.jqWidth + 'px')
@@ -663,11 +656,11 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.style('padding', '5px')
 			.style('background-color', data.dropdownFillColor)
 			.on('change', () => dropdownYearChanged(widget, d3.event.target.value))
-			.on('mouseover', function () {
+			.on('mouseover', function() {
 				widget.yearDropdownHovered = true;
 				d3.select(this).style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
 			})
-			.on('mouseout', function () {
+			.on('mouseout', function() {
 				widget.yearDropdownHovered = false;
 				d3.select(this).style('border', `1.5px solid ${data.dropdownStrokeColor}`)
 			})
@@ -814,7 +807,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.call(xAxisGenerator)
 		xAxis.selectAll('text')
 			.style('font', data.xAxisTicksTextFont)
-			.attr('fill', data.xAxisTicksTextColor)
+			.style('fill', data.xAxisTicksTextColor)
 		xAxis.selectAll('path')
 			.attr('stroke', 'none')
 
@@ -826,7 +819,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		yAxis.selectAll('text')
 			.style('text-anchor', 'end')
 			.style('font', data.yAxisTicksTextFont)
-			.attr('fill', data.yAxisTicksTextColor)
+			.style('fill', data.yAxisTicksTextColor)
 		yAxis.selectAll('path')
 			.attr('stroke', 'none')
 
@@ -911,7 +904,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('height', widget.settingsBtnHovered ? data.settingsBtnSize * 1.2 : data.settingsBtnSize)
 			.attr('width', widget.settingsBtnHovered ? data.settingsBtnSize * 1.2 : data.settingsBtnSize)
 			.on('click', () => {toggleModal()})
-			.on('mouseenter', function () {
+			.on('mouseenter', function() {
 				d3.select(this)
 					.attr('height', data.settingsBtnSize * 1.2)
 					.attr('width', data.settingsBtnSize * 1.2)
@@ -919,7 +912,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.attr('y', data.margin.top * 2)
 
 			})
-			.on('mouseout', function () {
+			.on('mouseout', function() {
 				d3.select(this)
 				.attr('height', data.settingsBtnSize)
 				.attr('width', data.settingsBtnSize)
@@ -931,7 +924,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('class', 'modalGroup')
 			.attr('transform', 	`translate(${(data.graphicWidth / 2) - (data.modalWidth / 2)},${(data.graphicHeight / 2) - (data.modalHeight / 2)})`)
 
-		function removeModal (rerenderAfter) {
+		function removeModal(rerenderAfter) {
 			resetElements(widget.outerDiv, '.modalDiv')
 			resetElements(widget.outerDiv, '.overlayDiv')
 			widget.svg.select('.modalBackgroundRect')
@@ -946,7 +939,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					})
 		}
 
-		function renderModal () {
+		function renderModal() {
 			// make box of background color with slight opacity to blur background and then add modal on top
 			const overlay = widget.outerDiv.append('div')
 				.attr('class', 'overlayDiv')
@@ -970,8 +963,8 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				.attr('stroke', 'black')
 				.attr('stroke-width', '2pt')
 				.attr('rx', data.modalWidth * 0.05)
-				.on('mousedown', function(){d3.event.stopPropagation()})
-				.on('click', function(){d3.event.stopPropagation()})
+				.on('mousedown', function() {d3.event.stopPropagation()})
+				.on('click', function() {d3.event.stopPropagation()})
 				.attr('height', 0)
 				.attr('width', 0)
 				.attr('x', data.modalWidth / 2)
@@ -981,7 +974,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.attr('y', 0)
 					.attr('height', data.modalHeight)
 					.attr('width', data.modalWidth)
-					.on('end', function () {
+					.on('end', function() {
 						renderModalDiv()
 					})
 
@@ -993,7 +986,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.attr('class', 'modalDiv')
 					.style('position', 'absolute')
 					.style('width', data.modalWidth)
-					.style('left', (data.paddingLeftOfDropdown + (data.graphicWidth / 2) - (data.modalWidth / 2)) + 'px')
+					.style('left', ((data.graphicWidth / 2) - (data.modalWidth / 2)) + 'px')
 					.style('top', ((data.graphicHeight / 2) - (data.modalHeight / 2)) + 'px')
 
 				const form = modalDiv.append('form')
@@ -1271,10 +1264,10 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				ttHrsText.text(widget.ttHours);
 				ttEffText.text(widget.ttEff);
 			}
-		function attemptUnhoverRects (d, i, nodes, that) {
+		function attemptUnhoverRects(d, i, nodes, that) {
 			if (widget.pinnedRectIndex === 'none') unhoverRects(d, i, nodes, that)
 		}
-		function unhoverRects () {
+		function unhoverRects() {
 			widget.hoveredRectIndex = 'none';
 			widget.svg.selectAll('.cell')
 				.attr('stroke-width', '0.5pt')
