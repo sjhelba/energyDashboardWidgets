@@ -42,11 +42,8 @@
       "no-restricted-globals": ["warn", "Promise"],
       "no-undef": "error",
       "no-unused-vars": ["warn", {"args": "none"}],
-      "padded-blocks": ["warn", "never"],
       "react/prop-types": "off",
       "react/jsx-no-bind": "off",
-      "space-before-blocks": ["warn", "always"],
-      "space-before-function-paren": ["warn", "never"]
     }
   }
   

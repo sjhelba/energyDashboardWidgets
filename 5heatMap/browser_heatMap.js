@@ -43,8 +43,8 @@ function defineFuncForTabSpacing () {
 	const getTextHeight = font => {
 		let num = '';
 		const indexOfLastDigit = font.indexOf('pt') - 1;
-		for(let i = 0; i <= indexOfLastDigit; i++){
-			if(!isNaN(font[i]) || font[i] === '.') num += font[i];
+		for (let i = 0; i <= indexOfLastDigit; i++) {
+			if (!isNaN(font[i]) || font[i] === '.') num += font[i];
 		}
 		num = +num;
 		return num * 1.33333333333;
@@ -64,11 +64,6 @@ function defineFuncForTabSpacing () {
 		let contOpacity = hrsInBin / hrsInMonth || 0;
 		if (contOpacity === 0) return 0;
 		return contOpacity + 0.5
-		// if (contOpacity < 0.25) return 0.4;
-		// if (contOpacity < 0.4) return 0.6;
-		// if (contOpacity < 0.6) return 0.8;
-		// if (contOpacity < 0.8) return 1;
-		// return 1; 
 	}
 
 	const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwTrFunc) => {
@@ -94,7 +89,7 @@ function defineFuncForTabSpacing () {
 		months.forEach(month => {
 			let monthObj = makeAMonthObj(month);
 			// if there is data for that month in hourlyData, add it to monthObj
-			if (hourlyData[year][month]){
+			if (hourlyData[year][month]) {
 				hourlyData[year][month].hoursArr.forEach(hour => {
 					monthObj.totalHoursForMonth++;
 					monthObj.tempBinsForMonth[getIndexOfBinForTemp(hour.temp, tempRanges)].totalHoursInBin++;
@@ -397,8 +392,6 @@ function defineFuncForTabSpacing () {
 		// /* SETUP DEFINITIONS AND DATA */
 	////////////////////////////////////////////////////////////////
 	const setupDefinitions = () => {
-		const today = new Date();
-		const thisYear = today.getFullYear();
 
 		// FROM USER // 
 		const data = {};
