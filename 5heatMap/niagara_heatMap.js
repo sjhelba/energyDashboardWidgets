@@ -442,12 +442,14 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		// DATA TO POPULATE //
 		data.availableYears = [];
 		data.hourlyData = {};
-		let addedTempHistoryYr = false;
 
 		// GET HISTORY DATA
 		return Promise.all([widget.resolve(`history:^System_WbtHr`), widget.resolve(`history:^System_MsEffHr`)])
 			.then(histories => {
 				const [tempHistoryTable, effHistoryTable] = histories;
+				data.tempPrecision = !data.overrideDefaultTempPrecisionWFacets ? 0 : tempHistoryTable.getCol('value').getFacets().get('precision') || 0;
+				data.kwTrPrecision = !data.overrideDefaultKwTrPrecisionWFacets ? 3 : effHistoryTable.getCol('value').getFacets().get('precision') || 3;
+				data.tempUnits = tempHistoryTable.getCol('value').getFacets().get('units') || '°F';
 				const cursorPromises = [
 
 					effHistoryTable.cursor({
@@ -483,43 +485,34 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 							const rowHour = timestamp.getHours();
 							const rowDateHr = [rowDate, rowHour];
 
-							if (!data.hourlyData[rowYear]) {
-								addedTempHistoryYr = true;
-								data.hourlyData[rowYear] = {};
-								data.availableYears.unshift(rowYear)
-							}
-							if (!data.hourlyData[rowYear][rowMonth]) {
-								data.hourlyData[rowYear][rowMonth] = {monthObj: {}, hoursArr: []};
-							}
-							if (!data.hourlyData[rowYear][rowMonth].monthObj[rowDateHr]) {
-								data.hourlyData[rowYear][rowMonth].monthObj[rowDateHr] = {eff: undefined, temp: rowValue};
-							} else {
+							// if there is already eff data for that hour, add temp data for that hour
+							if (data.hourlyData[rowYear] && data.hourlyData[rowYear][rowMonth] && data.hourlyData[rowYear][rowMonth].monthObj[rowDateHr]) {
 								data.hourlyData[rowYear][rowMonth].monthObj[rowDateHr].temp = rowValue;
 							}
 						}
 					})
-
 				];
 				return Promise.all(cursorPromises);
 			})
 			.catch(err => console.error('error finding or iterating through efficiencyMap histories: ' + err))
 			.then(() => {
-				// adjust collected data
-				// sort if needed
-				if (addedTempHistoryYr) data.availableYears.sort((a, b) => a - b);
-				//convert collected hours to array format within overall data obj
+				// format data for better d3 consumption
 				data.availableYears.forEach(yearKey => {
 					const monthKeys = Object.keys(data.hourlyData[yearKey]);
 					monthKeys.forEach(monthKey => {
+						//filter out any hours that are missing temp data
+						const hoursInMonth = Object.keys(data.hourlyData[yearKey][monthKey].monthObj);
+						hoursInMonth.forEach(hr => {
+							if (!data.hourlyData[yearKey][monthKey].monthObj[hr].temp) delete data.hourlyData[yearKey][monthKey].monthObj[hr];
+						})
+						//convert collected hours to array format within overall data obj
 						data.hourlyData[yearKey][monthKey].hoursArr = d3.values(data.hourlyData[yearKey][monthKey].monthObj);
 					})
 				});
 
 				// CALCULATED DEFS //
 				if (!widget.dropdownYearSelected) widget.dropdownYearSelected = data.availableYears[0];
-				data.tempPrecision = !data.overrideDefaultTempPrecisionWFacets ? 0 : 'getFROMFACETS'			//TODO: actually get from facets
-				data.kwTrPrecision = !data.overrideDefaultKwTrPrecisionWFacets ? 3 : 'getFROMFACETS'			//TODO: actually get from facets
-				data.tempUnits = '°F' || '°F'	//TODO: get from facets on left of ||
+
 				// functions
 				data.formatTemp = d3.format(`,.${data.tempPrecision}f`);
 				data.formatKwTr = d3.format(`,.${data.kwTrPrecision}f`);

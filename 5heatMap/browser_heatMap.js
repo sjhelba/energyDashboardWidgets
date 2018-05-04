@@ -791,7 +791,7 @@ function defineFuncForTabSpacing () {
 			.call(xAxisGenerator)
 		xAxis.selectAll('text')
 			.style('font', data.xAxisTicksTextFont)
-			.attr('fill', data.xAxisTicksTextColor)
+			.style('fill', 'blue' || data.xAxisTicksTextColor)
 		xAxis.selectAll('path')
 			.attr('stroke', 'none')
 
@@ -803,7 +803,7 @@ function defineFuncForTabSpacing () {
 		yAxis.selectAll('text')
 			.style('text-anchor', 'end')
 			.style('font', data.yAxisTicksTextFont)
-			.attr('fill', data.yAxisTicksTextColor)
+			.style('fill', data.yAxisTicksTextColor)
 		yAxis.selectAll('path')
 			.attr('stroke', 'none')
 
