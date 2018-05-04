@@ -199,7 +199,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				typeSpec: 'gx:Color'
 			},
 			{
-				name: 'legendUnitsTitleColor',
+				name: 'legendTitleColor',
 				value: 'black',
 				typeSpec: 'gx:Color'
 			},
@@ -373,10 +373,6 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			{
 				name: 'dropdownWidth',
 				value: 100
-			},
-			{
-				name: 'tooltipRoundedness',
-				value: 5
 			}
 		]);
 
@@ -554,7 +550,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 
 				// yAxis Bins
 				const getSmallestNumOfPrecision = decimals => {
-					if (!decimals) return 1;
+					if (decimals < 1) return 1;
 					let decimalNums = '0'.repeat(decimals - 1);
 					let num = '0.' + decimalNums + '1';
 					return +num;

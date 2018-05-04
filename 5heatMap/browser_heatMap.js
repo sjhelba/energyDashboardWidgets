@@ -206,7 +206,7 @@ function defineFuncForTabSpacing () {
 			typeSpec: 'gx:Color'
 		},
 		{
-			name: 'legendUnitsTitleColor',
+			name: 'legendTitleColor',
 			value: 'black',
 			typeSpec: 'gx:Color'
 		},
