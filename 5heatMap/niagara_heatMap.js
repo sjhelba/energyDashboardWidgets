@@ -262,47 +262,27 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			//fills
 			{
 				name: 'backgroundColor',
-				value: 'white',
+				value: 'rgb(245,245,245)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'gridFillColor',
-				value: 'white',
+				value: 'rgb(245,245,245)',
 				typeSpec: 'gx:Color'
 			},
-			// {
-			// 	name: 'maxKwTrColor',
-			// 	value: 'rgb(41,171,226)',
-			// 	typeSpec: 'gx:Color'
-			// },
-			// {
-			// 	name: 'minKwTrColor',
-			// 	value: 'rgb(34,181,115)',
-			// 	typeSpec: 'gx:Color'
-			// },
 			{
 				name: 'maxKwTrColor',
-				value: '#D33227',
+				value: 'rgb(105,202,210)',
 				typeSpec: 'gx:Color'
 			},
-			// {
-			// 	name: 'minKwTrColor',
-			// 	value: '#1F77B9',
-			// 	typeSpec: 'gx:Color'
-			// },
-			// {
-			// 	name: 'maxKwTrColor',
-			// 	value: 'rgb(21,67,96)',
-			// 	typeSpec: 'gx:Color'
-			// },
 			{
 				name: 'minKwTrColor',
-				value: '#FFA500',
+				value: 'rgb(54,64,78)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'dropdownFillColor',
-				value: 'white',
+				value: 'rgb(255,255,255)',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -312,13 +292,13 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			},
 			{
 				name: 'tooltipFillColor',
-				value: '#D1D1D1',
+				value: 'rgb(255,255,255)',
 				typeSpec: 'gx:Color'
 			},
 			//strokes
 			{
 				name: 'gridStrokeColor',
-				value: 'grey',
+				value: 'rgb(192,192,192)',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -328,23 +308,23 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			},
 			{
 				name: 'hoveredInputStrokeColor',
-				value: '#04B3D8',
+				value: 'rgb(4,179,216)',
 				typeSpec: 'gx:Color'
 			},
 			//text
 			{
 				name: 'xAxisTicksTextColor',
-				value: 'black',
+				value: 'rgb(64,64,64)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'yAxisTicksTextColor',
-				value: 'black',
+				value: 'rgb(64,64,64)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'yAxisTitleColor',
-				value: 'black',
+				value: 'rgb(64,64,64)',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -369,22 +349,22 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			},
 			{
 				name: 'tooltipMonthColor',
-				value: 'black',
+				value: 'rgb(64,64,64)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'tooltiptempColor',
-				value: 'black',
+				value: 'rgb(64,64,64)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'tooltipHrsColor',
-				value: 'black',
+				value: 'rgb(64,64,64)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'tooltipKwTrColor',
-				value: 'black',
+				value: 'rgb(64,64,64)',
 				typeSpec: 'gx:Color'
 			},
 			/* FONT */

@@ -27,106 +27,94 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
         that.properties().addAll([
             {
                 name: 'measuredColor',
-                value: 'rgb(39, 176, 71)',
+                value: 'rgb(105,202,210)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'measuredStrokeColor',
-                value: 'rgb(39, 176, 71)',
+                value: 'rgb(105,202,210)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'measuredDataPointStrokeColor',
-                value: 'white',
+                value: 'rgb(255,255,255)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'measuredDataPointFillColor',
-                value: 'rgb(39, 176, 71)',
+                value: 'rgb(105,202,210)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'baselineColor',
-                value: 'rgb(44, 139, 246)',
+                value: 'rgb(66,88,103)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'baselineStrokeColor',
-                value: 'rgb(44, 139, 246)',
+                value: 'rgb(66,88,103)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'baselineDataPointStrokeColor',
-                value: 'white',
+                value: 'rgb(255,255,255)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'baselineDataPointFillColor',
-                value: 'rgb(44, 139, 246)',
+                value: 'rgb(66,88,103)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'projectedColor',
-                value: 'rgb(246, 159, 44)',
+                value: 'rgb(252, 181, 80)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'projectedStrokeColor',
-                value: 'rgb(246, 159, 44)',
+                value: 'rgb(252, 181, 80)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'projectedDataPointStrokeColor',
-                value: 'white',
+                value: 'rgb(255,255,255)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'projectedDataPointFillColor',
-                value: 'rgb(246, 159, 44)',
+                value: 'rgb(252, 181, 80)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'gridColor',
-                value: 'grey',
+                value: 'rgb(128,128,128)',
                 typeSpec: 'gx:Color'
             },
             {
-                name: 'measuredFillOpacity',
-                value: 0.42
-            },
-            {
-                name: 'baselineFillOpacity',
-                value: 0.42
-            },
-            {
-                name: 'projectedFillOpacity',
-                value: 0.42
-            },
-            {
                 name: 'backgroundColor',
-                value: 'white',
+                value: 'rgb(245,245,245)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'tooltipFill',
-                value: 'white',
+                value: 'rgb(255,255,255)',
                 typeSpec: 'gx:Color'
             },
             {
                 name: 'dataPointRadius',
-                value: 5
+                value: 6
             },
             {
                 name: 'dataPointStrokeWidth',
-                value: 2.5
+                value: 2
             },
             {
-                name: 'areaPathStrokeWidth',
-                value: 3
+                name: 'pathStrokeWidth',
+                value: 4
             },
             {
                 name: 'unitsColor',
-                value: 'black',
+                value: 'rgb(64,64,64)',
                 typeSpec: 'gx:Color'
             },
             {
@@ -146,7 +134,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             },
             {
                 name: 'legendFontColor',
-                value: 'black',
+                value: 'rgb(64,64,64)',
                 typeSpec: 'gx:Color'
             },
             {
@@ -183,7 +171,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             },
             {
                 name: 'yAxisTitlePadding',
-                value: 2
+                value: 5
             },
             {
                 name: 'tooltipRectWidth',
@@ -389,9 +377,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                 data.yTickValues = [data.lowestYtick, (data.yTickInterval) + data.lowestYtick, (data.yTickInterval * 2) + data.lowestYtick, (data.yTickInterval * 3) + data.lowestYtick, data.highestYtick];
   
                 data.enterData = [
-                    {category: 'baseline', displayName: 'Baseline', color: data.baselineColor, strokeColor: data.baselineStrokeColor, dataPointStrokeColor: data.baselineDataPointStrokeColor, dataPointFillColor: data.baselineDataPointFillColor, opacity: data.baselineFillOpacity, data: data.baselineData},
-                    {category: 'projected', displayName: 'Projected', color: data.projectedColor, strokeColor: data.projectedStrokeColor, dataPointStrokeColor: data.projectedDataPointStrokeColor, dataPointFillColor: data.projectedDataPointFillColor, opacity: data.projectedFillOpacity, data: data.projectedData},
-                    {category: 'measured', displayName: 'Measured', color: data.measuredColor, strokeColor: data.measuredStrokeColor, dataPointStrokeColor: data.measuredDataPointStrokeColor, dataPointFillColor: data.measuredDataPointFillColor, opacity: data.measuredFillOpacity, data: data.measuredData}
+                    {category: 'baseline', displayName: 'Baseline', color: data.baselineColor, strokeColor: data.baselineStrokeColor, dataPointStrokeColor: data.baselineDataPointStrokeColor, dataPointFillColor: data.baselineDataPointFillColor, data: data.baselineData},
+                    {category: 'projected', displayName: 'Projected', color: data.projectedColor, strokeColor: data.projectedStrokeColor, dataPointStrokeColor: data.projectedDataPointStrokeColor, dataPointFillColor: data.projectedDataPointFillColor, data: data.projectedData},
+                    {category: 'measured', displayName: 'Measured', color: data.measuredColor, strokeColor: data.measuredStrokeColor, dataPointStrokeColor: data.measuredDataPointStrokeColor, dataPointFillColor: data.measuredDataPointFillColor, data: data.measuredData}
                 ];
             
             
@@ -459,12 +447,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
         const xAxisGenerator = d3.axisBottom(xScale) //axis generator
             .tickFormat(d3.timeFormat('%b-%y'));
   
-        const areaPathGenerator = d3.area()  // area generator (generates path element)
-            .x(d => xScale(parseDate(d.month + '-' + data.yrPerMonth[d.month])))  //data points on chart will be determined by scaling func, passing in date-parsed data element (i of dataYears) -- so that it matches up with x-axis scale
-            .y0(data.chartHeight) //bottom line of area ( where x axis would go for most area charts)
-            .y1(d => yScale(d.value)) //top line of area (we'd take d off of the height because y works upside down by default if we did this w/o scale). y(d) is outputting the literal y position the datapoint should be in
-            .curve(d3.curveCardinal);
-  
         const topBorderPathGenerator = d3.line()
             .x(d => xScale(parseDate(d.month + '-' + data.yrPerMonth[d.month])))
             .y(d => yScale(d.value))
@@ -479,19 +461,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             .data(data.enterData)
             .enter().append('g').attr('class', d => d.category);
   
-        // // Area Paths
-        // categoryGroups.append('path')
-        //     .attr('d', d => areaPathGenerator(d.data))
-        //     .attr('class', d => d.category + ' area')
-        //     .attr('fill', d => d.color)
-        //     .attr('opacity', d => widget.active && widget.active[d.category] || !widget.active ? d.opacity : 0);
             
-        // Top Border For Area Paths
+        // Top Border For Paths
         categoryGroups.append('path')   
             .attr('d', d => topBorderPathGenerator(d.data))
             .attr('class', d => d.category + ' path')
             .attr('stroke', d => d.strokeColor)
-            .attr('stroke-width', data.areaPathStrokeWidth)
+            .attr('stroke-width', data.pathStrokeWidth)
             .attr('opacity', d => widget.active && widget.active[d.category] || !widget.active ? 0.92 : 0)
             .attr('fill', 'none');
   
@@ -654,10 +630,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                 .attr('transform', (d, i) => `translate(5, ${-data.legendHeight + (data.legendCircleSize * i) + (data.legendPadding * (i + 1)) })`)
                 .on('click', d => {
                     if (!widget.active) widget.active = {baseline: true, projected: true, measured: true};
-                    const opacity = widget.active[d.category] ? {area: 0, path: 0, dataPoint: 0} : {area: d.opacity, path: 0.92, dataPoint: 1};
+                    const opacity = widget.active[d.category] ? {path: 0, dataPoint: 0} : {path: 0.92, dataPoint: 1};
                     const legendLineDecoration = widget.active[d.category] ? 'line-through' : 'none';
                     const elements = svg.selectAll(`.${d.category}`);
-                    elements.filter('.area').style('opacity', opacity.area);
                     elements.filter('.path').style('opacity', opacity.path);
                     elements.filter('.dataPointGroup').style('opacity', opacity.dataPoint);
                     svg.select(`#${d.category}Text`).style('text-decoration', legendLineDecoration);

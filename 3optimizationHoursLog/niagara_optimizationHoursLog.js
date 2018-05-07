@@ -32,17 +32,17 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		that.properties().addAll([
 			{
 				name: 'backgroundColor',
-				value: 'white',
+				value: 'rgb(245,245,245)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'standardColor',
-				value: '#ff8600',
+				value: 'rgb(66,88,103)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'optimizedColor',
-				value: 'rgb(44, 139, 246)',
+				value: 'rgb(105,202,210)',
 				typeSpec: 'gx:Color'
 			},
 			// if data not able to be pulled upon async try, will change values of these bools
@@ -65,31 +65,31 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			},
 			{
 				name: 'includeTowers',
-				value: true
+				value: false
 			},
 			{
 				name: 'color_CHs',
-				value: '#0ece2b',
+				value: 'rgb(9,105,130)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'color_PCPs',
-				value: '#060084',
+				value: 'rgb(95,218,239)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'color_SCPs',
-				value: '#5fdaef',
+				value: 'rgb(69,178,157)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'color_CDPs',
-				value: '#e26302',
+				value: 'rgb(252,163,36)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'color_CTFs',
-				value: '#f92f2f',
+				value: 'rgb(213,61,59)',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -159,7 +159,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			},
 			{
 				name: 'tooltipFillColor',
-				value: '#f2f2f2',
+				value: 'rgb(255,255,255)',
 				typeSpec: 'gx:Color'
 			},
 			{

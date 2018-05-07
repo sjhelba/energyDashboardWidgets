@@ -434,7 +434,7 @@ const needToRedrawWidget = (widget, newData) => {
 		that.properties().addAll([
 			{
 				name: 'backgroundColor',
-				value: 'white',
+				value: 'rgb(245,245,245)',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -469,21 +469,21 @@ const needToRedrawWidget = (widget, newData) => {
 			},
 			{
 				name: 'includeCTFs',
-				value: true
+				value: false
 			},
 			{
 				name: 'measuredColor',
-				value: '#29ABE2',
+				value: 'rgb(105,202,210)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'baselineColor',
-				value: '#003366',
+				value: 'rgb(66,88,103)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'projectedColor',
-				value: '#FF6633',
+				value: 'rgb(252,181,80)',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -493,7 +493,7 @@ const needToRedrawWidget = (widget, newData) => {
 			},
 			{
 				name: 'toolTitleColor',
-				value: '#333333',
+				value: 'rgb(51,51,51)',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -508,7 +508,7 @@ const needToRedrawWidget = (widget, newData) => {
 			},
 			{
 				name: 'dropdownFillColor',
-				value: 'white',
+				value: 'rgb(255,255,255)',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -528,22 +528,22 @@ const needToRedrawWidget = (widget, newData) => {
 			},
 			{
 				name: 'currencySymbolColor',
-				value: 'black',
+				value: 'rgb(51,65,78)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'utilityRateColor',
-				value: 'black',
+				value: 'rgb(64,64,64)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'changePercentColor',
-				value: 'white',
+				value: 'rgb(255,255,255)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'changeValueColor',
-				value: 'white',
+				value: 'rgb(255,255,255)',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -553,41 +553,41 @@ const needToRedrawWidget = (widget, newData) => {
 			},
 			{
 				name: 'tooltipBackgroundColor',
-				value: '#dedfe0',
+				value: 'rgb(255,255,255)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'changeToolRectColor',
-				value: '#333333',
+				value: 'rgb(51,65,78)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'sysBtnBackgroundColor',
-				value: '#7663F2',
+				value: 'rgb(68,108,179)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'eqBtnTextColor',
-				value: 'white',
+				value: 'rgb(255,255,255)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'eqBtnBackgroundColor',
-				value: '#8EF056',
+				value: 'rgb(34,181,115)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'sysBtnTextColor',
-				value: 'white',
+				value: 'rgb(255,255,255)',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'tooltipOpacity',
-				value: 0.9,
+				value: 0.8,
 			},
 			{
 				name: 'btnKnobColor',
-				value: 'white',
+				value: 'rgb(255,255,255)',
 				typeSpec: 'gx:Color'
 			}
 		]);
