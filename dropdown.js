@@ -52,7 +52,7 @@ const getTextHeight = font => {
 
 	/*
 		* @param {array} arrOfOptions	DEFAULT: []
-		* @param {function} funcToRunOnSelection	DEFAULT: valOfSelection => console.log('selected ' + valOfSelection)
+		* @param {function} funcToRunOnSelection, first param is val selected, rest are els in arr.	DEFAULT: valOfSelection => console.log('selected ' + valOfSelection)
 		* @param {d3 element / obj} elementToAppendTo	DEFAULT: d3.select('svg')
 		* @param {number} x	DEFAULT: 5
 		* @param {number} y	DEFAULT: 50
@@ -65,128 +65,136 @@ const getTextHeight = font => {
 		* @param {string} hoveredFill	DEFAULT: '#d5d6d4'
 		* @param {string} font	DEFAULT: '10.0pt Nirmala UI'
 		* @param {string} textColor	DEFAULT: 'black'
-		* @param {string || number} defaultSelection
-		* @param {array} arrOfArgsToPassInToFuncAfterVal
+		* @param {string || number} defaultSelection	: set to value of default selection
+		* @param {function} funcToRunOnOpen, params are els in arr.
+		* @param {function} funcToRunOnClose, params are els in arr.
+		* @param {array} arrOfArgsToPassInToFuncsAfterVal
 		* @return {d3 element / obj} returns dropdownGroup appended to 'elementToAppendTo'
 	*/
-function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection => console.log('selected: ' + valOfSelection), elementToAppendTo = d3.select('svg'), x = 5, y = 50, leftAligned = true, minDropdownWidth = 125, horizontalPadding = 5, verticalPadding = 5, strokeColor = 'black', backgroundFill = 'white', hoveredFill = '#d5d6d4', font = '10.0pt Nirmala UI', textColor = 'black', defaultSelection, arrOfArgsToPassInToFuncAfterVal) {
-  const arrowWidth = getTextWidth('8', font) / 1.5;
-  const textWidth = (arrowWidth * 2) + arrOfOptions.reduce((accum, curr) => {
-    let currTextWidth = getTextWidth(curr, font);
-    return currTextWidth > accum ? currTextWidth : accum;
-  }, 0);
-  const textHeight = getTextHeight(font);
-  const dropdownWidth = minDropdownWidth > textWidth + (horizontalPadding * 2) ? minDropdownWidth : textWidth + (horizontalPadding * 2);
-  const rowHeight = textHeight + (verticalPadding * 2);
-  const textY = verticalPadding + (textHeight / 2);
-  let clickedSelection = defaultSelection || defaultSelection === 0 ? defaultSelection : arrOfOptions[0];
-  const dropdownHeight = rowHeight * (arrOfOptions.length + 1);
-  let open = false;
-  function generatePath () {
-    let x1, y1, x2, y2, x3, y3;
-    x1 = dropdownWidth - (horizontalPadding + arrowWidth);
-    console.log('x1', x1, 'dropdownWidth', dropdownWidth, 'horizontalpad', horizontalPadding, 'arrowWidth', arrowWidth)
-    x2 = x1 + arrowWidth;
-    x3 = x1 + (arrowWidth / 2);
-    y1 = textY;
-    y2 = textY;
-    y3 = textY + (arrowWidth / 2);
-    return `M${x1},${y1} L${x2},${y2} L${x3},${y3} z`;
-  }
-  // dropdownGroup
-  const dropdownGroup = elementToAppendTo.append('g')
-    .attr('class', 'dropdownGroup')
-    .attr('transform', `translate(${x + 3},${y + 3})`)
-  //outer container
-  const outerContainer = dropdownGroup.append('rect')
-    .attr('class', 'outerContainerRect')
-    .attr('width', dropdownWidth + 6)
-    .attr('height', rowHeight + 6)
-    .attr('fill', backgroundFill)
-    .attr('rx', 5)
-    .attr('stroke', strokeColor)
-    .attr('x', - 3)
-    .attr('y', - 3)
-    .attr('stroke-width', '0.5px')
-    .on('click', function () {
-      toggleDrop()
-    })
-  //rows
-  const dropdownRows = dropdownGroup.selectAll('.dropdownRows')
-    .data(arrOfOptions)
-    .enter().append('g')
-      .attr('class', (d, i) => 'dropdownRows ' + i + 'dropdownRow')
-      .attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : 'translate(0,0)')
+  function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection => console.log('selected: ' + valOfSelection), elementToAppendTo = d3.select('svg'), x = 5, y = 50, leftAligned = true, minDropdownWidth = 125, horizontalPadding = 5, verticalPadding = 5, strokeColor = 'black', backgroundFill = 'white', hoveredFill = '#d5d6d4', font = '10.0pt Nirmala UI', textColor = 'black', defaultSelection, funcToRunOnOpen, funcToRunOnClose, arrOfArgsToPassInToFuncsAfterVal) {
+    const arrowWidth = getTextWidth('8', font) / 1.5;
+    const textWidth = (arrowWidth * 2) + arrOfOptions.reduce((accum, curr) => {
+      let currTextWidth = getTextWidth(curr, font);
+      return currTextWidth > accum ? currTextWidth : accum;
+    }, 0);
+    const textHeight = getTextHeight(font);
+    const dropdownWidth = minDropdownWidth > textWidth + (horizontalPadding * 2) ? minDropdownWidth : textWidth + (horizontalPadding * 2);
+    const rowHeight = textHeight + (verticalPadding * 2);
+    const textY = verticalPadding + (textHeight / 2);
+    let clickedSelection = defaultSelection || defaultSelection === 0 ? defaultSelection : arrOfOptions[0];
+    const dropdownHeight = rowHeight * (arrOfOptions.length + 1);
+    let open = false;
+    function generatePath () {
+      let x1, y1, x2, y2, x3, y3;
+      x1 = dropdownWidth - (horizontalPadding + arrowWidth);
+      x2 = x1 + arrowWidth;
+      x3 = x1 + (arrowWidth / 2);
+      y1 = textY;
+      y2 = textY;
+      y3 = textY + (arrowWidth / 2);
+      return `M${x1},${y1} L${x2},${y2} L${x3},${y3} z`;
+    }
+    // dropdownGroup
+    const dropdownGroup = elementToAppendTo.append('g')
+      .attr('class', 'dropdownGroup')
+      .attr('transform', `translate(${x + 3},${y + 3})`)
+    //outer container
+    const outerContainer = dropdownGroup.append('rect')
+      .attr('class', 'outerContainerRect')
+      .attr('width', dropdownWidth + 6)
+      .attr('height', rowHeight + 6)
+      .attr('fill', backgroundFill)
+      .attr('rx', 5)
+      .attr('stroke', strokeColor)
+      .attr('x', - 3)
+      .attr('y', - 3)
+      .attr('stroke-width', '0.5px')
+      .on('click', function () {
+        toggleDrop()
+      })
+    //rows
+    const dropdownRows = dropdownGroup.selectAll('.dropdownRows')
+      .data(arrOfOptions)
+      .enter().append('g')
+        .attr('class', (d, i) => 'dropdownRows ' + i + 'dropdownRow')
+        .attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : 'translate(0,0)')
+        .on('mouseenter', function() {
+          dropdownRows.selectAll('rect').attr('fill', backgroundFill);
+          d3.select(this).select('rect').attr('fill', hoveredFill);
+        })
+        .on('mouseleave', function() {
+          d3.select(this).select('rect').attr('fill', backgroundFill);
+        })
+        .on('click', function (d) {
+          changeClickedSelection(d);
+          toggleDrop();
+        });
+    const rowRects = dropdownRows.append('rect')
+      .attr('class', (d, i) => 'rowRect ' + i + 'rowRect')
+      .attr('width', dropdownWidth)
+      .attr('height', rowHeight)
+      .attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill)
+    dropdownRows.append('text')
+      .attr('class', (d, i) => 'rowText ' + i + 'rowText')
+      .text(d => d)
+      .attr('dominant-baseline', 'middle')
+      .attr('x', d => leftAligned ? horizontalPadding : (dropdownWidth / 2) - (getTextWidth(d, font) / 2))
+      .attr('y', textY)
+      .style('font', font)
+      .style('fill', textColor)
+      .style('cursor', 'default')
+    // Selected window
+    const selectedGroup = dropdownGroup.append('g')
+      .attr('class', 'selectedGroup')
       .on('mouseenter', function() {
-        dropdownRows.selectAll('rect').attr('fill', backgroundFill);
-        d3.select(this).select('rect').attr('fill', hoveredFill);
+        selectedRect.attr('fill', hoveredFill);
       })
       .on('mouseleave', function() {
-        d3.select(this).select('rect').attr('fill', backgroundFill);
+        if (!open) selectedRect.attr('fill', backgroundFill);
       })
-      .on('click', function (d) {
-        changeClickedSelection(d);
-        toggleDrop();
+      .on('click', function () {
+        toggleDrop()
       });
-  const rowRects = dropdownRows.append('rect')
-    .attr('class', (d, i) => 'rowRect ' + i + 'rowRect')
-    .attr('width', dropdownWidth)
-    .attr('height', rowHeight)
-    .attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill)
-  dropdownRows.append('text')
-    .attr('class', (d, i) => 'rowText ' + i + 'rowText')
-    .text(d => d)
-    .attr('dominant-baseline', 'middle')
-    .attr('x', d => leftAligned ? horizontalPadding : (dropdownWidth / 2) - (getTextWidth(d, font) / 2))
-    .attr('y', textY)
-    .style('font', font)
-    .style('fill', textColor)
-  // Selected window
-  const selectedGroup = dropdownGroup.append('g')
-    .attr('class', 'selectedGroup')
-    .on('mouseenter', function() {
-      selectedRect.attr('fill', hoveredFill);
-    })
-    .on('mouseleave', function() {
-      if (!open) selectedRect.attr('fill', backgroundFill);
-    })
-    .on('click', function () {
-      toggleDrop()
-    });
-  const selectedRect = selectedGroup.append('rect')
-    .attr('class', 'selectedRect')
-    .attr('width', dropdownWidth)
-    .attr('height', rowHeight)
-    .attr('fill', backgroundFill)
-  const selectedText = selectedGroup.append('text')
-    .attr('class', 'selectedText')
-    .text(clickedSelection)
-    .attr('dominant-baseline', 'middle')
-    .attr('x', leftAligned ? horizontalPadding : ((dropdownWidth - (arrowWidth * 2)) / 2) - ((getTextWidth(clickedSelection, font)) / 2))
-    .attr('y', textY)
-    .style('font', font)
-    .style('fill', textColor)
-  selectedGroup.append('path')
-    .attr('class', 'arrowPath')
-    .attr('d', generatePath())
-    .attr('fill', textColor)
-    .attr('stroke', textColor)
-  function changeClickedSelection (newSelectionValue) {
-    selectedRect.attr('fill', backgroundFill);
-    clickedSelection = newSelectionValue;
-    selectedText.text(clickedSelection);
-    funcToRunOnSelection(newSelectionValue, ...arrOfArgsToPassInToFuncAfterVal);
+    const selectedRect = selectedGroup.append('rect')
+      .attr('class', 'selectedRect')
+      .attr('width', dropdownWidth)
+      .attr('height', rowHeight)
+      .attr('fill', backgroundFill)
+    const selectedText = selectedGroup.append('text')
+      .attr('class', 'selectedText')
+      .text(clickedSelection)
+      .attr('dominant-baseline', 'middle')
+      .attr('x', leftAligned ? horizontalPadding : ((dropdownWidth - (arrowWidth * 2)) / 2) - ((getTextWidth(clickedSelection, font)) / 2))
+      .attr('y', textY)
+      .style('font', font)
+      .style('fill', textColor)
+      .style('cursor', 'default')
+    selectedGroup.append('path')
+      .attr('class', 'arrowPath')
+      .attr('d', generatePath())
+      .attr('fill', textColor)
+      .attr('stroke', textColor)
+    function changeClickedSelection (newSelectionValue) {
+      selectedRect.attr('fill', backgroundFill);
+      clickedSelection = newSelectionValue;
+      selectedText.text(clickedSelection);
+      funcToRunOnSelection(newSelectionValue, ...arrOfArgsToPassInToFuncsAfterVal);
+    }
+    function toggleDrop () {
+      open = !open;
+      if (open) {
+        funcToRunOnOpen(...arrOfArgsToPassInToFuncsAfterVal)
+      } else {
+        funcToRunOnClose(...arrOfArgsToPassInToFuncsAfterVal)
+      }
+      rowRects.attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill);
+      outerContainer.transition()
+        .attr('height', open ? dropdownHeight + 6: rowHeight + 6);
+      dropdownRows.transition()
+        .attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : `translate(0,0)`);
+    }
+    return dropdownGroup;
   }
-  function toggleDrop () {
-    open = !open;
-    rowRects.attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill);
-    outerContainer.transition()
-      .attr('height', open ? dropdownHeight + 6: rowHeight + 6);
-    dropdownRows.transition()
-      .attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : `translate(0,0)`);
-  }
-  return dropdownGroup;
-}
 
 
 

@@ -51,7 +51,7 @@ function defineFuncForTabSpacing () {
 	};
 	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-	const dropdownYearChanged = (widget, newYear) => {
+	const dropdownYearChanged = (newYear, widget) => {
 		widget.dropdownYearSelected = newYear;
 		render();
 	}
@@ -116,7 +116,7 @@ function defineFuncForTabSpacing () {
 
 	/*
 		* @param {array} arrOfOptions	DEFAULT: []
-		* @param {function} funcToRunOnSelection	DEFAULT: valOfSelection => console.log('selected ' + valOfSelection)
+		* @param {function} funcToRunOnSelection, first param is val selected, rest are els in arr.	DEFAULT: valOfSelection => console.log('selected ' + valOfSelection)
 		* @param {d3 element / obj} elementToAppendTo	DEFAULT: d3.select('svg')
 		* @param {number} x	DEFAULT: 5
 		* @param {number} y	DEFAULT: 50
@@ -129,28 +129,13 @@ function defineFuncForTabSpacing () {
 		* @param {string} hoveredFill	DEFAULT: '#d5d6d4'
 		* @param {string} font	DEFAULT: '10.0pt Nirmala UI'
 		* @param {string} textColor	DEFAULT: 'black'
-		* @param {string || number} defaultSelection
-		* @param {array} arrOfArgsToPassInToFuncAfterVal
+		* @param {string || number} defaultSelection	: set to value of default selection
+		* @param {function} funcToRunOnOpen, params are els in arr.
+		* @param {function} funcToRunOnClose, params are els in arr.
+		* @param {array} arrOfArgsToPassInToFuncsAfterVal
 		* @return {d3 element / obj} returns dropdownGroup appended to 'elementToAppendTo'
 	*/
-	function makeDropdown (
-    arrOfOptions = [],
-    funcToRunOnSelection = valOfSelection => console.log('selected ' + valOfSelection),
-    elementToAppendTo = d3.select('svg'),
-    x = 5,
-    y = 50,
-    leftAligned = true,
-    minDropdownWidth = 125,
-    horizontalPadding = 5,
-    verticalPadding = 5,
-    strokeColor = 'black',
-    backgroundFill = 'white',
-    hoveredFill = '#d5d6d4',
-    font = '10.0pt Nirmala UI',
-    textColor = 'black',
-    defaultSelection,
-    arrOfArgsToPassInToFuncAfterVal
-  ) {
+function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection => console.log('selected: ' + valOfSelection), elementToAppendTo = d3.select('svg'), x = 5, y = 50, leftAligned = true, minDropdownWidth = 125, horizontalPadding = 5, verticalPadding = 5, strokeColor = 'black', backgroundFill = 'white', hoveredFill = '#d5d6d4', font = '10.0pt Nirmala UI', textColor = 'black', defaultSelection, funcToRunOnOpen, funcToRunOnClose, arrOfArgsToPassInToFuncsAfterVal) {
   const arrowWidth = getTextWidth('8', font) / 1.5;
   const textWidth = (arrowWidth * 2) + arrOfOptions.reduce((accum, curr) => {
     let currTextWidth = getTextWidth(curr, font);
@@ -166,7 +151,6 @@ function defineFuncForTabSpacing () {
   function generatePath () {
     let x1, y1, x2, y2, x3, y3;
     x1 = dropdownWidth - (horizontalPadding + arrowWidth);
-    console.log('x1', x1, 'dropdownWidth', dropdownWidth, 'horizontalpad', horizontalPadding, 'arrowWidth', arrowWidth)
     x2 = x1 + arrowWidth;
     x3 = x1 + (arrowWidth / 2);
     y1 = textY;
@@ -192,7 +176,7 @@ function defineFuncForTabSpacing () {
     .on('click', function () {
       toggleDrop()
     })
-//rows
+  //rows
   const dropdownRows = dropdownGroup.selectAll('.dropdownRows')
     .data(arrOfOptions)
     .enter().append('g')
@@ -221,48 +205,52 @@ function defineFuncForTabSpacing () {
     .attr('x', d => leftAligned ? horizontalPadding : (dropdownWidth / 2) - (getTextWidth(d, font) / 2))
     .attr('y', textY)
     .style('font', font)
-    .style('fill', textColor)
-	// Selected window
-	const selectedGroup = dropdownGroup.append('g')
-		.attr('class', 'selectedGroup')
-		.on('mouseenter', function() {
-			selectedRect.attr('fill', hoveredFill);
-		})
-		.on('mouseleave', function() {
-			if (!open) selectedRect.attr('fill', backgroundFill);
-		})
-		.on('click', function () {
-			toggleDrop()
-		});
-
-	const selectedRect = selectedGroup.append('rect')
-		.attr('class', 'selectedRect')
-		.attr('width', dropdownWidth)
-		.attr('height', rowHeight)
-		.attr('fill', backgroundFill)
-
-	const selectedText = selectedGroup.append('text')
-		.attr('class', 'selectedText')
-		.text(clickedSelection)
-		.attr('dominant-baseline', 'middle')
-		.attr('x', leftAligned ? horizontalPadding : ((dropdownWidth - (arrowWidth * 2)) / 2) - ((getTextWidth(clickedSelection, font)) / 2))
-		.attr('y', textY)
-		.style('font', font)
 		.style('fill', textColor)
-
-	selectedGroup.append('path')
-		.attr('class', 'arrowPath')
-		.attr('d', generatePath())
-		.attr('fill', textColor)
-		.attr('stroke', textColor)
+    .style('cursor', 'default')
+  // Selected window
+  const selectedGroup = dropdownGroup.append('g')
+    .attr('class', 'selectedGroup')
+    .on('mouseenter', function() {
+      selectedRect.attr('fill', hoveredFill);
+    })
+    .on('mouseleave', function() {
+      if (!open) selectedRect.attr('fill', backgroundFill);
+    })
+    .on('click', function () {
+      toggleDrop()
+    });
+  const selectedRect = selectedGroup.append('rect')
+    .attr('class', 'selectedRect')
+    .attr('width', dropdownWidth)
+    .attr('height', rowHeight)
+    .attr('fill', backgroundFill)
+  const selectedText = selectedGroup.append('text')
+    .attr('class', 'selectedText')
+    .text(clickedSelection)
+    .attr('dominant-baseline', 'middle')
+    .attr('x', leftAligned ? horizontalPadding : ((dropdownWidth - (arrowWidth * 2)) / 2) - ((getTextWidth(clickedSelection, font)) / 2))
+    .attr('y', textY)
+    .style('font', font)
+		.style('fill', textColor)
+    .style('cursor', 'default')
+  selectedGroup.append('path')
+    .attr('class', 'arrowPath')
+    .attr('d', generatePath())
+    .attr('fill', textColor)
+    .attr('stroke', textColor)
   function changeClickedSelection (newSelectionValue) {
     selectedRect.attr('fill', backgroundFill);
     clickedSelection = newSelectionValue;
     selectedText.text(clickedSelection);
-    funcToRunOnSelection(newSelectionValue, ...arrOfArgsToPassInToFuncAfterVal);
+    funcToRunOnSelection(newSelectionValue, ...arrOfArgsToPassInToFuncsAfterVal);
   }
   function toggleDrop () {
-    open = !open;
+		open = !open;
+		if (open) {
+			funcToRunOnOpen(...arrOfArgsToPassInToFuncsAfterVal)
+		} else {
+			funcToRunOnClose(...arrOfArgsToPassInToFuncsAfterVal)
+		}
     rowRects.attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill);
     outerContainer.transition()
       .attr('height', open ? dropdownHeight + 6: rowHeight + 6);
@@ -474,7 +462,7 @@ function defineFuncForTabSpacing () {
 			value: 5
 		},
 		{
-			name: 'paddingLeftOfDropdown',				
+			name: 'paddingLeftOfDivs',				
 			value: 10
 		},
 		{
@@ -770,48 +758,8 @@ function defineFuncForTabSpacing () {
 		
 
 		// ********************************************* YEAR DROPDOWN ******************************************************* //
-		const yearDropdownGroup = makeDropdown(data.availableYears, dropdownYearChanged(widget, d3.event.target.value));
-		const dropdownDiv = widget.outerDiv.append('div')
-			.attr('class', 'dropdownDiv')
-
-		// dropdown title
-		dropdownDiv.append('h4')
-			.text('Year')
-			.attr('dominant-baseline', 'hanging')
-			.style('color', data.dropdownTitleColor)
-			.style('font', data.dropdownTitleFont)
-			.style('position', 'absolute')
-			.style('top', data.margin.top + 'px')
-			.style('left', data.paddingLeftOfDropdown + 5 + data.margin.left + 'px')
-
-			// dropdown select
-		dropdownDiv.append('select')		// assume 5px above and 5 px below textHeight for dropdownHeight
-			.attr('class', 'yearSelect')
-			.style('width', data.dropdownWidth + 'px')
-			.style('border-radius', (data.dropdownWidth * 0.1) + 'px')
-			.style('position', 'absolute')
-			.style('top', (data.margin.top + getTextHeight(data.dropdownTitleFont) + data.paddingAboveDropdown) + 'px')
-			.style('left', data.paddingLeftOfDropdown + data.margin.left + 'px')
-			.style('font', data.dropdownTextFont)
-			.style('color', data.dropdownTextColor)
-			.style('border', widget.yearDropdownHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : `1.5px solid ${data.dropdownStrokeColor}`)
-			.style('padding', '5px')
-			.style('background-color', data.dropdownFillColor)
-			.on('change', () => dropdownYearChanged(widget, d3.event.target.value))
-			.on('mouseover', function () {
-				widget.yearDropdownHovered = true;
-				d3.select(this).style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
-			})
-			.on('mouseout', function () {
-				widget.yearDropdownHovered = false;
-				d3.select(this).style('border', `1.5px solid ${data.dropdownStrokeColor}`)
-			})
-			.on('mousedown', unpinAll)
-			.selectAll('option')
-				.data(data.availableYears).enter()
-					.append('option')
-						.property('selected', d => d == widget.dropdownYearSelected)
-						.text(d => d)
+		makeDropdown(data.availableYears.map(yr => +yr), dropdownYearChanged, widget.svg, data.margin.left, data.margin.top, true, data.dropdownWidth, 5, 5, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.dropdownYearSelected, () => {}, () => {}, [widget]);
+	
 		
 		// ********************************************* TOOLTIP ******************************************************* //
 		const tooltipGroup = chartGroup.append('g')
@@ -949,7 +897,7 @@ function defineFuncForTabSpacing () {
 			.call(xAxisGenerator)
 		xAxis.selectAll('text')
 			.style('font', data.xAxisTicksTextFont)
-			.style('fill', 'blue' || data.xAxisTicksTextColor)
+			.style('fill', data.xAxisTicksTextColor)
 		xAxis.selectAll('path')
 			.attr('stroke', 'none')
 
@@ -1045,6 +993,7 @@ function defineFuncForTabSpacing () {
 			.attr('y', widget.settingsBtnHovered ? data.margin.top * 2 : (data.margin.top * 2) + halfOfDifferenceInSizeForPosGrowth)
 			.attr('height', widget.settingsBtnHovered ? data.settingsBtnSize * 1.2 : data.settingsBtnSize)
 			.attr('width', widget.settingsBtnHovered ? data.settingsBtnSize * 1.2 : data.settingsBtnSize)
+			.style('cursor', 'pointer')
 			.on('click', () => {toggleModal()})
 			.on('mouseenter', function () {
 				d3.select(this)
@@ -1052,7 +1001,6 @@ function defineFuncForTabSpacing () {
 					.attr('width', data.settingsBtnSize * 1.2)
 					.attr('x', (data.graphicWidth - (data.settingsBtnSize * 1.2)) - halfOfDifferenceInSizeForPosGrowth)
 					.attr('y', data.margin.top * 2)
-
 			})
 			.on('mouseout', function () {
 				d3.select(this)
@@ -1064,7 +1012,7 @@ function defineFuncForTabSpacing () {
 		
 		const modalGroup = widget.svg.append('g')
 			.attr('class', 'modalGroup')
-			.attr('transform', 	`translate(${(data.graphicWidth / 2) - (data.modalWidth / 2)},${(data.graphicHeight / 2) - (data.modalHeight / 2)})`)
+			.attr('transform', 	`translate(${(data.graphicWidth / 2) - (data.modalWidth / 2)},${(data.margin.top)})`)
 
 		function removeModal (rerenderAfter) {
 			resetElements(widget.outerDiv, '.modalDiv')
@@ -1128,8 +1076,8 @@ function defineFuncForTabSpacing () {
 					.attr('class', 'modalDiv')
 					.style('position', 'absolute')
 					.style('width', data.modalWidth)
-					.style('left', (data.paddingLeftOfDropdown + (data.graphicWidth / 2) - (data.modalWidth / 2)) + 'px')
-					.style('top', ((data.graphicHeight / 2) - (data.modalHeight / 2)) + 'px')
+					.style('left', (data.paddingLeftOfDivs + (data.graphicWidth / 2) - (data.modalWidth / 2)) + 'px')
+					.style('top', (data.margin.top * 2) + 'px')
 			
 				const form = modalDiv.append('form')
 					.attr('class', 'modalForm')
@@ -1152,6 +1100,8 @@ function defineFuncForTabSpacing () {
 						widget.tempMinSelection = 30;
 						widget.tempMaxSelection = 80;
 						widget.tempNumOfBins = 12;
+						resetElements(svgForDropdown, '.dropdownGroup')
+						renderBinsDropbox();
 					})
 				
 				// ROW ONE
@@ -1180,7 +1130,7 @@ function defineFuncForTabSpacing () {
 					.attr('name', 'minTempBinInput')
 					.attr('value', widget.tempMinSelection)
 					.style('width', data.dropdownWidth / 2 + 'px')
-					.style('border-radius', ((data.dropdownWidth / 2) * 0.1) + 'px')
+					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('color', data.dropdownTextColor)
 					.style('border', widget.minInputHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : `1.5px solid ${data.dropdownStrokeColor}`)
@@ -1208,7 +1158,7 @@ function defineFuncForTabSpacing () {
 					.attr('name', 'maxTempBinInput')
 					.attr('value', widget.tempMaxSelection)
 					.style('width', data.dropdownWidth / 2 + 'px')
-					.style('border-radius', ((data.dropdownWidth / 2) * 0.1) + 'px')
+					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('color', data.dropdownTextColor)
 					.style('border', widget.maxInputHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : `1.5px solid ${data.dropdownStrokeColor}`)
@@ -1241,37 +1191,25 @@ function defineFuncForTabSpacing () {
 					.style('left', ((data.modalWidth / 2) - (getTextWidth('# of Temperature Bins', data.modalLabelsFont) / 2)) + 'px')
 					.style('top', ( (verticalModalPadding * 2) + (getTextHeight(data.modalLabelsFont)) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 2) ) + 'px')
 
+
 				// ROW FOUR
-				form.append('select')
-					.attr('class', 'formElement')
-					.attr('name', 'numOfBinsSelect')
-					.style('width', data.dropdownWidth / 2 + 'px')
-					.style('border-radius', ((data.dropdownWidth / 2) * 0.1) + 'px')
-					.style('top', ( (verticalModalPadding * 2) + (getTextHeight(data.modalLabelsFont) * 2) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 4) ) + 'px')
-					.style('left', ((data.modalWidth / 2) - (data.dropdownWidth / 4)) + 'px')
-					.style('font', data.modalInputFont)
-					.style('color', data.dropdownTextColor)
-					.style('border', widget.modalDropdownHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : `1.5px solid ${data.dropdownStrokeColor}`)
-					.style('padding', '2px')
-					.style('background-color', data.dropdownFillColor)
+				const svgForDropdown = form.append('svg')
+					.attr('width', (data.dropdownWidth / 2) + 15)
 					.style('position', 'absolute')
-					.style('text-align', 'center')
-					.on('mouseover', function () {
-						widget.modalDropdownHovered = true;
-						d3.select(this).style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
-					})
-					.on('mouseout', function () {
-						widget.modalDropdownHovered = false;
-						d3.select(this).style('border', `1.5px solid ${data.dropdownStrokeColor}`)
-					})
-					.on('change', function(){
-						widget.tempNumOfBins = +d3.event.target.value;
-					})
-					.selectAll('option')
-						.data([12, 11, 10, 9, 8, 7, 6, 5, 4]).enter()
-							.append('option')
-								.property('selected', d => d == widget.tempNumOfBins)
-								.text(d => d);
+					.attr('height', getTextHeight(data.dropdownTextFont) + 20 )
+					.style('z-index', 2)
+					.attr('fill', 'none')
+					.attr('transform', `translate(${((data.modalWidth / 2) - (data.dropdownWidth / 4) - 2.5)},${((verticalModalPadding * 2) + (getTextHeight(data.modalLabelsFont) * 2) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 4) - 2.5)})`);
+				function funcOnOpen() {
+					svgForDropdown.transition().attr('height', data.graphicHeight)
+				}
+				function funcOnClose() {
+					svgForDropdown.transition().attr('height', getTextHeight(data.dropdownTextFont) + 20)
+				}
+				function renderBinsDropbox (){
+					makeDropdown([12, 11, 10, 9, 8, 7, 6, 5, 4], val => {widget.tempNumOfBins = +val}, svgForDropdown, 2.5, 2.5, false, data.dropdownWidth / 2, 2, 2, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.tempNumOfBins, funcOnOpen, funcOnClose, []);
+				}
+				renderBinsDropbox();
 
 				// ROW FIVE
 				form.append('button')
@@ -1279,7 +1217,7 @@ function defineFuncForTabSpacing () {
 					.attr('type', 'submit')
 					.text('OK')
 					.style('width', getTextWidth('OK', data.modalInputFont) + 30 + 'px')
-					.style('border-radius', ((getTextWidth('OK', data.modalInputFont) + 20) * 0.1) + 'px')
+					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('font-weight', 'bold')
 					.style('border', widget.modalSubmitHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : 'none')
@@ -1288,6 +1226,7 @@ function defineFuncForTabSpacing () {
 					.style('background-color', data.hoveredInputStrokeColor)
 					.style('position', 'absolute')
 					.style('text-align', 'center')
+					.style('cursor', 'pointer')
 					.style('left', widget.modalSubmitHovered ? (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) - 0.75) + 'px' : ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
 					.style('top', widget.modalSubmitHovered ? (( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px' : ( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
 					.on('mouseover', function () {
@@ -1311,13 +1250,15 @@ function defineFuncForTabSpacing () {
 					.text('reset')
 					.style('width', getTextWidth('reset', data.modalInputFont) + 20 + 'px')
 					.style('border', 'none')
-					.style('border-radius', ((getTextWidth('reset', data.modalInputFont) + 10) * 0.1) + 'px')
+					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('padding-top', '2px')
 					.style('padding-bottom', '2px')
 					.style('background-color', data.tooltipFillColor)
 					.style('position', 'absolute')
+					.style('cursor', 'pointer')
 					.style('text-align', 'center')
+					.style('z-index', 1)
 					.style('left', (data.margin.left + 0.75) + 'px')
 					.style('bottom', (data.margin.bottom) + 'px')
 					.on('mouseover', function () {
@@ -1332,6 +1273,8 @@ function defineFuncForTabSpacing () {
 							.style('left', (data.margin.left + 0.75) + 'px')
 							.style('bottom', (data.margin.bottom) + 'px')
 						})
+
+
 
 				widget.outerDiv.selectAll('.formElement')
 					.style('margin', '0px')
