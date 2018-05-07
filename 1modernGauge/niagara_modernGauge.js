@@ -34,15 +34,15 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
           },
           {
               name: 'title1SpacingFromMiddle',
-              value: 35
+              value: 30
           },
           {
               name: 'title2SpacingFromMiddle',
-              value: 18
+              value: 10
           },
           {
               name: 'valueSpacingFromMiddle',
-              value: 11
+              value: 15
           },
           {
               name: 'minVal',
@@ -54,7 +54,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
           },
           {
               name: 'gaugeArcThickness',
-              value: 23
+              value: 18
           },
           {
               name: 'titleFont',
@@ -68,48 +68,48 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
           },
           {
               name: 'valueFont',
-              value: 'bold 24.0pt Nirmala UI',
+              value: 'bold 22.0pt Nirmala UI',
               typeSpec: 'gx:Font'
           },
           {
               name: 'backgroundColor',
-              value: '#ffffff',
+              value: 'rgb(245,245,245)',
               typeSpec: 'gx:Color'
           },
           // if efficiencyGauge is true, will utilize efficiencyColorScale for arc fill (all 3 gaugeArcColors), else only nominalGaugeArcColor
           {
               name: 'nominalGaugeArcColor',
-              value: '#21A75D',
+              value: 'rgb(34,181,115)',
               typeSpec: 'gx:Color'
           },
           {
               name: 'subTargetGaugeArcColor',
-              value: '#ffd829',
+              value: 'rgb(250,215,50)',
               typeSpec: 'gx:Color'
           },
           {
               name: 'subBaselineGaugeArcColor',
-              value: '#c01616',
+              value: 'rgb(213,61,59)',
               typeSpec: 'gx:Color'
           },
           {
               name: 'titleColor',
-              value: '#ff404040',
+              value: 'rgb(64,64,64)',
               typeSpec: 'gx:Color'
           },
           {
               name: 'unitsColor',
-              value: '#ff404040',
+              value: 'rgb(64,64,64)',
               typeSpec: 'gx:Color'
           },
           {
               name: 'valueColor',
-              value: '#ff000000',
+              value: 'rgb(64,64,64)',
               typeSpec: 'gx:Color'
           },
           {
               name: 'backgroundArcColor',
-              value: 'lightGray',
+              value: 'rgb(212,212,212)',
               typeSpec: 'gx:Color'
           }
       ]);

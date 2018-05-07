@@ -45,7 +45,7 @@ const getTextHeight = font => {
 	return num * 1.33333333333;
 };
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const dropdownYearChanged = (widget, newYear) => {
+const dropdownYearChanged = (newYear, widget) => {
 	widget.dropdownYearSelected = newYear;
 	render(widget, true);
 }
@@ -767,7 +767,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 
 
 		// ********************************************* YEAR DROPDOWN ******************************************************* //
-		makeDropdown(data.availableYears.map(yr => +yr), dropdownYearChanged, widget.svg, data.margin.left, data.margin.top, true, data.dropdownWidth, 5, 5, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredDropdownFill, data.dropdownTextFont, data.dropdownTextColor, +widget.dropdownYearSelected, () => {}, () => {}, [widget]);
+		makeDropdown(data.availableYears.map(yr => +yr), dropdownYearChanged, widget.svg, data.margin.left, data.margin.top, true, data.dropdownWidth, 5, 3, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredDropdownFill, data.dropdownTextFont, data.dropdownTextColor, +widget.dropdownYearSelected, () => {}, () => {}, [widget]);
 
 
 		// ********************************************* TOOLTIP ******************************************************* //
@@ -1002,6 +1002,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('y', widget.settingsBtnHovered ? data.margin.top * 2 : (data.margin.top * 2) + halfOfDifferenceInSizeForPosGrowth)
 			.attr('height', widget.settingsBtnHovered ? data.settingsBtnSize * 1.2 : data.settingsBtnSize)
 			.attr('width', widget.settingsBtnHovered ? data.settingsBtnSize * 1.2 : data.settingsBtnSize)
+			.style('cursor', 'pointer')
 			.on('click', () => {toggleModal()})
 			.on('mouseenter', function() {
 				d3.select(this)
@@ -1021,7 +1022,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 
 		const modalGroup = widget.svg.append('g')
 			.attr('class', 'modalGroup')
-			.attr('transform', 	`translate(${(data.graphicWidth / 2) - (data.modalWidth / 2)},${(data.graphicHeight / 2) - (data.modalHeight / 2)})`)
+			.attr('transform', 	`translate(${(data.graphicWidth / 2) - (data.modalWidth / 2)},${data.margin.top * 1.25})`)
 
 		function removeModal(rerenderAfter) {
 			resetElements(widget.outerDiv, '.modalDiv')
@@ -1043,7 +1044,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			const overlay = widget.outerDiv.append('div')
 				.attr('class', 'overlayDiv')
 				.style('position', 'absolute')
-				.style('top', data.margin.top + 'px')
+				.style('top', '0px')
 				.style('height', data.jqHeight + 'px')
 				.style('width', data.jqWidth + 'px')
 				.style('background-color', widget.modalActive ? data.backgroundColor : 'none')
@@ -1086,7 +1087,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.style('position', 'absolute')
 					.style('width', data.modalWidth)
 					.style('left', ((data.graphicWidth / 2) - (data.modalWidth / 2)) + 'px')
-					.style('top', ((data.graphicHeight / 2) - (data.modalHeight / 2)) + 'px')
+					.style('top', (data.margin.top * 1.5) + 'px')
 
 				const form = modalDiv.append('form')
 					.attr('class', 'modalForm')
@@ -1234,6 +1235,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.style('background-color', data.hoveredInputStrokeColor)
 					.style('position', 'absolute')
 					.style('text-align', 'center')
+					.style('cursor', 'pointer')
 					.style('left', widget.modalSubmitHovered ? (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) - 0.75) + 'px' : ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
 					.style('top', widget.modalSubmitHovered ? (( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px' : ( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
 					.on('mouseover', function() {
@@ -1264,6 +1266,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.style('background-color', data.tooltipFillColor)
 					.style('position', 'absolute')
 					.style('text-align', 'center')
+					.style('cursor', 'pointer')
 					.style('left', (data.margin.left + 0.75) + 'px')
 					.style('bottom', (data.margin.bottom) + 'px')
 					.on('mouseover', function() {
