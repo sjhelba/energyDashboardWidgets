@@ -30,13 +30,13 @@ const data = {
     includeCHs: true,
     includePCPs: true,
     includeSCPs: true,
-    includeCDPs: true,
+    includeTWPs: true,
     includeCTFs: true,
 
     color_CHs: '#0ece2b',
     color_PCPs: '#060084',
     color_SCPs: '#5fdaef',
-    color_CDPs: '#e26302',
+    color_TWPs: '#e26302',
     color_CTFs: '#f92f2f',
 
     overallArcThickness: 40,
@@ -81,7 +81,7 @@ data.percentIsHovered = false;
 
 // calculated
 data.maxTooltipTextWidths = {
-    type: getTextWidth('CDPs:', 'bold ' + data.tooltipFont),
+    type: getTextWidth('TWPs:', 'bold ' + data.tooltipFont),
     hours: getTextWidth('5555 HRS', data.tooltipFont),
     percent: getTextWidth('55%', data.tooltipFont)
 };
@@ -109,7 +109,7 @@ const PCP = {type: 'PCPs', optimizedHours: 1500, standardHours: 1500, totalHours
         //Secondary Pumps
 const SCP = {type: 'SCPs', optimizedHours: 2250, standardHours: 2750, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_SCPs};
         //Condenser Pumps
-const CDP = {type: 'CDPs', optimizedHours: 2450, standardHours: 250, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CDPs};
+const TWP = {type: 'TWPs', optimizedHours: 2450, standardHours: 250, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_TWPs};
         //Chiller Towers
 const CTF = {type: 'CTFs', optimizedHours: 1800, standardHours: 1200, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CTFs};
 
@@ -118,7 +118,7 @@ data.modulesData = [];
 if (data.includeCHs) data.modulesData.push(CHS);
 if (data.includePCPs) data.modulesData.push(PCP);
 if (data.includeSCPs) data.modulesData.push(SCP);
-if (data.includeCDPs) data.modulesData.push(CDP);
+if (data.includeTWPs) data.modulesData.push(TWP);
 if (data.includeCTFs) data.modulesData.push(CTF);
 
 //set totalHours
@@ -587,7 +587,8 @@ legendModuleGroups.append('text')
 					.attr('fill', data.tooltipFillColor)
 					.attr('rx', '10px')
 					.attr('ry', '10px')
-					.style('opacity', percentDescriptionRectOpacity) 
+                    .style('opacity', percentDescriptionRectOpacity)
+                    .attr('pointer-events', 'none')
 		
 					allDonutGroupsGroup.append('text')
 					.attr('class', 'percentageDescription')
@@ -596,8 +597,10 @@ legendModuleGroups.append('text')
 					.attr('dominant-baseline', 'middle')
 					.attr('y', data.paddingBetweenPercentDescriptionAndMiddle)
 					.style('opacity', 1) 
-					.text(percentageDescription);
-			}
+                    .text(percentageDescription)
+                    .attr('pointer-events', 'none');
+            }
+            console.log('data: ', data)
 		}
 
 

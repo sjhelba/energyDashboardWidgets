@@ -379,7 +379,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
           that.uniqueId = 'ModernGauge_' + modernGaugeCounter;
           modernGaugeCounter++;
           
-		  that.getSubscriber().attach("changed", function(prop, cx) {render(that);});
+          that.getSubscriber().attach("changed", function(prop, cx) {render(that);});
           
           render(that);
       };

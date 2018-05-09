@@ -25,24 +25,20 @@
     },
 
     "rules": {
-      "array-bracket-spacing": ["warn", "never"],
-      "arrow-body-style": ["warn", "as-needed"],
       "arrow-parens": ["warn", "as-needed"],
       "arrow-spacing": "warn",
-      "brace-style": ["warn", "1tbs"],
       "camelcase": "warn",
-      "comma-spacing": ["warn", {"after": true}],
       "dot-notation": "warn",
       "key-spacing": ["warn", {"beforeColon": false, "afterColon": true, "mode": "minimum"}],
       "keyword-spacing": "warn",
       "no-console": "off",
       "no-empty": "off",
-      "no-multi-spaces": "warn",
       "no-redeclare": "off",
       "no-undef": "error",
       "no-unused-vars": ["warn", {"args": "none"}],
       "react/prop-types": "off",
-      "react/jsx-no-bind": "off"
+      "react/jsx-no-bind": "off",
+      "no-mixed-spaces-and-tabs": "off"
     }
   }
   

@@ -54,7 +54,7 @@ baselineData = [
     CDPs: getRandomInt(minForKwhBaseline, maxForKwhBaseline),
     CTFs: getRandomInt(minForKwhBaseline, maxForKwhBaseline)
   }},
-  {month: 'Mar', year: 2015, trh: getRandomInt(minForTrhBaseline, maxForTrhBaseline), equipmentKwhs: {
+  {month: 'Mar', year: 2015, trh: 3999, equipmentKwhs: {
     CHs: getRandomInt(minForKwhBaseline, maxForKwhBaseline),
     PCPs: getRandomInt(minForKwhBaseline, maxForKwhBaseline),
     SCPs: getRandomInt(minForKwhBaseline, maxForKwhBaseline),
@@ -273,7 +273,7 @@ measuredData = [
     CDPs: getRandomInt(minForKwhMeasured, maxForKwhMeasured),
     CTFs: getRandomInt(minForKwhMeasured, maxForKwhMeasured)
   }},
-  {month: 'Mar', year: 2016, trh: getRandomInt(minForTrhMeasured, maxForTrhMeasured), equipmentKwhs: {
+  {month: 'Mar', year: 2016, trh: 4000, equipmentKwhs: {
     CHs: getRandomInt(minForKwhMeasured, maxForKwhMeasured),
     PCPs: getRandomInt(minForKwhMeasured, maxForKwhMeasured),
     SCPs: getRandomInt(minForKwhMeasured, maxForKwhMeasured),

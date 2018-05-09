@@ -8,7 +8,15 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
     
     // function that makes '3 digit month'-'4 digit year' into JS date
     const parseDate = d3.timeParse('%b-%Y');
-    
+    const getTextHeight = font => {
+        let num = '';
+        const indexOfLastDigit = font.indexOf('pt') - 1;
+        for (let i = 0; i <= indexOfLastDigit; i++) {
+            if (!isNaN(font[i]) || font[i] === '.') num += font[i];
+        }
+        num = +num;
+        return num * 1.33333333333;
+    };
     const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
       const getTextWidth = (text, font) => {
           const canvas = document.createElement('canvas');
@@ -148,13 +156,18 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                 typeSpec: 'gx:Font'
             },
             {
+                name: 'axesStrokeColor',
+                value: 'rgb(64,64,64)',
+                typeSpec: 'gx:Color'
+            },
+            {
                 name: 'legendFont',
                 value: '10pt Nirmala UI',
                 typeSpec: 'gx:Font'
             },
             {
                 name: 'tooltipFont',
-                value: 'bold 10pt Nirmala UI',
+                value: '10pt Nirmala UI',
                 typeSpec: 'gx:Font'
             },
             {
@@ -164,6 +177,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             {
                 name: 'legendPadding',
                 value: 5
+            },
+            {
+                name: 'tooltipTextColor',
+                value: 'black',
+                typeSpec: 'gx:Color'
             },
             {
                 name: 'legendCircleSize',
@@ -179,7 +197,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             },
             {
                 name: 'tooltipRectHeight',
-                value: 66
+                value: 71
             }
         ]);
   
@@ -484,52 +502,95 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             .attr('stroke', data.gridColor)
             .attr('stroke-width', 0.5)
   
-  
+
   
         /* TOOLTIPS */
         // (note event listeners that define many tooltip properties are in datapoints section)
-        const leftPaddingOfTooltip = data.yAxisWidth + (data.chartWidth * 0.06);
-        const tooltipGroup = svg.append('g').attr('transform', `translate(${leftPaddingOfTooltip},${data.legendHeight / 2})`);
+        // const leftPaddingOfTooltip = data.yAxisWidth + (data.chartWidth * 0.06);
+        const tooltipGroup = svg.append('g')
+            .attr('transform', `translate(${data.yAxisWidth + data.yAxisTitlePadding + getTextHeight(data.unitsFont) + 20},${(data.legendHeight / 2)})`)
+            .attr('pointer-events', 'none');
         const tooltipRect = tooltipGroup.append('rect')
             .attr('display', 'none')
             .style('position', 'absolute')
             .attr('fill', data.tooltipFill)
+            .attr('x', -10)
+            .attr('y', -5)
+            .attr('rx', 5)
             .attr('fill-opacity', '0.9')
             .attr('width', data.tooltipRectWidth)
             .attr('height', data.tooltipRectHeight);
-  
+
         // tooltips text
-        const tooltipText = tooltipGroup.append('text').attr('dominant-baseline', 'hanging').style('font', data.tooltipFont);
-        const monthTspan = tooltipText.append('tspan').attr('id', 'monthTspan').attr('y', -2).attr('x', 0);
-        tooltipText.selectAll('.value')
+        const monthText = tooltipGroup.append('text')
+            .attr('id', 'monthText')
+            .attr('y', -2)
+            .attr('x', 0)
+            .attr('dominant-baseline', 'hanging')
+            .style('font', data.tooltipFont)
+            .style('font-weight', 'bold');
+
+        const categoryTextGroups = tooltipGroup.selectAll('.value')
             .data(data.enterData)
-            .enter().append('tspan')
+            .enter().append('g')
               .attr('class', 'value')
-              .attr('id', d => `${d.category}Tspan`)
-              .attr('fill', d => d.color)
-              .attr('x', 0);
-        const baselineTspan = svg.select('#baselineTspan');
-        const projectedTspan = svg.select('#projectedTspan');
-        const measuredTspan = svg.select('#measuredTspan');
-  
+              .attr('id', d => `${d.category}TextGroup`)
+        
+        categoryTextGroups.append('text')
+            .attr('class', 'typeText')
+            .attr('fill', d => d.color)
+            .attr('x', 0)
+            .attr('dominant-baseline', 'hanging')
+            .style('font', data.tooltipFont)
+            .style('font-weight', 'bold');
+
+
+        categoryTextGroups.append('text')
+            .attr('class', 'valueText')
+            .attr('fill', data.tooltipTextColor)
+            .attr('x', getTextWidth('M:', data.tooltipFont) + 5)
+            .attr('dominant-baseline', 'hanging')
+            .style('font', data.tooltipFont);
+
+
+
+        const baselineTextGroup = svg.select('#baselineTextGroup');
+        const projectedTextGroup = svg.select('#projectedTextGroup');
+        const measuredTextGroup = svg.select('#measuredTextGroup');
   
   
   
         /* AXES */
-        chartGroup.append('g')
+        const yAxis = chartGroup.append('g')
             .attr('class', 'axisY')
-            .call(yAxisGenerator);
+            .call(yAxisGenerator)
+
+        yAxis.selectAll('text')
+            .style('fill', data.yAxisFontColor)
+            .style('font', data.yAxisFont);
+
+        yAxis.selectAll('path')
+            .attr('stroke', data.axesStrokeColor);
+        yAxis.selectAll('line')
+            .attr('stroke', data.axesStrokeColor);
   
-        chartGroup.append('g')
+        const xAxis = chartGroup.append('g')
             .attr('class', 'axisX')
             .attr('transform', `translate(0,${data.chartHeight})`)
             .call(xAxisGenerator)
-                .selectAll('text')
-                    .attr('text-anchor', 'end')
-                    .attr('transform', 'rotate(-25)');
+        
+        xAxis.selectAll('text')
+            .attr('text-anchor', 'end')
+            .attr('transform', 'rotate(-25)')
+            .style('fill', data.yAxisFontColor)
+            .style('font', data.yAxisFont);
+
+        xAxis.selectAll('path')
+            .attr('stroke', data.axesStrokeColor)
+
+        xAxis.selectAll('line')
+            .attr('stroke', data.axesStrokeColor)
   
-        svg.selectAll('.axisY text').style('fill', data.yAxisFontColor).style('font', data.yAxisFont);
-        svg.selectAll('.axisX text').style('fill', data.xAxisFontColor).style('font', data.xAxisFont);
   
         chartGroup.append('text')
             .attr("transform", "rotate(-90)")
@@ -584,18 +645,21 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                         .attr('stroke-width', data.dataPointStrokeWidth * 1.5);
                     tooltipRect
                         .attr('display', 'block')
-                    monthTspan.text(`${d.month + ' ' + data.yrPerMonth[d.month]}:`)
+                    monthText.text(`${d.month + ' ' + data.yrPerMonth[d.month]}:`)
                     if (i >= data.baselineIndicesRemoved){
-                      baselineTspan.text(`B: ${d3.format(`,.${data.precision}f`)(data.baselineDataWMissingData[i].value)} ${data.unitsLabel}`)
-                        .attr('y', data.tooltipPadding);
+                      baselineTextGroup.attr('transform', `translate(0,${data.tooltipPadding})`);
+                      baselineTextGroup.select('.typeText').text(`B:`)
+                      baselineTextGroup.select('.valueText').text(`${d3.format(`,.${data.precision}f`)(data.baselineDataWMissingData[i].value)} ${data.unitsLabel}`)
                     }
                     if (i >= data.projectedIndicesRemoved) {
-                      projectedTspan.text(`P: ${d3.format(`,.${data.precision}f`)(data.projectedDataWMissingData[i].value)} ${data.unitsLabel}`)
-                        .attr('y', data.tooltipPadding * (i >= data.baselineIndicesRemoved ? 2 : 1));
+                      projectedTextGroup.attr('transform', `translate(0,${data.tooltipPadding * (i >= data.baselineIndicesRemoved ? 2 : 1)})`);
+                      projectedTextGroup.select('.typeText').text(`P:`)
+                      projectedTextGroup.select('.valueText').text(`${d3.format(`,.${data.precision}f`)(data.projectedDataWMissingData[i].value)} ${data.unitsLabel}`)
                     }
                     if (i >= data.measuredIndicesRemoved) {
-                      measuredTspan.text(`M: ${d3.format(`,.${data.precision}f`)(data.measuredDataWMissingData[i].value)} ${data.unitsLabel}`)
-                        .attr('y', data.tooltipPadding * (i >= data.baselineIndicesRemoved && i >= data.projectedIndicesRemoved ? 3 : (i >= data.projectedIndicesRemoved || i >= data.baselineIndicesRemoved ? 2 : 1) ));
+                      measuredTextGroup.attr('transform', `translate(0,${data.tooltipPadding * (i >= data.baselineIndicesRemoved && i >= data.projectedIndicesRemoved ? 3 : (i >= data.projectedIndicesRemoved || i >= data.baselineIndicesRemoved ? 2 : 1) )})`);
+                      measuredTextGroup.select('.typeText').text(`M:`)
+                      measuredTextGroup.select('.valueText').text(`${d3.format(`,.${data.precision}f`)(data.measuredDataWMissingData[i].value)} ${data.unitsLabel}`)
                     }
                 })
                 .on('mouseout', function(d) {
@@ -603,14 +667,14 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
                         .attr('r', data.dataPointRadius)
                         .attr('stroke-width', data.dataPointStrokeWidth);
                     tooltipRect.attr('display', 'none');
-                    monthTspan.text('');
-                    baselineTspan.text('');
-                    projectedTspan.text('');
-                    measuredTspan.text('');
+                    monthText.text('');
+                    baselineTextGroup.selectAll('text').text('');
+                    projectedTextGroup.selectAll('text').text('');
+                    measuredTextGroup.selectAll('text').text('');
                 });
   
   
-  
+
   
   
   
@@ -665,6 +729,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
             .attr('y', data.legendCircleSize - 1)
             .attr('fill', data.legendFontColor)
             .style('font', data.legendFont)
+            .style('cursor', 'default')
             .style('text-decoration', d => widget.active && widget.active[d.category] || !widget.active ? 'none' : 'line-through');
   
     };

@@ -124,7 +124,7 @@ const widget = {};
       .attr('y', textY)
       .style('font', font)
       .style('fill', textColor)
-      .style('cursor', 'default')
+			.style('cursor', 'default')
     selectedGroup.append('path')
       .attr('class', 'arrowPath')
       .attr('d', generatePath())
@@ -441,7 +441,7 @@ const properties = [
 		value: true
 	},
 	{
-		name: 'includeCDPs',
+		name: 'includeTWPs',
 		value: true
 	},
 	{
@@ -594,11 +594,11 @@ data.activeEquipmentGroups = [
 	'CHs',
 	'PCPs',
 	'SCPs',
-	'CDPs',
+	'TWPs',
 	'CTFs',
 ];
 if (!data.includeCTFs) { data.activeEquipmentGroups.splice(4, 1) }
-if (!data.includeCDPs) { data.activeEquipmentGroups.splice(3, 1) }
+if (!data.includeTWPs) { data.activeEquipmentGroups.splice(3, 1) }
 if (!data.includeSCPs) { data.activeEquipmentGroups.splice(2, 1) }
 if (!data.includePCPs) { data.activeEquipmentGroups.splice(1, 1) }
 
@@ -752,7 +752,8 @@ widget.resetElements = elementsToReset => {
 widget.outerDiv = d3.select('#outer')
 	.attr('class', 'UtilitySavingsToolOuter')
 	.style('height', jqHeight + 'px')
-	.style('width', jqWidth + 'px');
+	.style('width', jqWidth + 'px')
+	.style('cursor', 'default');
 
 // RENDER //
 const renderWidget = () => {
@@ -799,6 +800,7 @@ const renderWidget = () => {
 	const buttonGroup = toolsGroup.append('g')
 		.attr('class', 'buttonGroup')
 		.attr('transform', `translate(${paddingLeftOfTools + (dateDropdownWidth * 1.35) + paddingBetweenDropdowns + paddingLeftOfButton}, ${getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles + getTextHeight(data.dropdownFont) + paddingAboveUtilityRate})`)
+		.style('cursor', 'pointer')
 
 
 
@@ -1763,7 +1765,8 @@ const renderWidget = () => {
 		const diff = Math.abs(origVal - newVal);
 		const change = diff / origVal;
 		const percentVal = change * 100;
-		return Math.round(percentVal);
+		const roundedPercentVal = Math.round(percentVal);
+		return roundedPercentVal === 0 && percentVal > 0 ? '<01' : roundedPercentVal;
 	}
 	const paddingBetweenPercentAndValue = data.widgetSize === 'large' ? 10 : 5;
 	const paddingBetweenArrowAndPercent = 0;
@@ -1785,16 +1788,18 @@ const renderWidget = () => {
 
 			// set percentage arrays
 			//kwh
-			kwhPercent.new = getNiceChangePercent(hoveredEquipmentDataForDate.kwh[0].value, hoveredEquipmentDataForDate.kwh[2].value).toString().split('').map(digit => +digit);
-			if (kwhPercent.new.length > 2) kwhPercent.new = [1, 9, 9];
+			let kwhNiceChangePercent = getNiceChangePercent(hoveredEquipmentDataForDate.kwh[0].value, hoveredEquipmentDataForDate.kwh[2].value)
+			kwhPercent.new = kwhNiceChangePercent.toString().split('').map(digit => digit !== '<' ? +digit : digit);
+			if (kwhPercent.new.length > 2) kwhPercent.new = kwhPercent.new[0] === '<' ? [2, 0, 1] : [1, 9, 9];
 			if (kwhPercent.new.length === 1) kwhPercent.new.unshift(0, 0);
 			if (kwhPercent.new.length === 2) kwhPercent.new.unshift(0);
 			kwhPercent.last = widget.lastKwhPercent ? widget.lastKwhPercent.slice() : kwhPercent.new.slice();
 			widget.lastKwhPercent = kwhPercent.new.slice();
 
 			//cost
-			costPercent.new = getNiceChangePercent(hoveredEquipmentDataForDate.utilityRate[0].cost, hoveredEquipmentDataForDate.utilityRate[2].cost).toString().split('').map(digit => +digit);
-			if (costPercent.new.length > 2) costPercent.new = [1, 9, 9];
+			let costNiceChangePercent = getNiceChangePercent(hoveredEquipmentDataForDate.utilityRate[0].cost, hoveredEquipmentDataForDate.utilityRate[2].cost)
+			costPercent.new = costNiceChangePercent.toString().split('').map(digit => digit !== '<' ? +digit : digit);
+			if (costPercent.new.length > 2) costPercent.new = costPercent.new[0] === '<' ? [2, 0, 1] : [1, 9, 9];
 			if (costPercent.new.length === 1) costPercent.new.unshift(0, 0);
 			if (costPercent.new.length === 2) costPercent.new.unshift(0);
 			costPercent.last = widget.lastCostPercent ? widget.lastCostPercent.slice() : costPercent.new.slice();
@@ -1821,16 +1826,18 @@ const renderWidget = () => {
 		} else {
 			// set percentage arrays
 			//kwh
-			kwhPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[2].kwh).toString().split('').map(digit => +digit);
-			if (kwhPercent.new.length > 2) kwhPercent.new = [1, 9, 9];
+			let kwhNiceChangePercent = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[2].kwh)
+			kwhPercent.new = kwhNiceChangePercent.toString().split('').map(digit => digit !== '<' ? +digit : digit);
+			if (kwhPercent.new.length > 2) kwhPercent.new = kwhPercent.new[0] === '<' ? [2, 0, 1] : [1, 9, 9];
 			if (kwhPercent.new.length === 1) kwhPercent.new.unshift(0, 0);
 			if (kwhPercent.new.length === 2) kwhPercent.new.unshift(0);
 			kwhPercent.last = widget.lastKwhPercent ? widget.lastKwhPercent.slice() : kwhPercent.new.slice();
 			widget.lastKwhPercent = kwhPercent.new.slice();
 
 			//cost
-			costPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].cost, widget.dataForDate.categoryDataForDate[2].cost).toString().split('').map(digit => +digit);
-			if (costPercent.new.length > 2) costPercent.new = [1, 9, 9];
+			let costNiceChangePercent = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].cost, widget.dataForDate.categoryDataForDate[2].cost)
+			costPercent.new = costNiceChangePercent.toString().split('').map(digit => digit !== '<' ? +digit : digit);
+			if (costPercent.new.length > 2) costPercent.new = costPercent.new[0] === '<' ? [2, 0, 1] : [1, 9, 9];
 			if (costPercent.new.length === 1) costPercent.new.unshift(0, 0);
 			if (costPercent.new.length === 2) costPercent.new.unshift(0);
 			costPercent.last = widget.lastCostPercent ? widget.lastCostPercent.slice() : costPercent.new.slice();
@@ -1858,8 +1865,9 @@ const renderWidget = () => {
 		}
 		// set percentage arrays
 		//trh
-		trhPercent.new = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].trh, widget.dataForDate.categoryDataForDate[2].trh).toString().split('').map(digit => +digit);
-		if (trhPercent.new.length > 2) trhPercent.new = [1, 9, 9];
+		let trhNiceChangePercent = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].trh, widget.dataForDate.categoryDataForDate[2].trh);
+		trhPercent.new = trhNiceChangePercent.toString().split('').map(digit => digit !== '<' ? +digit : digit);
+		if (trhPercent.new.length > 2) trhPercent.new = trhPercent.new[0] === '<' ? [2, 0, 1] : [1, 9, 9];
 		if (trhPercent.new.length === 1) trhPercent.new.unshift(0, 0);
 		if (trhPercent.new.length === 2) trhPercent.new.unshift(0);
 		trhPercent.last = widget.lastTrhPercent ? widget.lastTrhPercent.slice() : trhPercent.new.slice();
@@ -1936,7 +1944,7 @@ const renderWidget = () => {
 
 
 		const displayForIndex = [
-			[' ', '>'],
+			[' ', '>', '<'],
 			[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
 			[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 		]
@@ -1990,7 +1998,7 @@ const renderWidget = () => {
 		percentChangeTextGroup.append('text')
 			.text('%')
 			.attr('class', d => `${d.category}PercentSign`)
-			.attr('x', d => d.percent.last[0] === 1 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
+			.attr('x', d => d.percent.last[0] > 0 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
 			.attr('fill', data.changePercentColor)
 			.style('font', data.changePercentFont)
 			.style('font-size', (getTextHeight(data.changePercentFont) / 2) + 'pt');
@@ -1998,7 +2006,7 @@ const renderWidget = () => {
 		const rollingPercentsChangeDuration = 275;
 
 
-		function increaseDigit(category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
+		function increaseDigit(category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsFractionOrOver99) {
 			const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
 			const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
 			const thisDuration = rollingPercentsChangeDuration / numbersToGetThrough;
@@ -2009,9 +2017,9 @@ const renderWidget = () => {
 				.duration(0)
 				.attr('y', 0)
 				.attr('x', () => {
-					if (digitIndex === 1 && !newIsOver99) {
+					if (digitIndex === 1 && !newIsFractionOrOver99) {
 						return getTextWidth('0', data.changePercentFont) / 2
-					} else if (digitIndex === 2 && !newIsOver99) {
+					} else if (digitIndex === 2 && !newIsFractionOrOver99) {
 						return getTextWidth('0', data.changePercentFont) * 1.5;
 					} else {
 						return digitIndex * getTextWidth('0', data.changePercentFont);
@@ -2022,7 +2030,7 @@ const renderWidget = () => {
 				.attr('y', -paddingHidingText)
 				.transition()
 				.duration(0)
-				.text(() => displayForIndex[digitIndex][+currentVal + 1])
+				.text(() => displayForIndex[digitIndex][digitIndex === 0 && +currentVal === 2 ? 1 : +currentVal + 1])
 				.attr('y', 0);
 
 
@@ -2030,12 +2038,12 @@ const renderWidget = () => {
 				.transition()
 				.delay(thisDuration * delayMultiplier)
 				.duration(0)
-				.text(() => displayForIndex[digitIndex][currentVal + 1])
+				.text(() => displayForIndex[digitIndex][digitIndex === 0 && +currentVal === 2 ? 1 : currentVal + 1])
 				.attr('y', paddingHidingText)
 				.attr('x', () => {
-					if (digitIndex === 1 && !newIsOver99) {
+					if (digitIndex === 1 && !newIsFractionOrOver99) {
 						return getTextWidth('0', data.changePercentFont) / 2;
-					} else if (digitIndex === 2 && !newIsOver99) {
+					} else if (digitIndex === 2 && !newIsFractionOrOver99) {
 						return getTextWidth('0', data.changePercentFont) * 1.5;
 					} else {
 						return digitIndex * getTextWidth('0', data.changePercentFont);
@@ -2049,7 +2057,7 @@ const renderWidget = () => {
 					.attr('y', paddingHidingText);
 		}
 
-		function decreaseDigit(category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsOver99) {
+		function decreaseDigit(category, digitIndex, delayMultiplier, numbersToGetThrough, currentVal, lastWasOver99, newIsFractionOrOver99) {
 			const digitObjToChange1 = widget.svg.select(`.g1DigitIndex${digitIndex}For${category}`);
 			const digitObjToChange2 = widget.svg.select(`.g2DigitIndex${digitIndex}For${category}`);
 			const thisDuration = rollingPercentsChangeDuration / numbersToGetThrough;
@@ -2060,9 +2068,9 @@ const renderWidget = () => {
 				.duration(0)
 				.attr('y', 0)
 				.attr('x', () => {
-					if (digitIndex === 1 && !newIsOver99) {
+					if (digitIndex === 1 && !newIsFractionOrOver99) {
 						return getTextWidth('0', data.changePercentFont) / 2;
-					} else if (digitIndex === 2 && !newIsOver99) {
+					} else if (digitIndex === 2 && !newIsFractionOrOver99) {
 						return getTextWidth('0', data.changePercentFont) * 1.5;
 					} else {
 						return digitIndex * getTextWidth('0', data.changePercentFont);
@@ -2084,9 +2092,9 @@ const renderWidget = () => {
 				.text(() => displayForIndex[digitIndex][currentVal - 1])
 				.attr('y', -paddingHidingText)
 				.attr('x', () => {
-					if (digitIndex === 1 && !newIsOver99) {
+					if (digitIndex === 1 && !newIsFractionOrOver99) {
 						return getTextWidth('0', data.changePercentFont) / 2
-					} else if (digitIndex === 2 && !newIsOver99) {
+					} else if (digitIndex === 2 && !newIsFractionOrOver99) {
 						return getTextWidth('0', data.changePercentFont) * 1.5;
 					} else {
 						return digitIndex * getTextWidth('0', data.changePercentFont);
@@ -2110,17 +2118,17 @@ const renderWidget = () => {
 		trhPercentObj.current = trhPercentObj.last.slice();
 
 
-		function loopFromTo(category, digitIndex, from, to, lastWasOver99, newIsOver99) {
+		function loopFromTo(category, digitIndex, from, to, lastWasOver99, newIsFractionOrOver99) {
 			let differenceBtwOldAndNewVal = 0;
 			if (from < to) {
 				differenceBtwOldAndNewVal = to - from;
 				for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
-					increaseDigit(category, digitIndex, i, differenceBtwOldAndNewVal, from + i, lastWasOver99, newIsOver99);
+					increaseDigit(category, digitIndex, i, differenceBtwOldAndNewVal, from + i, lastWasOver99, newIsFractionOrOver99);
 				}
 			} else {
 				differenceBtwOldAndNewVal = from - to;
 				for (let i = 0; i < differenceBtwOldAndNewVal; i++) {
-					decreaseDigit(category, digitIndex, i, differenceBtwOldAndNewVal, from - i, lastWasOver99, newIsOver99);
+					decreaseDigit(category, digitIndex, i, differenceBtwOldAndNewVal, from - i, lastWasOver99, newIsFractionOrOver99);
 				}
 			}
 		}
@@ -2150,7 +2158,7 @@ const renderWidget = () => {
 
 			// change percent sign placement if necessary
 			if (currentFirstDigit !== newFirstDigit) {
-				widget.svg.select(`.${category}PercentSign`).attr('x', newFirstDigit === 1 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
+				widget.svg.select(`.${category}PercentSign`).attr('x', newFirstDigit > 0 ? getTextWidth('0', data.changePercentFont) * 3 : getTextWidth('0', data.changePercentFont) * 2.5)
 			}
 		}
 
@@ -2225,6 +2233,7 @@ const renderWidget = () => {
 		.attr('x', ((buttonWidth) - getTextWidth('View', data.toolTitleFont)) / 2)
 
 
+
 	// BUTTON BACKGROUND //
 
 	buttonGroup.append('rect')
@@ -2284,7 +2293,7 @@ const renderWidget = () => {
 			.duration(buttonTransitionDuration)
 			.text(widget.activeChartType === 'stacked' ? 'SYS' : 'EQ')
 			.attr('fill', widget.activeChartType === 'stacked' ? data.sysBtnTextColor : data.eqBtnTextColor)
-			.attr('opacity', 1);
+			.attr('opacity', 1)
 	}
 	renderButtonText()
 
@@ -2321,8 +2330,6 @@ const renderWidget = () => {
 		.style('font', data.toolTitleFont);
 
 	makeDropdown(data.availableDates[widget.yearDropDownSelected], widget.dropdownMonthChanged, dropdownsGroup, dateDropdownWidth + paddingBetweenDropdowns, getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles, true, dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.monthDropDownSelected, () => {}, () => {}, [], dropdownBorderRadius)
-
-
 
 
 

@@ -18,7 +18,6 @@ var units = 'kW / tR';
 var minVal = 0;
 var maxVal = 2;
 
-v = 7
 
 var gaugeArcThickness = 23
 
@@ -81,7 +80,7 @@ if (efficiencyGauge) {
 if (efficiencyGauge) var [minVal,maxVal] = [maxVal,minVal];
 
 // func returns which color arc fill should be based on curr val, efficiency thresholds, and selected arc colors for up to baseline, up to target, & nominal vals
-const efficiencyColorScale = (currentValue) => {
+const efficiencyColorScale = currentValue => {
     if (currentValue >= baselineEfficiencyThreshold) return subBaselineGaugeArcColor;
     if (currentValue >= targetEfficiencyThreshold) return subTargetGaugeArcColor;
     return nominalGaugeArcColor;

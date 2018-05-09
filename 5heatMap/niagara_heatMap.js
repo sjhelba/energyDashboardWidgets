@@ -760,7 +760,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('width', data.tooltipWidth)
 			.attr('fill', data.tooltipFillColor)
 			.attr('rx', data.tooltipHeight * 0.1)
-			.style('opacity', widget.tooltipActive ? 1 : 0)
+			.style('opacity', widget.tooltipActive ? 0.9 : 0)
 
 		const ttTextGroup = tooltipGroup.append('g')
 			.attr('class', 'ttTextGroup')
@@ -1236,7 +1236,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				form.append('button')
 					.attr('class', 'formElement')
 					.attr('type', 'reset')
-					.text('reset')
+					.text('Reset')
 					.style('width', getTextWidth('reset', data.modalInputFont) + 20 + 'px')
 					.style('border', 'none')
 					.style('border-radius', ((getTextWidth('reset', data.modalInputFont) + 10) * 0.1) + 'px')
@@ -1329,7 +1329,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				widget.ttHours = d.totalHoursInBin + ' Hours';
 				widget.ttEff = d.avgEffInBin + ' kW/tR';
 
-				ttRect.style('opacity', widget.tooltipActive ? 1 : 0);
+				ttRect.style('opacity', widget.tooltipActive ? 0.9 : 0);
 				ttMonthText.text(widget.ttMonth);
 				ttTempText.text(widget.ttTemp);
 				ttHrsText.text(widget.ttHours);
@@ -1350,7 +1350,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			widget.ttHours = '';
 			widget.ttEff = '';
 
-			ttRect.style('opacity', widget.tooltipActive ? 1 : 0);
+			ttRect.style('opacity', widget.tooltipActive ? 0.9 : 0);
 			ttMonthText.text(widget.ttMonth);
 			ttTempText.text(widget.ttTemp);
 			ttHrsText.text(widget.ttHours);

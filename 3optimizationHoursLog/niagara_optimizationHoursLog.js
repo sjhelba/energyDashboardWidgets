@@ -18,7 +18,18 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 	const percentDescriptionRectOpacity = 0.8
 	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 	const moduleNamesForHistories = ['Chillers', 'Pcwps', 'Scwps', 'Twps', 'Towers'];
-
+	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
+	const needToRedrawWidget = (widget, newData) => {
+		const lastData = widget.data;
+		// check primitives for equivalence
+		if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
+		// check nested modulesData arr for equivalence
+		if (lastData.modulesData.length !== newData.modulesData.length) return true;
+		const isDiscrepency = lastData.modulesData.some((obj, objIndex) => !arePrimitiveValsInObjsSame(obj, newData.modulesData[objIndex]));
+		if (isDiscrepency) return true;
+		//return false if nothing prompted true
+		return false;
+	};
 
 
 	////////////////////////////////////////////////////////////////
@@ -83,7 +94,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				typeSpec: 'gx:Color'
 			},
 			{
-				name: 'color_CDPs',
+				name: 'color_TWPs',
 				value: 'rgb(252,163,36)',
 				typeSpec: 'gx:Color'
 			},
@@ -100,6 +111,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				name: 'percentageFont',
 				value: '38.0pt Nirmala UI',
 				typeSpec: 'gx:Font'
+			},
+			{
+				name: 'percentageColor',
+				value: 'black',
+				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'legendFont',
@@ -226,7 +242,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			//Secondary Pumps
 			{ type: 'SCPs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_SCPs },
 			//Condenser Pumps
-			{ type: 'CDPs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CDPs },
+			{ type: 'TWPs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_TWPs },
 			//Chiller Towers
 			{ type: 'CTFs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CTFs }
 		];
@@ -237,20 +253,16 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		// const currentMonthIndex = today.getMonth();
 		
 		function resolveHistoriesAndAddDataToModulesData(moduleType, moduleTypeIndex){
-			console.log('inside resolveHistoriesAndAddDataToModulesData for ' + moduleType)
 			function resolveHistoryDataUtil (isStd){
 				let thisYearHrs = 0;
 				return widget.resolve(`history:^${moduleType}_${isStd ? 'StdhMr' : 'OpthMr'}`)
 				.then(hoursHistory => {
-					console.log(moduleType, 'history resolved')
 					return hoursHistory.cursor({
 					limit: 5000000,
 					each: function(row, index){
 						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 						const rowYear = timestamp.getFullYear();
-						if(rowYear === currentFullYear){
-						console.log(moduleType, 'row year matched. value is ' + row.get('value'))
-
+						if (rowYear === currentFullYear){
 						thisYearHrs = +row.get('value');
 						}
 					}
@@ -269,7 +281,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 
 		const promisesForEachModuleType = [];
 		moduleNamesForHistories.forEach((moduleType, moduleTypeIndex) => {
-			console.log('inside for each for ' + moduleType + ' and include is set to: ' + data[`include${moduleType}`]);
 			if (data[`include${moduleType}`]) promisesForEachModuleType.push(resolveHistoriesAndAddDataToModulesData(moduleType, moduleTypeIndex));
 		});
 
@@ -280,7 +291,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				data.percentDescriptionRectWidth = getTextWidth(percentageDescription, data.percentDescriptionFont) + 5;
 				data.margin = { top: 5, left: 5, right: 5, bottom: (data.graphicHeight * 0.02) + 5 };
 				data.maxTooltipTextWidths = {
-					type: getTextWidth('CDPs:', 'bold ' + data.tooltipFont),
+					type: getTextWidth('TWPs:', 'bold ' + data.tooltipFont),
 					hours: getTextWidth('5555 HRS', data.tooltipFont),
 					percent: getTextWidth('55%', data.tooltipFont)
 				};
@@ -295,7 +306,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				data.overallInnerRadius = data.overallOuterRadius - data.overallArcThickness;
 				data.tooltipDiameter = (data.overallInnerRadius * 2) - data.tooltipPadding || 180;
 
-				console.log('modulesData is: ', data.modulesData);
 				// calculated with ords
 					//set totalHours
 				data.modulesData.forEach(mod => mod.totalHours = mod.optimizedHours + mod.standardHours)
@@ -492,6 +502,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.attr('dominant-baseline', 'middle')
 			.attr('y', -data.paddingBetweenPercentAndMiddle)
 			.style('font', data.percentageFont)
+			.attr('fill', data.percentageColor)
 			.style('opacity', widget.hovered.current === 'neither' && widget.activeModule === 'none' ? 1 : 0)
 			.text(data.percent);
 
@@ -511,6 +522,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					.attr('rx', '10px')
 					.attr('ry', '10px')
 					.style('opacity', percentDescriptionRectOpacity)
+					.attr('pointer-events', 'none')
+
 
 				allDonutGroupsGroup.append('text')
 					.attr('class', 'percentageDescription')
@@ -519,7 +532,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 					.attr('dominant-baseline', 'middle')
 					.attr('y', data.paddingBetweenPercentDescriptionAndMiddle)
 					.style('opacity', 1)
-					.text(percentageDescription);
+					.style('cursor', 'default')
+					.text(percentageDescription)
+					.attr('pointer-events', 'none')
+
 			}
 		}
 		renderPercentageDescription();
@@ -638,7 +654,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 				})
 				.on('mouseleave', function () {
 					widget.percentIsHovered = false;
-					renderPercentageDescription();
+					widget.svg.selectAll('.percentageDescription').remove();
 				})
 
 
@@ -760,6 +776,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			.attr('x', data.legendColorRectsWidth / 2)
 			.text(d => d.type)
 			.style('font', data.legendFont)
+			.style('cursor', 'default')
 			.style('font-weight', d => widget.activeModule === d.type ? 'bold' : 'normal')
 
 
@@ -778,7 +795,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 			})
 			.on('mouseleave', function () {
 				widget.percentIsHovered = false;
-				renderPercentageDescription();
+				widget.svg.selectAll('.percentageDescription').remove();
 			})
 
 
@@ -788,7 +805,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
 		// invoking setupDefinitions, then returning value from successful promise to renderWidget func
 		return setupDefinitions(widget)
 			.then(data => {
-				renderWidget(widget, data);
+				if (!widget.data || needToRedrawWidget(widget, data)){
+					renderWidget(widget, data);	
+				}
+				widget.data = data;
 			})
 			.catch(err => console.error('render did not run properly: ' + err));
 	}
