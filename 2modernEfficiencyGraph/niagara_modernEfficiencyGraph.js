@@ -4,7 +4,32 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
     ////////////////////////////////////////////////////////////////
     // Define Widget Constructor & Add Exposed Properties
     ////////////////////////////////////////////////////////////////
-  
+    const areScalarArrsSame = (arr1, arr2) => arr1.length === arr2.length && arr1.every((el, idx) => el === arr2[idx]);
+	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
+	const needToRedrawWidget = (widget, newData) => {
+		const lastData = widget.data;
+		// check primitives for equivalence
+		if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
+		
+		//check scalar arr for equivalence
+		if (lastData.last12Dates.length !== newData.last12Dates.length || !areScalarArrsSame(lastData.last12Dates, newData.last12Dates)) return true;
+		
+		// check arrs of objs for equivalence
+		if (lastData.baselineDataWMissingData.length !== newData.baselineDataWMissingData.length) return true;
+		const isBaselineDiscrepency = lastData.baselineDataWMissingData.some((obj, objIndex) => !arePrimitiveValsInObjsSame(obj, newData.baselineDataWMissingData[objIndex]));
+		if (isBaselineDiscrepency) return true;
+		
+		if (lastData.projectedDataWMissingData.length !== newData.projectedDataWMissingData.length) return true;
+		const isProjectedDiscrepency = lastData.projectedDataWMissingData.some((obj, objIndex) => !arePrimitiveValsInObjsSame(obj, newData.projectedDataWMissingData[objIndex]));
+		if (isProjectedDiscrepency) return true;
+		
+		if (lastData.measuredDataWMissingData.length !== newData.measuredDataWMissingData.length) return true;
+		const isMeasuredDiscrepency = lastData.measuredDataWMissingData.some((obj, objIndex) => !arePrimitiveValsInObjsSame(obj, newData.measuredDataWMissingData[objIndex]));
+		if (isMeasuredDiscrepency) return true;
+		
+		//return false if nothing prompted true
+		return false;
+	};
     
     // function that makes '3 digit month'-'4 digit year' into JS date
     const parseDate = d3.timeParse('%b-%Y');
@@ -738,7 +763,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
         // invoking setupDefinitions, then returning value from successful promise to renderWidget func
         return setupDefinitions(widget)
             .then(data => {
-                renderWidget(widget, data);
+                if (!widget.data || needToRedrawWidget(widget, data)) {
+                    renderWidget(widget, data);
+                }
+                widget.data = data;
             });
     }
   
