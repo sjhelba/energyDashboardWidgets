@@ -5,7 +5,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
   // Define Widget Constructor & Add Exposed Properties
   ////////////////////////////////////////////////////////////////
     let modernGaugeCounter = 0;
-
+    const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
+	const needToRedrawWidget = (widget, newData) => !arePrimitiveValsInObjsSame(widget.data, newData);
 
     var ModernGauge = function() {
       var that = this;
@@ -353,7 +354,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/
         }
         
         const theData = setupDefinitions(widget);
-        renderWidget(widget, theData);
+        if (!widget.data || needToRedrawWidget(widget, theData)){
+            renderWidget(widget, theData);
+        }
+        widget.data = theData;
         
       }
     
