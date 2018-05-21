@@ -1,5 +1,5 @@
 "use strict";
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/tekScratch/rc/d3/d3.min', 'css!nmodule/tekScratch/rc/web/UtilitySavingsTool/style'], function(Widget, subscriberMixIn, d3) {
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d3.min'], function(Widget, subscriberMixIn, d3) {
 
 
 ////////// Hard Coded Defs //////////
