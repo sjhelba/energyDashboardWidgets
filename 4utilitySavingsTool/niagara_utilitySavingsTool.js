@@ -828,7 +828,7 @@ const needToRedrawWidget = (widget, newData) => {
 				})
 				.catch(err => 'error iterating through trh trends: ' + err)
 				.then(() => {
-					
+				
 					const populateEquipmentTrendData = (eqType, eqTypeIndex) => {
 						return Promise.all([widget.resolve(`history:^${eqType}_BlKwhMr`), widget.resolve(`history:^${eqType}_PrKwh`), widget.resolve(`history:^${eqType}_MsKwhMr`), widget.resolve(`history:^${eqType}_MsKwhCurrentMonth`)])
 						.then(histories => {
