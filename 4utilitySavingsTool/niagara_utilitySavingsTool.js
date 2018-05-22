@@ -358,7 +358,7 @@ const needToRedrawWidget = (widget, newData) => {
 				if (((month === 'All' && availableDates[year] && availableDates[year][monthlyDatum.month]) || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)) {
 					equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
 						// set kwh vals
-						equipmentGroup.kwh[categoryIndex].value = monthlyDatum.equipmentKwhs[equipmentHistoryNames[egIndex]] || 0;	//default to 0 if missing data for date
+						if (monthlyDatum.equipmentKwhs[equipmentHistoryNames[egIndex]]) equipmentGroup.kwh[categoryIndex].value += monthlyDatum.equipmentKwhs[equipmentHistoryNames[egIndex]];	//default to 0 if missing data for date
 						// set utility rates for baseline and measured
 						if (categoryIndex !== 1) {
 							const monthlyDatumRate = getRateForDate(monthlyDatum.month, monthlyDatum.year, rates)
@@ -372,7 +372,7 @@ const needToRedrawWidget = (widget, newData) => {
 						}
 					})
 					// set system level trh vals for baseline and measured
-					if (categoryIndex !== 1) categoryDataForDate[categoryIndex].trh = monthlyDatum.trh || 0;	//default to 0 if missing data for date
+					if (categoryIndex !== 1 && monthlyDatum.trh) categoryDataForDate[categoryIndex].trh += monthlyDatum.trh;	//default to 0 if missing data for date
 				}
 			})
 		})
@@ -611,6 +611,7 @@ const needToRedrawWidget = (widget, newData) => {
 	const setupDefinitions = widget => {
 		const today = new Date();
 		const thisYear = today.getFullYear();
+		const thisMonth = today.getMonth();
 
 		// FROM USER // 
 		const data = widget.properties().toValueMap();	//obj with all exposed properties as key/value pairs
@@ -775,12 +776,12 @@ const needToRedrawWidget = (widget, newData) => {
 					});
 
 					//return trh history trends
-					return Promise.all([widget.resolve(`history:^System_BlTrhMr`), widget.resolve(`history:^System_MsTrhMr`)])
+					return Promise.all([widget.resolve(`history:^System_BlTrhMr`), widget.resolve(`history:^System_MsTrhMr`), widget.resolve(`history:^System_MsTrhCurrentMonth`)])
 					
 				})
 				.then(historyTrendTables => {
 
-					const [baselineTable, measuredTable] = historyTrendTables;
+					const [baselineTable, measuredTable, measuredTableCurrentMonth] = historyTrendTables;
 					const iterativePromises = [
 						baselineTable.cursor({
 						limit: 5000000,
@@ -807,6 +808,18 @@ const needToRedrawWidget = (widget, newData) => {
 							if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
 							measuredDates[rowYear][rowMonth].trh = rowValue;
 						}
+					}),
+					measuredTableCurrentMonth.cursor({
+						limit: 5000000,
+						each: function(row, index) {
+							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+							const rowValue = +row.get('value');
+							const rowMonth = timestamp.getMonth();
+							const rowYear = timestamp.getFullYear();
+							if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
+							if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+							measuredDates[rowYear][rowMonth].trh = rowValue;
+						}
 					})
 						];
 						
@@ -817,9 +830,9 @@ const needToRedrawWidget = (widget, newData) => {
 				.then(() => {
 					
 					const populateEquipmentTrendData = (eqType, eqTypeIndex) => {
-						return Promise.all([widget.resolve(`history:^${eqType}_BlKwhMr`), widget.resolve(`history:^${eqType}_PrKwh`), widget.resolve(`history:^${eqType}_MsKwhMr`)])
+						return Promise.all([widget.resolve(`history:^${eqType}_BlKwhMr`), widget.resolve(`history:^${eqType}_PrKwh`), widget.resolve(`history:^${eqType}_MsKwhMr`), widget.resolve(`history:^${eqType}_MsKwhCurrentMonth`)])
 						.then(histories => {
-							const [baselineKwh, projectedKwh, measuredKwh] = histories;
+							const [baselineKwh, projectedKwh, measuredKwh, currentMonthMeasuredKwh] = histories;
 							const iterativeKwhPromises = [
 								baselineKwh.cursor({
 									limit: 5000000,
@@ -852,12 +865,26 @@ const needToRedrawWidget = (widget, newData) => {
 										const rowValue = +row.get('value');
 										const rowMonth = timestamp.getMonth();
 										const rowYear = timestamp.getFullYear();
+										if (rowMonth !== thisMonth || rowYear !== thisYear) {
+											if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
+											if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+											measuredDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
+										}
+									}
+								}),
+								currentMonthMeasuredKwh.cursor({
+									limit: 5000000,
+									each: function(row, index) {
+										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+										const rowValue = +row.get('value');
+										const rowMonth = timestamp.getMonth();
+										const rowYear = timestamp.getFullYear();
 										if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
 										if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
 										measuredDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
 									}
-								}),
-								]
+								})
+							]
 
 							return Promise.all(iterativeKwhPromises);
 							
@@ -2626,6 +2653,7 @@ const needToRedrawWidget = (widget, newData) => {
 		widget.outerDiv.selectAll('.changeToolSvg')
 			.style('overflow', 'hidden')
 
+		console.log('TODO: ', data);
 	};
 
 

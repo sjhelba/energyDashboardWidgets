@@ -248,25 +248,17 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 		];
 		
 		// get hours' histories, then add to data.modulesData
-		const today = new Date();
-		const currentFullYear = today.getFullYear();
-		// const currentMonthIndex = today.getMonth();
-		
 		function resolveHistoriesAndAddDataToModulesData(moduleType, moduleTypeIndex){
 			function resolveHistoryDataUtil (isStd){
 				let thisYearHrs = 0;
-				return widget.resolve(`history:^${moduleType}_${isStd ? 'StdhMr' : 'OpthMr'}`)
-				.then(hoursHistory => {
-					return hoursHistory.cursor({
-					limit: 5000000,
-					each: function(row, index){
-						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-						const rowYear = timestamp.getFullYear();
-						if (rowYear === currentFullYear){
-						thisYearHrs = +row.get('value');
+				return widget.resolve(`history:^${moduleType}_${isStd ? 'StdhCurrentYear' : 'OpthCurrentYear'}`)
+				.then(currentYearHrsHistory => {
+					return currentYearHrsHistory.cursor({
+						limit: 5000000,
+						each: function(row, index){
+							thisYearHrs = +row.get('value');
 						}
-					}
-					});
+					})
 				})
 				.then(() => {
 					// due to corresponding index being used here, important that ordering of modules is consistent btwn modulesData and moduleNamesForHistories being iterated below in forEach()
