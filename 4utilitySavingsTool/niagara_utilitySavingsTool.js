@@ -784,44 +784,44 @@ const needToRedrawWidget = (widget, newData) => {
 					const [baselineTable, measuredTable, measuredTableCurrentMonth] = historyTrendTables;
 					const iterativePromises = [
 						baselineTable.cursor({
-						limit: 5000000,
-						each: function(row, index) {
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-							const rowValue = +row.get('value');
-							const rowMonth = timestamp.getMonth();
-							const rowYear = timestamp.getFullYear();
+							limit: 5000000,
+							each: function(row, index) {
+								const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+								const rowValue = +row.get('value');
+								const rowMonth = timestamp.getMonth();
+								const rowYear = timestamp.getFullYear();
 
-							if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
-							if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-							baselineDates[rowYear][rowMonth].trh = rowValue;
-						}
-					}),
-					measuredTable.cursor({
-						limit: 5000000,
-						each: function(row, index) {
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-							const rowValue = +row.get('value');
-							const rowMonth = timestamp.getMonth();
-							const rowYear = timestamp.getFullYear();
+								if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
+								if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+								baselineDates[rowYear][rowMonth].trh = rowValue;
+							}
+						}),
+						measuredTable.cursor({
+							limit: 5000000,
+							each: function(row, index) {
+								const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+								const rowValue = +row.get('value');
+								const rowMonth = timestamp.getMonth();
+								const rowYear = timestamp.getFullYear();
 
-							if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
-							if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-							measuredDates[rowYear][rowMonth].trh = rowValue;
-						}
-					}),
-					measuredTableCurrentMonth.cursor({
-						limit: 5000000,
-						each: function(row, index) {
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-							const rowValue = +row.get('value');
-							const rowMonth = timestamp.getMonth();
-							const rowYear = timestamp.getFullYear();
-							if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
-							if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-							measuredDates[rowYear][rowMonth].trh = rowValue;
-						}
-					})
-						];
+								if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
+								if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+								measuredDates[rowYear][rowMonth].trh = rowValue;
+							}
+						}),
+						measuredTableCurrentMonth.cursor({
+							limit: 5000000,
+							each: function(row, index) {
+								const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+								const rowValue = +row.get('value');
+								const rowMonth = timestamp.getMonth();
+								const rowYear = timestamp.getFullYear();
+								if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
+								if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+								measuredDates[rowYear][rowMonth].trh = rowValue;
+							}
+						})
+					];
 						
 					return Promise.all(iterativePromises);
 					

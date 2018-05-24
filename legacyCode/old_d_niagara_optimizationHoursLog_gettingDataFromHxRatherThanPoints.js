@@ -16,7 +16,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 	const formatIntoPercentage = d3.format('.0%');
 	const percentageDescription = '% of System Run Hours Logged in Optimization Mode';
 	const percentDescriptionRectOpacity = 0.8
-	const moduleNamesForOrds = ['Chillers', 'Pcwps', 'Scwps', 'Twps', 'Towers'];
+	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
+	const moduleNamesForHistories = ['Chillers', 'Pcwps', 'Scwps', 'Twps', 'Towers'];
 	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
 	const needToRedrawWidget = (widget, newData) => {
 		const lastData = widget.data;
@@ -55,55 +56,27 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 				value: 'rgb(105,202,210)',
 				typeSpec: 'gx:Color'
 			},
+			// if data not able to be pulled upon async try, will change values of these bools
+
 			{
-				name: 'ordForChillersStdHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Chillers/OperatingHours/Standard',
-				typeSpec: 'baja:Ord'
+				name: 'includeChillers',
+				value: true
 			},
 			{
-				name: 'ordForPcwpsStdHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Pcwps/OperatingHours/Standard',
-				typeSpec: 'baja:Ord'
+				name: 'includePcwps',
+				value: true
 			},
 			{
-				name: 'ordForScwpsStdHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Scwps/OperatingHours/Standard',
-				typeSpec: 'baja:Ord'
+				name: 'includeScwps',
+				value: true
 			},
 			{
-				name: 'ordForTwpsStdHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Twps/OperatingHours/Standard',
-				typeSpec: 'baja:Ord'
+				name: 'includeTwps',
+				value: true
 			},
 			{
-				name: 'ordForTowersStdHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Towers/OperatingHours/Standard',
-				typeSpec: 'baja:Ord'
-			},
-			{
-				name: 'ordForChillersOptHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Chillers/OperatingHours/Optimization',
-				typeSpec: 'baja:Ord'
-			},
-			{
-				name: 'ordForPcwpsOptHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Pcwps/OperatingHours/Optimization',
-				typeSpec: 'baja:Ord'
-			},
-			{
-				name: 'ordForScwpsOptHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Scwps/OperatingHours/Optimization',
-				typeSpec: 'baja:Ord'
-			},
-			{
-				name: 'ordForTwpsOptHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Twps/OperatingHours/Optimization',
-				typeSpec: 'baja:Ord'
-			},
-			{
-				name: 'ordForTowersOptHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Towers/OperatingHours/Optimization',
-				typeSpec: 'baja:Ord'
+				name: 'includeTowers',
+				value: false
 			},
 			{
 				name: 'color_CHs',
@@ -260,7 +233,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 		if (!widget.percentIsHovered) widget.percentIsHovered = false;
 
 
-		// GET ORD DATA //
+		// GET HISTORY DATA //
 		data.modulesData = [
 			//Chillers
 			{ type: 'CHs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CHs },
@@ -274,23 +247,33 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 			{ type: 'CTFs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CTFs }
 		];
 		
-		// get hours' ords, then add to data.modulesData
-		function resolveOrdsAndAddDataToModulesData(moduleType, moduleTypeIndex){
-			function resolveOrdDataUtil (isStd){
-				return widget.resolve(isStd ? data[`ordFor${moduleType}StdHrs`] : data[`ordFor${moduleType}OptHrs`])
-				.then(dataPoint => {
-					// due to corresponding index being used here, important that ordering of modules is consistent btwn modulesData and moduleNamesForOrds being iterated below in forEach()
-					data.modulesData[moduleTypeIndex][isStd ? 'standardHours' : 'optimizedHours'] += (+(dataPoint.get('out').get('value')));	// adds hrs from ords matching the data type
+		// get hours' histories, then add to data.modulesData
+		function resolveHistoriesAndAddDataToModulesData(moduleType, moduleTypeIndex){
+			function resolveHistoryDataUtil (isStd){
+				let thisYearHrs = 0;
+				return widget.resolve(`history:^${moduleType}_${isStd ? 'StdhCurrentYear' : 'OpthCurrentYear'}`)
+				.then(currentYearHrsHistory => {
+					return currentYearHrsHistory.cursor({
+						limit: 5000000,
+						each: function(row, index){
+							thisYearHrs = +row.get('value');
+						}
+					})
 				})
-				.catch(err => { console.error('Likely no properly named optimized/standard hrs Ord for ' + moduleType + ':\n' + err)});
+				.then(() => {
+					// due to corresponding index being used here, important that ordering of modules is consistent btwn modulesData and moduleNamesForHistories being iterated below in forEach()
+					data.modulesData[moduleTypeIndex][isStd ? 'standardHours' : 'optimizedHours'] += thisYearHrs;	// adds hrs from histories matching the data type
+					thisYearHrs = 0;
+				})
+				.catch(err => { console.error('Likely no properly named optimized/standard hrs history for ' + moduleType + ':\n' + err)});
 			}
-			return resolveOrdDataUtil(true)
-				.then(() => resolveOrdDataUtil(false));
+			return resolveHistoryDataUtil(true)
+				.then(() => resolveHistoryDataUtil(false));
 		}
 
 		const promisesForEachModuleType = [];
-		moduleNamesForOrds.forEach((moduleType, moduleTypeIndex) => {
-			if (data[`ordFor${moduleType}OptHrs`] !== 'null' && data[`ordFor${moduleType}StdHrs`] !== 'null') promisesForEachModuleType.push(resolveOrdsAndAddDataToModulesData(moduleType, moduleTypeIndex));
+		moduleNamesForHistories.forEach((moduleType, moduleTypeIndex) => {
+			if (data[`include${moduleType}`]) promisesForEachModuleType.push(resolveHistoriesAndAddDataToModulesData(moduleType, moduleTypeIndex));
 		});
 
 		return Promise.all(promisesForEachModuleType)
