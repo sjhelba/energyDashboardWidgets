@@ -273,7 +273,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 			//Chiller Towers
 			{ type: 'CTFs', optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CTFs }
 		];
-		
+	
 		// get hours' ords, then add to data.modulesData
 		function resolveOrdsAndAddDataToModulesData(moduleType, moduleTypeIndex){
 			function resolveOrdDataUtil (isStd){
