@@ -426,7 +426,7 @@ const needToRedrawWidget = (widget, newData) => {
 	// Define Widget Constructor & Exposed Properties
 ////////////////////////////////////////////////////////////////
 
-	var CxUtilitySavingsTool = function() {
+	var UtilitySavingsTool = function() {
 		var that = this;
 		Widget.apply(this, arguments);
 		that.properties().addAll([
@@ -598,8 +598,8 @@ const needToRedrawWidget = (widget, newData) => {
 		subscriberMixIn(that);
 	};
 
-	CxUtilitySavingsTool.prototype = Object.create(Widget.prototype);
-	CxUtilitySavingsTool.prototype.constructor = CxUtilitySavingsTool;
+	UtilitySavingsTool.prototype = Object.create(Widget.prototype);
+	UtilitySavingsTool.prototype.constructor = UtilitySavingsTool;
 
 
 
@@ -776,7 +776,7 @@ const needToRedrawWidget = (widget, newData) => {
 					});
 
 					//return trh history trends
-					return Promise.all([widget.resolve(`history:^System_BlTrHm`), widget.resolve(`history:^System_MsTrHm`), widget.resolve(`history:^System_MsTrCm`)])
+					return Promise.all([widget.resolve(`history:^System_BlTrhMr`), widget.resolve(`history:^System_MsTrhMr`), widget.resolve(`history:^System_MsTrhCurrentMonth`)])
 					
 				})
 				.then(historyTrendTables => {
@@ -830,7 +830,7 @@ const needToRedrawWidget = (widget, newData) => {
 				.then(() => {
 				
 					const populateEquipmentTrendData = (eqType, eqTypeIndex) => {
-						return Promise.all([widget.resolve(`history:^${eqType}_BlKwHm`), widget.resolve(`history:^${eqType}_PrKwHm`), widget.resolve(`history:^${eqType}_MsKwHm`), widget.resolve(`history:^${eqType}_MsKwCm`)])
+						return Promise.all([widget.resolve(`history:^${eqType}_BlKwhMr`), widget.resolve(`history:^${eqType}_PrKwh`), widget.resolve(`history:^${eqType}_MsKwhMr`), widget.resolve(`history:^${eqType}_MsKwhCurrentMonth`)])
 						.then(histories => {
 							const [baselineKwh, projectedKwh, measuredKwh, currentMonthMeasuredKwh] = histories;
 							const iterativeKwhPromises = [
@@ -2676,11 +2676,11 @@ const needToRedrawWidget = (widget, newData) => {
 	// Initialize Widget
 ////////////////////////////////////////////////////////////////
 
-	CxUtilitySavingsTool.prototype.doInitialize = function(element) {
+	UtilitySavingsTool.prototype.doInitialize = function(element) {
 		var that = this;
-		element.addClass("CxUtilitySavingsToolOuter");
+		element.addClass("UtilitySavingsToolOuter");
 		that.outerDiv = d3.select(element[0]).append('div')
-			.attr('class', 'CxUtilitySavingsTool')
+			.attr('class', 'UtilitySavingsTool')
 			.style('cursor', 'default')
 
 		that.getSubscriber().attach("changed", function(prop, cx) { render(that, false) });
@@ -2691,19 +2691,19 @@ const needToRedrawWidget = (widget, newData) => {
 	// Extra Widget Methods
 ////////////////////////////////////////////////////////////////
 
-	CxUtilitySavingsTool.prototype.doLayout = CxUtilitySavingsTool.prototype.doChanged = CxUtilitySavingsTool.prototype.doLoad = function() { render(this, false); };
+	UtilitySavingsTool.prototype.doLayout = UtilitySavingsTool.prototype.doChanged = UtilitySavingsTool.prototype.doLoad = function() { render(this, false); };
 
 	/* FOR FUTURE NOTE: 
-	CxUtilitySavingsTool.prototype.doChanged = function(name, value) {
+	UtilitySavingsTool.prototype.doChanged = function(name, value) {
 		  if(name === "value") valueChanged += 'prototypeMethod - ';
 		  render(this);
 	};
 	*/
 
-	CxUtilitySavingsTool.prototype.doDestroy = function() {
-		this.jq().removeClass("CxUtilitySavingsToolOuter");
+	UtilitySavingsTool.prototype.doDestroy = function() {
+		this.jq().removeClass("UtilitySavingsToolOuter");
 	};
 
-	return CxUtilitySavingsTool;
+	return UtilitySavingsTool;
 });
 

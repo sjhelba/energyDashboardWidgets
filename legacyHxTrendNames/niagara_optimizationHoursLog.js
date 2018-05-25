@@ -35,7 +35,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 	// Define Widget Constructor & Exposed Properties
 	////////////////////////////////////////////////////////////////
 
-	var CxOptimizationHoursLog = function () {
+	var OptimizationHoursLog = function () {
 		var that = this;
 		Widget.apply(this, arguments);
 
@@ -233,8 +233,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 		subscriberMixIn(that);
 	};
 
-	CxOptimizationHoursLog.prototype = Object.create(Widget.prototype);
-	CxOptimizationHoursLog.prototype.constructor = CxOptimizationHoursLog;
+	OptimizationHoursLog.prototype = Object.create(Widget.prototype);
+	OptimizationHoursLog.prototype.constructor = OptimizationHoursLog;
 
 
 
@@ -301,7 +301,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 				data.margin = { top: 5, left: 5, right: 5, bottom: (data.graphicHeight * 0.02) + 5 };
 				data.maxTooltipTextWidths = {
 					type: getTextWidth('TWPs:', 'bold ' + data.tooltipFont),
-					hours: getTextWidth('5,555.0 HRS', data.tooltipFont),
+					hours: getTextWidth('5555 HRS', data.tooltipFont),
 					percent: getTextWidth('55%', data.tooltipFont)
 				};
 				data.totalTooltipTextWidth = data.maxTooltipTextWidths.type + data.maxTooltipTextWidths.hours + data.maxTooltipTextWidths.percent + (data.tooltipHorizontalTextPadding * 2);
@@ -617,7 +617,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 				//hoursTexts
 				tooltipModuleGroups.append('text')
 					.attr('class', '.data .hours')
-					.text(d => `${d3.format(`,.1f`)(d[`${widget.hovered.current}Hours`])} HRS`)
+					.text(d => `${d[`${widget.hovered.current}Hours`]} HRS`)
 					.attr('x', data.tooltipHorizontalTextPadding + data.maxTooltipTextWidths.type)
 					.attr('y', (d, i) => data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * (i + 1)))
 
@@ -634,13 +634,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 				tooltipTextGroup.append('text')
 					.attr('text-anchor', 'middle')
 					.attr('x', 0)
-					.text(`${d3.format(`,.1f`)(moduleObj.optimizedHours)} OPTIMIZED HRS`)
+					.text(`${moduleObj.optimizedHours} OPTIMIZED HRS`)
 					.attr('y', data.extraPaddingUnderTooltipHeader + data.tooltipVerticalTextPadding)
 
 				tooltipTextGroup.append('text')
 					.attr('text-anchor', 'middle')
 					.attr('x', 0)
-					.text(`${d3.format(`,.1f`)(moduleObj.standardHours)} STANDARD HRS`)
+					.text(`${moduleObj.standardHours} STANDARD HRS`)
 					.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 2))
 
 				tooltipTextGroup.append('text')
@@ -827,12 +827,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 	// Initialize Widget
 	////////////////////////////////////////////////////////////////
 
-	CxOptimizationHoursLog.prototype.doInitialize = function (element) {
+	OptimizationHoursLog.prototype.doInitialize = function (element) {
 		var that = this;
-		element.addClass("CxOptimizationHoursLogOuter");
+		element.addClass("OptimizationHoursLogOuter");
 
 		that.svg = d3.select(element[0]).append('svg')
-			.attr('class', 'CxOptimizationHoursLog')
+			.attr('class', 'OptimizationHoursLog')
 			.attr('top', 0)
 			.attr('left', 0)
 			.attr('width', "100%")
@@ -846,19 +846,19 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 	// Extra Widget Methods
 	////////////////////////////////////////////////////////////////
 
-	CxOptimizationHoursLog.prototype.doLayout = CxOptimizationHoursLog.prototype.doChanged = CxOptimizationHoursLog.prototype.doLoad = function () { render(this); };
+	OptimizationHoursLog.prototype.doLayout = OptimizationHoursLog.prototype.doChanged = OptimizationHoursLog.prototype.doLoad = function () { render(this); };
 
 	/* FOR FUTURE NOTE: 
-	CxOptimizationHoursLog.prototype.doChanged = function (name, value) {
+	OptimizationHoursLog.prototype.doChanged = function (name, value) {
 		  if(name === "value") valueChanged += 'prototypeMethod - ';
 		  render(this);
 	};
 	*/
 
-	CxOptimizationHoursLog.prototype.doDestroy = function () {
-		this.jq().removeClass("CxOptimizationHoursLogOuter");
+	OptimizationHoursLog.prototype.doDestroy = function () {
+		this.jq().removeClass("OptimizationHoursLogOuter");
 	};
 
-	return CxOptimizationHoursLog;
+	return OptimizationHoursLog;
 });
 
