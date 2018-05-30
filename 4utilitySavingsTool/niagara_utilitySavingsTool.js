@@ -258,7 +258,7 @@ const needToRedrawWidget = (widget, newData) => {
 			let pointedRate = rates[i]
 			if ( pointedRate.year < selectedYear || (pointedRate.year === selectedYear && indexOfMonth[pointedRate.month] <= indexOfMonth[selectedMonth]) ) return pointedRate.rate;
 		}
-		return 0;
+		return rates[0] || 0;
 	};
 
 	const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rates, equipmentHistoryNames, availableDates) => {
