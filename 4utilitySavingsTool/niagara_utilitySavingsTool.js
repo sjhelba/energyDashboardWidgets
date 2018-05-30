@@ -2039,7 +2039,7 @@ const needToRedrawWidget = (widget, newData) => {
 			//create objects to iterate over
 			kwh = {
 				category: 'kwh',
-				value: Math.abs(hoveredEquipmentDataForDate.kwh[2].value - hoveredEquipmentDataForDate.kwh[0].value),
+				value: Math.round(Math.abs(hoveredEquipmentDataForDate.kwh[2].value - hoveredEquipmentDataForDate.kwh[0].value)),
 				percent: JSON.parse(JSON.stringify(kwhPercent)),
 				arrowPath: getArrowPath(hoveredEquipmentDataForDate.kwh[2].value <= hoveredEquipmentDataForDate.kwh[0].value),
 				imgPath: base64Images.electricityBadge,
@@ -2078,7 +2078,7 @@ const needToRedrawWidget = (widget, newData) => {
 			//create objects to iterate over
 			kwh = {
 				category: 'kwh',
-				value: Math.abs(widget.dataForDate.categoryDataForDate[2].kwh - widget.dataForDate.categoryDataForDate[0].kwh),
+				value: Math.round(Math.abs(widget.dataForDate.categoryDataForDate[2].kwh - widget.dataForDate.categoryDataForDate[0].kwh)),
 				percent: JSON.parse(JSON.stringify(kwhPercent)),
 				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].kwh <= widget.dataForDate.categoryDataForDate[0].kwh),
 				imgPath: base64Images.electricityBadge,
@@ -2106,7 +2106,7 @@ const needToRedrawWidget = (widget, newData) => {
 		//create object to iterate over
 		trh = {
 			category: 'trh',
-			value: Math.abs(widget.dataForDate.categoryDataForDate[2].trh - widget.dataForDate.categoryDataForDate[0].trh),
+			value: Math.round(Math.abs(widget.dataForDate.categoryDataForDate[2].trh - widget.dataForDate.categoryDataForDate[0].trh)),
 			percent: JSON.parse(JSON.stringify(trhPercent)),
 			arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].trh <= widget.dataForDate.categoryDataForDate[0].trh),
 			imgPath: base64Images.productionBadge,
@@ -2653,7 +2653,6 @@ const needToRedrawWidget = (widget, newData) => {
 		widget.outerDiv.selectAll('.changeToolSvg')
 			.style('overflow', 'hidden')
 
-		console.log('TODO: ', data);
 	};
 
 

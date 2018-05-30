@@ -124,7 +124,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		* @param {array} arrOfArgsToPassInToFuncsAfterVal
 		* @return {d3 element / obj} returns dropdownGroup appended to 'elementToAppendTo'
 	*/
-	function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection => console.log('selected: ' + valOfSelection), elementToAppendTo = d3.select('svg'), x = 5, y = 50, leftAligned = true, minDropdownWidth = 125, horizontalPadding = 5, verticalPadding = 5, strokeColor = 'black', backgroundFill = 'white', hoveredFill = '#d5d6d4', font = '10.0pt Nirmala UI', textColor = 'black', defaultSelection, funcToRunOnOpen, funcToRunOnClose, arrOfArgsToPassInToFuncsAfterVal) {
+	function makeDropdown(arrOfOptions, funcToRunOnSelection, elementToAppendTo, x, y, leftAligned, minDropdownWidth, horizontalPadding, verticalPadding, strokeColor, backgroundFill, hoveredFill, font, textColor, defaultSelection, funcToRunOnOpen, funcToRunOnClose, arrOfArgsToPassInToFuncsAfterVal) {
 		const arrowWidth = getTextWidth('8', font) / 1.5;
 		const textWidth = (arrowWidth * 2) + arrOfOptions.reduce((accum, curr) => {
 			let currTextWidth = getTextWidth(curr, font);

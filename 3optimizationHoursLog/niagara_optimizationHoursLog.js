@@ -77,7 +77,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 			},
 			{
 				name: 'ordForTowersStdHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Towers/OperatingHours/Standard',
+				value: 'null',
 				typeSpec: 'baja:Ord'
 			},
 			{
@@ -102,7 +102,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d
 			},
 			{
 				name: 'ordForTowersOptHrs',
-				value: 'station:|slot:/tekWorx/Dashboard/Towers/OperatingHours/Optimization',
+				value: 'null',
 				typeSpec: 'baja:Ord'
 			},
 			{
