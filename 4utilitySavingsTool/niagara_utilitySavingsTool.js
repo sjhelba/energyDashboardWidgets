@@ -258,7 +258,7 @@ const needToRedrawWidget = (widget, newData) => {
 			let pointedRate = rates[i]
 			if ( pointedRate.year < selectedYear || (pointedRate.year === selectedYear && indexOfMonth[pointedRate.month] <= indexOfMonth[selectedMonth]) ) return pointedRate.rate;
 		}
-		return rates[0] || 0;
+		return rates[0].rate || 0;
 	};
 
 	const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rates, equipmentHistoryNames, availableDates) => {
@@ -1497,7 +1497,7 @@ const needToRedrawWidget = (widget, newData) => {
 				.style('font-weight', 'bold')
 
 			textGroups.append('text')
-				.text(d => isStacked ? d.kwh + ' kWh' : d.value + ' kWh')
+				.text(d => isStacked ? d.kwh + ' kWh' : Math.round(d.value) + ' kWh')
 				.attr('dominant-baseline', 'hanging')
 				.style('font', data.tooltipFont)
 				.attr('fill', data.tooltipFontColor)
@@ -1851,7 +1851,7 @@ const needToRedrawWidget = (widget, newData) => {
 				.style('font-weight', 'bold')
 
 			trhTextGroups.append('text')
-				.text(d => d.trh + ' tRh')
+				.text(d => Math.round(d.trh) + ' tRh')
 				.attr('x', getTextWidth('M:', 'bold ' + data.tooltipFont) + data.paddingAfterLegendCat)
 				.attr('dominant-baseline', 'hanging')
 				.style('font', data.tooltipFont)
