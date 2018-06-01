@@ -1,104 +1,120 @@
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/ceoWeb/rc/d3/d3.min'], function(Widget, subscriberMixIn, d3) {
-	"use strict";
+function defineFuncForTabSpacing () {
+	////ONLY FOR BROWSER /////
+	const widget = {};
 
-////////// Hard Coded Defs //////////
-const areScalarArrsSame = (arr1, arr2) => arr1.length === arr2.length && arr1.every((el, idx) => el === arr2[idx]);
-const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
-const needToRedrawWidget = (widget, newData) => {
-	const lastData = widget.data;
-	// check primitives for equivalence
-	if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
-	// check availableYears for equivalence
-	if (!areScalarArrsSame(lastData.availableYears, newData.availableYears))	return true;
-	// check dataForYear data for equivalence
-	if (lastData.dataForYear.length !== newData.dataForYear.length) return true;
-	const isDiscrepencyInMonthlyObjs = lastData.dataForYear.some((monthObj, idx) => {
-		const newMonthObj = newData.dataForYear[idx];
-		if (!arePrimitiveValsInObjsSame(monthObj, newMonthObj) || monthObj.tempBinsForMonth.length !== newMonthObj.tempBinsForMonth.length) return true;
-		const isDiscrepencyInTempBins = monthObj.tempBinsForMonth.some((lastTempBin, tempBinIndex) => {
-			const newTempBin = newMonthObj.tempBinsForMonth[tempBinIndex];
-			if (!arePrimitiveValsInObjsSame(lastTempBin, newTempBin) || lastTempBin.thisTempBin.display !== newTempBin.thisTempBin.display) return true;
-		})
-		if (isDiscrepencyInTempBins) return true;
-		return false;
-	})
-	if (isDiscrepencyInMonthlyObjs) return true;
-	return false;
-}
-let widgetCount = 0;	// for generating unique ids
-const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
-const getTextWidth = (text, font) => {
-	const canvas = document.createElement('canvas');
-	const context = canvas.getContext('2d');
-	context.font = font;
-	const width = context.measureText(text).width;
-	d3.select(canvas).remove()
-	return width;
-};
-const getTextHeight = font => {
-	let num = '';
-	const indexOfLastDigit = font.indexOf('pt') - 1;
-	for (let i = 0; i <= indexOfLastDigit; i++) {
-		if (!isNaN(font[i]) || font[i] === '.') num += font[i];
-	}
-	num = +num;
-	return num * 1.33333333333;
-};
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const dropdownYearChanged = (newYear, widget) => {
-	widget.dropdownYearSelected = newYear;
-	render(widget, true);
-}
-const resetElements = (outerWidgetEl, elementsToReset) => {
-	const selectionForCheck = outerWidgetEl.selectAll(elementsToReset)
-	if (!selectionForCheck.empty()) selectionForCheck.remove();
-};
-const getIndexOfBinForTemp = (temp, binArr) => binArr.findIndex(bin => temp >= bin.min && temp <= bin.max);
-const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwTrFunc) => {
-	const makeAMonthObj = month => {
-		const obj = {
-			thisMonth: month,
-			totalHoursForMonth: 0,
-			// create arr of {} (one for each tempBin) for each month's monthObj.tempBinsForMonth
-			tempBinsForMonth: tempRanges.map(range => {
-				return {
-						totalHoursInBin: 0,
-						totalEffInBin: 0,
-						avgEffInBin: 0,
-						opacity: 0,
-						colorScaleVal: 0,
-						thisTempBin: range
-				};
+
+
+
+	////////// Hard Coded Defs //////////
+	const areScalarArrsSame = (arr1, arr2) => arr1.length === arr2.length && arr1.every((el, idx) => el === arr2[idx]);
+	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
+	const needToRedrawWidget = (widget, newData) => {
+		const lastData = widget.data;
+		// check primitives for equivalence
+		if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
+		// check availableYears for equivalence
+		if (!areScalarArrsSame(lastData.availableYears, newData.availableYears))	return true;
+		// check dataForYear data for equivalence
+		if (lastData.dataForYear.length !== newData.dataForYear.length) return true;
+		const isDiscrepencyInMonthlyObjs = lastData.dataForYear.some((monthObj, idx) => {
+			const newMonthObj = newData.dataForYear[idx];
+			if (!arePrimitiveValsInObjsSame(monthObj, newMonthObj) || monthObj.tempBinsForMonth.length !== newMonthObj.tempBinsForMonth.length) return true;
+			const isDiscrepencyInTempBins = monthObj.tempBinsForMonth.some((lastTempBin, tempBinIndex) => {
+				const newTempBin = newMonthObj.tempBinsForMonth[tempBinIndex];
+				if (!arePrimitiveValsInObjsSame(lastTempBin, newTempBin) || lastTempBin.thisTempBin.display !== newTempBin.thisTempBin.display) return true;
 			})
-		};
-		return obj;
+			if (isDiscrepencyInTempBins) return true;
+			return false;
+		})
+		if (isDiscrepencyInMonthlyObjs) return true;
+		return false;
 	}
-	const hrsPerTempRangePerMonth = [];
-	months.forEach(month => {
-		let monthObj = makeAMonthObj(month);
-		// if there is data for that month in hourlyData, add it to monthObj
-		if (hourlyData[year][month]) {
-			hourlyData[year][month].hoursArr.forEach(hour => {
-				monthObj.totalHoursForMonth++;
-				monthObj.tempBinsForMonth[getIndexOfBinForTemp(hour.temp, tempRanges)].totalHoursInBin++;
-				monthObj.tempBinsForMonth[getIndexOfBinForTemp(hour.temp, tempRanges)].totalEffInBin += hour.eff;
-			});
-		}		
-		// add month's monthObj with data to hrsPerTempRangePerMonth
-		hrsPerTempRangePerMonth.push(monthObj);
-	});
-	// calculate avg eff, opacity, and colorScaleVal for each bin in each month
-	hrsPerTempRangePerMonth.forEach(month => {
-		month.tempBinsForMonth.forEach(bin => {
-			bin.avgEffInBin = bin.totalEffInBin / bin.totalHoursInBin ? +formatKwTrFunc(bin.totalEffInBin / bin.totalHoursInBin) : 0;
-			bin.opacity = bin.totalHoursInBin ? 1 : 0;
-			bin.colorScaleVal = bin.avgEffInBin < effRange[0] ? effRange[0] : (bin.avgEffInBin > effRange[1] ? effRange[1] : bin.avgEffInBin);
-		});
-	});
-	return hrsPerTempRangePerMonth;
-};
+	let widgetCount = 0;	// for generating unique ids
+	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
+	const formatIntoPercentage = d3.format('.0%');
+	const getTextWidth = (text, font) => {
+		const canvas = document.createElement('canvas');
+		const context = canvas.getContext('2d');
+		context.font = font;
+		const width = context.measureText(text).width;
+		d3.select(canvas).remove()
+		return width;
+	};
+	const getTextHeight = font => {
+		let num = '';
+		const indexOfLastDigit = font.indexOf('pt') - 1;
+		for (let i = 0; i <= indexOfLastDigit; i++) {
+			if (!isNaN(font[i]) || font[i] === '.') num += font[i];
+		}
+		num = +num;
+		return num * 1.33333333333;
+	};
+	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/*
+	const dropdownYearChanged = (newYear, widget) => {
+		widget.dropdownYearSelected = newYear;
+		render();
+	}
+	const resetElements = (outerWidgetEl, elementsToReset) => {
+		const selectionForCheck = outerWidgetEl.selectAll(elementsToReset)
+		if (!selectionForCheck.empty()) selectionForCheck.remove();
+	};
+	const getIndexOfBinForTemp = (temp, binArr) => binArr.findIndex(bin => temp >= bin.min && temp <= bin.max);
+	const getBinOpacity = (hrsInBin, hrsInMonth) => {
+		let contOpacity = hrsInBin / hrsInMonth || 0;
+		if (contOpacity === 0) return 0;
+		return contOpacity + 0.5
+	}
+
+	const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwTrFunc) => {
+		const makeAMonthObj = month => {
+			const obj = {
+				thisMonth: month,
+				totalHoursForMonth: 0,
+				// create arr of {} (one for each tempBin) for each month's monthObj.tempBinsForMonth
+				tempBinsForMonth: tempRanges.map(range => {
+					return {
+							totalHoursInBin: 0,
+							totalEffInBin: 0,
+							avgEffInBin: 0,
+							opacity: 0,
+							colorScaleVal: 0,
+							thisTempBin: range
+					};
+				})
+			};
+			return obj;
+		}
+		const hrsPerTempRangePerMonth = [];
+		months.forEach(month => {
+			let monthObj = makeAMonthObj(month);
+			// if there is data for that month in hourlyData, add it to monthObj
+			if (hourlyData[year][month]) {
+				hourlyData[year][month].hoursArr.forEach(hour => {
+					monthObj.totalHoursForMonth++;
+					monthObj.tempBinsForMonth[getIndexOfBinForTemp(hour.temp, tempRanges)].totalHoursInBin++;
+					monthObj.tempBinsForMonth[getIndexOfBinForTemp(hour.temp, tempRanges)].totalEffInBin += hour.eff;
+				});
+			}
+
+			// monthObj.totalHoursForMonth = monthObj.tempBinsForMonth.reduce(((accum, curr) => accum + curr.totalHoursInBin), 0)
+			
+			// add month's monthObj with data to hrsPerTempRangePerMonth
+			hrsPerTempRangePerMonth.push(monthObj);
+		});
+
+		// calculate avg eff, opacity, and colorScaleVal for each bin in each month
+		hrsPerTempRangePerMonth.forEach(month => {
+			month.tempBinsForMonth.forEach(bin => {
+				bin.avgEffInBin = bin.totalEffInBin / bin.totalHoursInBin ? +formatKwTrFunc(bin.totalEffInBin / bin.totalHoursInBin) : 0;
+				bin.opacity = getBinOpacity(bin.totalHoursInBin, month.totalHoursForMonth);
+				bin.colorScaleVal = bin.avgEffInBin < effRange[0] ? effRange[0] : (bin.avgEffInBin > effRange[1] ? effRange[1] : bin.avgEffInBin);
+			});
+		});
+		return hrsPerTempRangePerMonth;
+	};
+
+	/*
 		* @param {array} arrOfOptions	DEFAULT: []
 		* @param {function} funcToRunOnSelection, first param is val selected, rest are els in arr.	DEFAULT: valOfSelection => console.log('selected ' + valOfSelection)
 		* @param {d3 element / obj} elementToAppendTo	DEFAULT: d3.select('svg')
@@ -119,412 +135,416 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		* @param {array} arrOfArgsToPassInToFuncsAfterVal
 		* @return {d3 element / obj} returns dropdownGroup appended to 'elementToAppendTo'
 	*/
-	function makeDropdown(arrOfOptions, funcToRunOnSelection, elementToAppendTo, x, y, leftAligned, minDropdownWidth, horizontalPadding, verticalPadding, strokeColor, backgroundFill, hoveredFill, font, textColor, defaultSelection, funcToRunOnOpen, funcToRunOnClose, arrOfArgsToPassInToFuncsAfterVal) {
-		const arrowWidth = getTextWidth('8', font) / 1.5;
-		const textWidth = (arrowWidth * 2) + arrOfOptions.reduce((accum, curr) => {
-			let currTextWidth = getTextWidth(curr, font);
-			return currTextWidth > accum ? currTextWidth : accum;
-		}, 0);
-		const textHeight = getTextHeight(font);
-		const dropdownWidth = minDropdownWidth > textWidth + (horizontalPadding * 2) ? minDropdownWidth : textWidth + (horizontalPadding * 2);
-		const rowHeight = textHeight + (verticalPadding * 2);
-		const textY = verticalPadding + (textHeight / 2);
-		let clickedSelection = defaultSelection || defaultSelection === 0 ? defaultSelection : arrOfOptions[0];
-		const dropdownHeight = rowHeight * (arrOfOptions.length + 1);
-		let open = false;
-		function generatePath () {
-			let x1, y1, x2, y2, x3, y3;
-			x1 = dropdownWidth - (horizontalPadding + arrowWidth);
-			x2 = x1 + arrowWidth;
-			x3 = x1 + (arrowWidth / 2);
-			y1 = textY;
-			y2 = textY;
-			y3 = textY + (arrowWidth / 2);
-			return `M${x1},${y1} L${x2},${y2} L${x3},${y3} z`;
+function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection => console.log('selected: ' + valOfSelection), elementToAppendTo = d3.select('svg'), x = 5, y = 50, leftAligned = true, minDropdownWidth = 125, horizontalPadding = 5, verticalPadding = 5, strokeColor = 'black', backgroundFill = 'white', hoveredFill = '#d5d6d4', font = '10.0pt Nirmala UI', textColor = 'black', defaultSelection, funcToRunOnOpen, funcToRunOnClose, arrOfArgsToPassInToFuncsAfterVal) {
+  const arrowWidth = getTextWidth('8', font) / 1.5;
+  const textWidth = (arrowWidth * 2) + arrOfOptions.reduce((accum, curr) => {
+    let currTextWidth = getTextWidth(curr, font);
+    return currTextWidth > accum ? currTextWidth : accum;
+  }, 0);
+  const textHeight = getTextHeight(font);
+  const dropdownWidth = minDropdownWidth > textWidth + (horizontalPadding * 2) ? minDropdownWidth : textWidth + (horizontalPadding * 2);
+  const rowHeight = textHeight + (verticalPadding * 2);
+  const textY = verticalPadding + (textHeight / 2);
+  let clickedSelection = defaultSelection || defaultSelection === 0 ? defaultSelection : arrOfOptions[0];
+  const dropdownHeight = rowHeight * (arrOfOptions.length + 1);
+  let open = false;
+  function generatePath () {
+    let x1, y1, x2, y2, x3, y3;
+    x1 = dropdownWidth - (horizontalPadding + arrowWidth);
+    x2 = x1 + arrowWidth;
+    x3 = x1 + (arrowWidth / 2);
+    y1 = textY;
+    y2 = textY;
+    y3 = textY + (arrowWidth / 2);
+    return `M${x1},${y1} L${x2},${y2} L${x3},${y3} z`;
+  }
+  // dropdownGroup
+  const dropdownGroup = elementToAppendTo.append('g')
+    .attr('class', 'dropdownGroup')
+    .attr('transform', `translate(${x + 3},${y + 3})`)
+  //outer container
+  const outerContainer = dropdownGroup.append('rect')
+    .attr('class', 'outerContainerRect')
+    .attr('width', dropdownWidth + 6)
+    .attr('height', rowHeight + 6)
+    .attr('fill', backgroundFill)
+    .attr('rx', 5)
+    .attr('stroke', strokeColor)
+    .attr('x', - 3)
+    .attr('y', - 3)
+    .attr('stroke-width', '0.5px')
+    .on('click', function () {
+      toggleDrop()
+    })
+  //rows
+  const dropdownRows = dropdownGroup.selectAll('.dropdownRows')
+    .data(arrOfOptions)
+    .enter().append('g')
+      .attr('class', (d, i) => 'dropdownRows ' + i + 'dropdownRow')
+      .attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : 'translate(0,0)')
+      .on('mouseenter', function() {
+        dropdownRows.selectAll('rect').attr('fill', backgroundFill);
+        d3.select(this).select('rect').attr('fill', hoveredFill);
+      })
+      .on('mouseleave', function() {
+        d3.select(this).select('rect').attr('fill', backgroundFill);
+      })
+      .on('click', function (d) {
+        changeClickedSelection(d);
+        toggleDrop();
+      });
+  const rowRects = dropdownRows.append('rect')
+    .attr('class', (d, i) => 'rowRect ' + i + 'rowRect')
+    .attr('width', dropdownWidth)
+    .attr('height', rowHeight)
+    .attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill)
+  dropdownRows.append('text')
+    .attr('class', (d, i) => 'rowText ' + i + 'rowText')
+    .text(d => d)
+    .attr('dominant-baseline', 'middle')
+    .attr('x', d => leftAligned ? horizontalPadding : (dropdownWidth / 2) - (getTextWidth(d, font) / 2))
+    .attr('y', textY)
+    .style('font', font)
+		.style('fill', textColor)
+    .style('cursor', 'default')
+  // Selected window
+  const selectedGroup = dropdownGroup.append('g')
+    .attr('class', 'selectedGroup')
+    .on('mouseenter', function() {
+      selectedRect.attr('fill', hoveredFill);
+    })
+    .on('mouseleave', function() {
+      if (!open) selectedRect.attr('fill', backgroundFill);
+    })
+    .on('click', function () {
+      toggleDrop()
+    });
+  const selectedRect = selectedGroup.append('rect')
+    .attr('class', 'selectedRect')
+    .attr('width', dropdownWidth)
+    .attr('height', rowHeight)
+    .attr('fill', backgroundFill)
+  const selectedText = selectedGroup.append('text')
+    .attr('class', 'selectedText')
+    .text(clickedSelection)
+    .attr('dominant-baseline', 'middle')
+    .attr('x', leftAligned ? horizontalPadding : ((dropdownWidth - (arrowWidth * 2)) / 2) - ((getTextWidth(clickedSelection, font)) / 2))
+    .attr('y', textY)
+    .style('font', font)
+		.style('fill', textColor)
+    .style('cursor', 'default')
+  selectedGroup.append('path')
+    .attr('class', 'arrowPath')
+    .attr('d', generatePath())
+    .attr('fill', textColor)
+    .attr('stroke', textColor)
+  function changeClickedSelection (newSelectionValue) {
+    selectedRect.attr('fill', backgroundFill);
+    clickedSelection = newSelectionValue;
+    selectedText.text(clickedSelection);
+    funcToRunOnSelection(newSelectionValue, ...arrOfArgsToPassInToFuncsAfterVal);
+  }
+  function toggleDrop () {
+		open = !open;
+		if (open) {
+			funcToRunOnOpen(...arrOfArgsToPassInToFuncsAfterVal)
+		} else {
+			funcToRunOnClose(...arrOfArgsToPassInToFuncsAfterVal)
 		}
-		// dropdownGroup
-		const dropdownGroup = elementToAppendTo.append('g')
-			.attr('class', 'dropdownGroup')
-			.attr('transform', `translate(${x + 3},${y + 3})`)
-		//outer container
-		const outerContainer = dropdownGroup.append('rect')
-			.attr('class', 'outerContainerRect')
-			.attr('width', dropdownWidth + 6)
-			.attr('height', rowHeight + 6)
-			.attr('fill', backgroundFill)
-			.attr('rx', 5)
-			.attr('stroke', strokeColor)
-			.attr('x', - 3)
-			.attr('y', - 3)
-			.attr('stroke-width', '0.5px')
-			.on('click', function () {
-				toggleDrop()
-			})
-		//rows
-		const dropdownRows = dropdownGroup.selectAll('.dropdownRows')
-			.data(arrOfOptions)
-			.enter().append('g')
-				.attr('class', (d, i) => 'dropdownRows ' + i + 'dropdownRow')
-				.attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : 'translate(0,0)')
-				.on('mouseenter', function() {
-					dropdownRows.selectAll('rect').attr('fill', backgroundFill);
-					d3.select(this).select('rect').attr('fill', hoveredFill);
-				})
-				.on('mouseleave', function() {
-					d3.select(this).select('rect').attr('fill', backgroundFill);
-				})
-				.on('click', function (d) {
-					changeClickedSelection(d);
-					toggleDrop();
-				});
-		const rowRects = dropdownRows.append('rect')
-			.attr('class', (d, i) => 'rowRect ' + i + 'rowRect')
-			.attr('width', dropdownWidth)
-			.attr('height', rowHeight)
-			.attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill)
-		dropdownRows.append('text')
-			.attr('class', (d, i) => 'rowText ' + i + 'rowText')
-			.text(d => d)
-			.attr('dominant-baseline', 'middle')
-			.attr('x', d => leftAligned ? horizontalPadding : (dropdownWidth / 2) - (getTextWidth(d, font) / 2))
-			.attr('y', textY)
-			.style('font', font)
-			.style('fill', textColor)
-			.style('cursor', 'default')
-		// Selected window
-		const selectedGroup = dropdownGroup.append('g')
-			.attr('class', 'selectedGroup')
-			.on('mouseenter', function() {
-				selectedRect.attr('fill', hoveredFill);
-			})
-			.on('mouseleave', function() {
-				if (!open) selectedRect.attr('fill', backgroundFill);
-			})
-			.on('click', function () {
-				toggleDrop()
-			});
-		const selectedRect = selectedGroup.append('rect')
-			.attr('class', 'selectedRect')
-			.attr('width', dropdownWidth)
-			.attr('height', rowHeight)
-			.attr('fill', backgroundFill)
-		const selectedText = selectedGroup.append('text')
-			.attr('class', 'selectedText')
-			.text(clickedSelection)
-			.attr('dominant-baseline', 'middle')
-			.attr('x', leftAligned ? horizontalPadding : ((dropdownWidth - (arrowWidth * 2)) / 2) - ((getTextWidth(clickedSelection, font)) / 2))
-			.attr('y', textY)
-			.style('font', font)
-			.style('fill', textColor)
-			.style('cursor', 'default')
-		selectedGroup.append('path')
-			.attr('class', 'arrowPath')
-			.attr('d', generatePath())
-			.attr('fill', textColor)
-			.attr('stroke', textColor)
-		function changeClickedSelection (newSelectionValue) {
-			selectedRect.attr('fill', backgroundFill);
-			clickedSelection = newSelectionValue;
-			selectedText.text(clickedSelection);
-			funcToRunOnSelection(newSelectionValue, ...arrOfArgsToPassInToFuncsAfterVal);
-		}
-		function toggleDrop () {
-			open = !open;
-			if (open) {
-				funcToRunOnOpen(...arrOfArgsToPassInToFuncsAfterVal)
-			} else {
-				funcToRunOnClose(...arrOfArgsToPassInToFuncsAfterVal)
-			}
-			rowRects.attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill);
-			outerContainer.transition()
-				.attr('height', open ? dropdownHeight + 6: rowHeight + 6);
-			dropdownRows.transition()
-				.attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : `translate(0,0)`);
-		}
-		return dropdownGroup;
-	}
+    rowRects.attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill);
+    outerContainer.transition()
+      .attr('height', open ? dropdownHeight + 6: rowHeight + 6);
+    dropdownRows.transition()
+      .attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : `translate(0,0)`);
+  }
+  return dropdownGroup;
+}
 
-////////////////////////////////////////////////////////////////
-	// Define Widget Constructor & Exposed Properties
-////////////////////////////////////////////////////////////////
 
-	var CxEfficiencyMap = function() {
-		var that = this;
-		Widget.apply(this, arguments);
 
-		that.properties().addAll([
+	////////////////////////////////////////////////////////////////
+		// Define Widget Constructor & Exposed Properties
+	////////////////////////////////////////////////////////////////
+	const properties = [
 		/* COLORS */
-			//fills
-			{
-				name: 'backgroundColor',
-				value: 'rgb(245,245,245)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'gridFillColor',
-				value: 'rgb(245,245,245)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'minKwTrColor',
-				value: 'rgb(105,202,210)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'maxKwTrColor',
-				value: 'rgb(54,64,78)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'dropdownFillColor',
-				value: 'rgb(255,255,255)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'hoveredDropdownFill',
-				value: '#d5d6d4',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'tooltipFillColor',
-				value: 'rgb(255,255,255)',
-				typeSpec: 'gx:Color'
-			},
-			//strokes
-			{
-				name: 'gridStrokeColor',
-				value: 'rgb(192,192,192)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'dropdownStrokeColor',
-				value: 'black',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'hoveredInputStrokeColor',
-				value: 'rgb(4,179,216)',
-				typeSpec: 'gx:Color'
-			},
-			//text
-			{
-				name: 'xAxisTicksTextColor',
-				value: 'rgb(64,64,64)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'yAxisTicksTextColor',
-				value: 'rgb(64,64,64)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'yAxisTitleColor',
-				value: 'rgb(64,64,64)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'legendTitleColor',
-				value: 'black',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'legendTicksTextColor',
-				value: 'black',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'dropdownTitleColor',
-				value: 'black',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'dropdownTextColor',
-				value: 'black',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'tooltipMonthColor',
-				value: 'rgb(64,64,64)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'tooltiptempColor',
-				value: 'rgb(64,64,64)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'tooltipHrsColor',
-				value: 'rgb(64,64,64)',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'tooltipKwTrColor',
-				value: 'rgb(64,64,64)',
-				typeSpec: 'gx:Color'
-			},
-			/* FONT */
-			{
-				name: 'xAxisTicksTextFont',
-				value: '8.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'yAxisTicksTextFont',
-				value: '10.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'yAxisTitleFont',
-				value: 'bold 10.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'legendTitleFont',
-				value: 'bold 10.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'legendTicksTextFont',
-				value: '10.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'dropdownTitleFont',
-				value: 'bold 12.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'dropdownTextFont',
-				value: '10.5pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'tooltipMonthFont',
-				value: 'bold 12.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'tooltipTempFont',
-				value: 'bold 12.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'tooltipHrsFont',
-				value: '12.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'tooltipKwTrFont',
-				value: '12.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'modalLabelsFont',
-				value: '10.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
-				name: 'modalInputFont',
-				value: '10.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-		/* PADDING */
-			{
-				name: 'paddingAboveDropdown',
-				value: 5
-			},
-			{
-				name: 'paddingLeftOfDropdown',				
-				value: 10
-			},
-			{
-				name: 'paddingBelowDropdown',				
-				value: 10
-			},
-			{
-				name: 'paddingRightOfYAxisTicks',
-				value: 3
-			},
-			{
-				name: 'paddingAboveXAxisTicks',
-				value: 3
-			},
-			{
-				name: 'paddingRightOfYAxisTitle',
-				value: 7
-			},
-			{
-				name: 'paddingRightOfGrid',
-				value: 5
-			},
-			{
-				name: 'paddingRightOfLegendTitle',
-				value: 5
-			},
-			{
-				name: 'paddingRightOfLegendBar',
-				value: 2
-			},
-			{
-				name: 'paddingRightOfTooltipMonth',				
-				value: 5
-			},
-			{
-				name: 'paddingRightOfTooltipTemp',				
-				value: 15
-			},
-			{
-				name: 'paddingRightOfTooltipHrs',				
-				value: 15
-			},
-		/* OTHER */
-			{
-				name: 'overrideDefaultTempPrecisionWFacets',
-				value: false
-			},
-			{
-				name: 'overrideDefaultKwTrPrecisionWFacets',
-				value: false
-			},
-			{
-				name: 'minKwTrCategory',
-				value: 0.250
-			},
-			{
-				name: 'maxKwTrCategory',
-				value: 1.250
-			},
-			{
-				name: 'dropdownWidth',
-				value: 100
-			}
-		]);
+		//fills
+		{
+			name: 'backgroundColor',
+			value: 'white',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'gridFillColor',
+			value: 'white',
+			typeSpec: 'gx:Color'
+		},
+		// {
+		// 	name: 'maxKwTrColor',
+		// 	value: 'rgb(41,171,226)',
+		// 	typeSpec: 'gx:Color'
+		// },
+		// {
+		// 	name: 'minKwTrColor',
+		// 	value: 'rgb(34,181,115)',
+		// 	typeSpec: 'gx:Color'
+		// },
+		{
+			name: 'maxKwTrColor',
+			value: '#D33227',
+			typeSpec: 'gx:Color'
+		},
+		// {
+		// 	name: 'minKwTrColor',
+		// 	value: '#1F77B9',
+		// 	typeSpec: 'gx:Color'
+		// },
+		// {
+		// 	name: 'maxKwTrColor',
+		// 	value: 'rgb(21,67,96)',
+		// 	typeSpec: 'gx:Color'
+		// },
+		{
+			name: 'minKwTrColor',
+			value: '#FFA500',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'dropdownFillColor',
+			value: 'white',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'tooltipFillColor',
+			value: '#D1D1D1',
+			typeSpec: 'gx:Color'
+		},
+		//strokes
+		{
+			name: 'gridStrokeColor',
+			value: 'grey',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'dropdownStrokeColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'hoveredInputStrokeColor',
+			value: '#04B3D8',
+			typeSpec: 'gx:Color'
+		},
+		//text
+		{
+			name: 'xAxisTicksTextColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'yAxisTicksTextColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'yAxisTitleColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'legendTitleColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'legendTicksTextColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'dropdownTitleColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'dropdownTextColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'tooltipMonthColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'tooltiptempColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'tooltipHrsColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'tooltipKwTrColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+		},
+		/* FONT */
+		{
+			name: 'xAxisTicksTextFont',
+			value: '8.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'yAxisTicksTextFont',
+			value: '10.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'yAxisTitleFont',
+			value: 'bold 10.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'legendTitleFont',
+			value: 'bold 10.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'legendTicksTextFont',
+			value: '10.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'dropdownTitleFont',
+			value: 'bold 12.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'dropdownTextFont',
+			value: '10.5pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'tooltipMonthFont',
+			value: 'bold 12.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'tooltipTempFont',
+			value: 'bold 12.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'tooltipHrsFont',
+			value: '12.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'tooltipKwTrFont',
+			value: '12.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'modalLabelsFont',
+			value: '10.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+		{
+			name: 'modalInputFont',
+			value: '10.0pt Nirmala UI',
+			typeSpec: 'gx:Font'
+		},
+	/* PADDING */
+		{
+			name: 'paddingAboveDropdown',
+			value: 5
+		},
+		{
+			name: 'paddingLeftOfDivs',				
+			value: 10
+		},
+		{
+			name: 'paddingBelowDropdown',				
+			value: 5
+		},
+		{
+			name: 'paddingRightOfYAxisTicks',
+			value: 3
+		},
+		{
+			name: 'paddingAboveXAxisTicks',
+			value: 3
+		},
+		{
+			name: 'paddingRightOfYAxisTitle',
+			value: 7
+		},
+		{
+			name: 'paddingRightOfGrid',
+			value: 5
+		},
+		{
+			name: 'paddingRightOfLegendTitle',
+			value: 5
+		},
+		{
+			name: 'paddingRightOfLegendBar',
+			value: 2
+		},
+		{
+			name: 'paddingRightOfTooltipMonth',				
+			value: 5
+		},
+		{
+			name: 'paddingRightOfTooltipTemp',				
+			value: 15
+		},
+		{
+			name: 'paddingRightOfTooltipHrs',				
+			value: 15
+		},
+	/* OTHER */
+		{
+			name: 'overrideDefaultTempPrecisionWFacets',
+			value: false
+		},
+		{
+			name: 'overrideDefaultKwTrPrecisionWFacets',
+			value: false
+		},
+		{
+			name: 'minKwTrCategory',
+			value: 0.250
+		},
+		{
+			name: 'maxKwTrCategory',
+			value: 1.250
+		},
+		{
+			name: 'dropdownWidth',
+			value: 100
+		},
+		{
+			name: 'tooltipRoundedness',
+			value: 5
+		}
+	];
 
 
-
-		subscriberMixIn(that);
-	};
-
-	CxEfficiencyMap.prototype = Object.create(Widget.prototype);
-	CxEfficiencyMap.prototype.constructor = CxEfficiencyMap;
-
-
-
-////////////////////////////////////////////////////////////////
-	// /* SETUP DEFINITIONS AND DATA */
-////////////////////////////////////////////////////////////////
-
-
-	const setupDefinitions = widget => {
+	////////////////////////////////////////////////////////////////
+		// /* SETUP DEFINITIONS AND DATA */
+	////////////////////////////////////////////////////////////////
+	const setupDefinitions = () => {
 
 		// FROM USER // 
-		const data = widget.properties().toValueMap();	//obj with all exposed properties as key/value pairs
+		const data = {};
+		properties.forEach(prop => data[prop.name] = prop.value);
 
 		// FROM JQ //
-		const jq = widget.jq();
-		data.jqWidth = jq.width() || 565;
-		data.jqHeight = jq.height() || 315;
-
+		data.jqHeight = 315;
+		data.jqWidth = 565;
 
 		// SIZING //
 		data.margin = {top: 5, left: 5, right: 5, bottom: 5};
@@ -559,166 +579,162 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		if (!widget.settingsBtnHovered) widget.settingsBtnHovered = false;
 
 
+
+
 		// DATA TO POPULATE //
 		data.availableYears = [];
 		data.hourlyData = {};
+		let addedTempHistoryYr = false;
 
-		// GET HISTORY DATA
-		return Promise.all([widget.resolve(`history:^System_WbtHh`), widget.resolve(`history:^System_MsEffHh`)])
-			.then(histories => {
-				const [tempHistoryTable, effHistoryTable] = histories;
-				data.tempPrecision = !data.overrideDefaultTempPrecisionWFacets ? 0 : tempHistoryTable.getCol('value').getFacets().get('precision') || 0;
-				data.kwTrPrecision = !data.overrideDefaultKwTrPrecisionWFacets ? 3 : effHistoryTable.getCol('value').getFacets().get('precision') || 3;
-				data.tempUnits = tempHistoryTable.getCol('value').getFacets().get('units') || '°F';
-				const cursorPromises = [
+		// FAKE DATA //
+		const populateFakeData = () => {
 
-					effHistoryTable.cursor({
-						limit: 5000000,
-						each: function(row, index) {
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-							const rowValue = +row.get('value');
-							const rowYear = timestamp.getFullYear();
-							const rowMonth = months[timestamp.getMonth()];
-							const rowDate = timestamp.getDate();
-							const rowHour = timestamp.getHours();
-							const rowDateHr = [rowDate, rowHour];
-
-							if (!data.hourlyData[rowYear]) {
-								data.hourlyData[rowYear] = {};
-								data.availableYears.unshift(rowYear)
-							}
-							if (!data.hourlyData[rowYear][rowMonth]) {
-								data.hourlyData[rowYear][rowMonth] = {monthObj: {}, hoursArr: []};
-							}
-							data.hourlyData[rowYear][rowMonth].monthObj[rowDateHr] = {eff: rowValue, temp: undefined};
-						}
-					}),
-
-					tempHistoryTable.cursor({
-						limit: 5000000,
-						each: function(row, index) {
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-							const rowValue = +row.get('value');
-							const rowYear = timestamp.getFullYear();
-							const rowMonth = months[timestamp.getMonth()];
-							const rowDate = timestamp.getDate();
-							const rowHour = timestamp.getHours();
-							const rowDateHr = [rowDate, rowHour];
-
-							// if there is already eff data for that hour, add temp data for that hour
-							if (data.hourlyData[rowYear] && data.hourlyData[rowYear][rowMonth] && data.hourlyData[rowYear][rowMonth].monthObj[rowDateHr]) {
-								data.hourlyData[rowYear][rowMonth].monthObj[rowDateHr].temp = rowValue;
-							}
-						}
-					})
-				];
-				return Promise.all(cursorPromises);
-			})
-			.catch(err => console.error('error finding or iterating through CxEfficiencyMap histories: ' + err))
-			.then(() => {
-				// format data for better d3 consumption
-				data.availableYears.forEach(yearKey => {
-					const monthKeys = Object.keys(data.hourlyData[yearKey]);
-					monthKeys.forEach(monthKey => {
-						//filter out any hours that are missing temp data
-						const hoursInMonth = Object.keys(data.hourlyData[yearKey][monthKey].monthObj);
-						hoursInMonth.forEach(hr => {
-							if (!data.hourlyData[yearKey][monthKey].monthObj[hr].temp) delete data.hourlyData[yearKey][monthKey].monthObj[hr];
-						})
-						//convert collected hours to array format within overall data obj
-						data.hourlyData[yearKey][monthKey].hoursArr = d3.values(data.hourlyData[yearKey][monthKey].monthObj);
-					})
-				});
-
-				// CALCULATED DEFS //
-				if (!widget.dropdownYearSelected) widget.dropdownYearSelected = data.availableYears[0];
-
-				// functions
-				data.formatTemp = d3.format(`,.${data.tempPrecision}f`);
-				data.formatKwTr = d3.format(`,.${data.kwTrPrecision}f`);
-	
-				//widths
-				data.legendBarWidth = data.graphicWidth / 37 || 15;
-				data.yAxisTicksWidth = getTextWidth(`${data.formatTemp(-888.888)}-${data.formatTemp(-888.888)}`, data.yAxisTicksTextFont) + data.paddingRightOfYAxisTicks;
-				data.yAxisTextAreaWidth = getTextHeight(data.yAxisTitleFont) + data.paddingRightOfYAxisTitle + data.yAxisTicksWidth;
-				data.legendWidth = + data.paddingRightOfGrid + getTextHeight(data.legendTitleFont) + data.paddingRightOfLegendTitle + data.legendBarWidth + data.paddingRightOfLegendBar + getTextWidth(`>${data.formatKwTr(8.8888)}`, data.legendTicksTextFont);
-				data.gridWidth = data.graphicWidth - (data.yAxisTextAreaWidth + data.legendWidth)
-				data.cellWidth = data.gridWidth / 12;
-				data.hoveredCellWidth = data.cellWidth * 1.25;
-				data.ttMonthWidth = getTextWidth('May:', data.tooltipMonthFont);
-				data.ttTempWidth = getTextWidth(`${data.formatTemp(-888.888)}-${data.formatTemp(88.888)}${data.tempUnits}`, data.tooltipTempFont);
-				data.ttHoursWidth = getTextWidth('888 Hours', data.tooltipHrsFont);
-				data.ttEffWidth = getTextWidth(data.formatKwTr(8.88888) + ' kW/tR', data.tooltipKwTrFont);
-				data.tooltipWidth = 10 +	// 5 padding on right and left
-					data.ttMonthWidth +
-					data.paddingRightOfTooltipMonth +
-					data.ttTempWidth +
-					data.paddingRightOfTooltipTemp +
-					data.ttHoursWidth +
-					data.paddingRightOfTooltipHrs +
-					data.ttEffWidth;
-				data.settingsBtnSize = data.cellWidth * 0.6;
-				data.modalWidth = data.gridWidth * 0.6;
-				const modalInputTitlesWidth = getTextWidth('Min TemperatureMax Temperature', data.modalLabelsFont);
-				data.paddingBetweenModalInputs = (data.modalWidth - modalInputTitlesWidth) / 3;
-
-				//heights
-				data.headerAreaHeight = data.dropdownGroupHeight + data.paddingBelowDropdown;
-				data.gridHeight = data.graphicHeight - (data.headerAreaHeight + getTextHeight(data.xAxisTicksTextFont) + data.paddingAboveXAxisTicks);
-				data.cellHeight = data.gridHeight / widget.numOfTempBins;
-				data.hoveredCellHeight = data.cellHeight * 1.25;
-				data.tooltipHeight = getTextHeight(data.tooltipMonthFont) + 10 //5 padding top and bottom
-				data.paddingBetweenLegendTicks = (data.gridHeight - (getTextHeight(data.legendTicksTextFont) * 5)) / 4;
-				data.legendTickSpaceHeight = getTextHeight(data.legendTicksTextFont) + data.paddingBetweenLegendTicks;
-				data.modalHeight = data.gridHeight * 0.75;
-
-				// yAxis Bins
-				const getSmallestNumOfPrecision = decimals => {
-					if (decimals < 1) return 1;
-					let decimalNums = '0'.repeat(decimals - 1);
-					let num = '0.' + decimalNums + '1';
-					return +num;
-				};
-				const smallestNumOfPrecision = getSmallestNumOfPrecision(data.tempPrecision)
-				data.tempBins = [];
-				data.tempBins.push({min: Number.NEGATIVE_INFINITY, max: widget.minTempCategory - 0.00000000000000000000000000000001, display: '<' + data.formatTemp(widget.minTempCategory)})
-				data.tempBinsInterval = (widget.maxTempCategory - widget.minTempCategory) / (widget.numOfTempBins - 2);	// 10 if 12 bins
-				for (let i = 0; i <= (widget.numOfTempBins - 3); i++) { // 9 if 12 bins
-					let bin = {};
-					bin.min = widget.minTempCategory + (data.tempBinsInterval * i);
-					bin.max = (bin.min + data.tempBinsInterval) - 0.00000000000000000000000000000000000001;
-					bin.display = data.formatTemp(bin.min) + '-' + data.formatTemp(((bin.min + data.tempBinsInterval) - smallestNumOfPrecision));
-					data.tempBins.push(bin);
+			effHistory.forEach(hourlyDatum => {
+				if (!data.hourlyData[hourlyDatum.year]) {
+					data.hourlyData[hourlyDatum.year] = {};
+					data.availableYears.unshift(hourlyDatum.year)
 				}
-				data.tempBins.push({min: widget.maxTempCategory, max: Number.POSITIVE_INFINITY, display: '≥' + data.formatTemp(widget.maxTempCategory)})
-				// legend range and ticks
-				data.legendRange = [data.minKwTrCategory, data.maxKwTrCategory];
-				const legendInterval = (data.maxKwTrCategory - data.minKwTrCategory) / 4; // to get 5 ticks
-				data.legendTicks = [data.maxKwTrCategory, data.minKwTrCategory + (legendInterval * 3), data.minKwTrCategory + (legendInterval * 2), data.minKwTrCategory + (legendInterval), data.minKwTrCategory]
-					.map((el, i) => {
-						el = data.formatKwTr(el);
-						if (i === 4) el = '<' + el;
-						if (i === 0) el = '>' + el;
-						return el;
-					});
-				// get dataForYear
-				data.dataForYear = getMonthlyDataForYear(data.hourlyData, widget.dropdownYearSelected, data.tempBins, data.legendRange, data.formatKwTr);
+				if (!data.hourlyData[hourlyDatum.year][hourlyDatum.month]) {
+					data.hourlyData[hourlyDatum.year][hourlyDatum.month] = {monthObj: {}, hoursArr: []};
+				}
+				data.hourlyData[hourlyDatum.year][hourlyDatum.month].monthObj[hourlyDatum.dateHr] = {eff: hourlyDatum.value, temp: undefined};
+			});
+			tempHistory.forEach(hourlyDatum => {
+				if (!data.hourlyData[hourlyDatum.year]) {
+					addedTempHistoryYr = true;
+					data.hourlyData[hourlyDatum.year] = {};
+					data.availableYears.unshift(hourlyDatum.year)
+				}
+				if (!data.hourlyData[hourlyDatum.year][hourlyDatum.month]) {
+					data.hourlyData[hourlyDatum.year][hourlyDatum.month] = {monthObj: {}, hoursArr: []};
+				}
+				if (!data.hourlyData[hourlyDatum.year][hourlyDatum.month].monthObj[hourlyDatum.dateHr]) {
+					data.hourlyData[hourlyDatum.year][hourlyDatum.month].monthObj[hourlyDatum.dateHr] = {eff: undefined, temp: hourlyDatum.value};
+				} else {
+					data.hourlyData[hourlyDatum.year][hourlyDatum.month].monthObj[hourlyDatum.dateHr].temp = hourlyDatum.value;
+				}
+			});
 
-				// return data
-				return data;
+
+		if (addedTempHistoryYr) data.availableYears.sort((a,b) => a-b);
+
+		//convert collected hours to array format within overall data obj
+		data.availableYears.forEach(yearKey => {
+			const monthKeys = Object.keys(data.hourlyData[yearKey]);
+			monthKeys.forEach(monthKey => {
+				data.hourlyData[yearKey][monthKey].hoursArr = d3.values(data.hourlyData[yearKey][monthKey].monthObj);
 			})
-			.catch(err => console.error('Error for CxEfficiencyMap (history calculations promise rejected): ' + err));
+		})
 	};
 
+		// CALCULATED DEFS //
+		const calculateDefs = () => {
+			if (!widget.dropdownYearSelected) widget.dropdownYearSelected = data.availableYears[0];
+			data.tempPrecision = !data.overrideDefaultTempPrecisionWFacets ? 0 : 'getFROMFACETS'			//TODO: actually get from facets
+			data.kwTrPrecision = !data.overrideDefaultKwTrPrecisionWFacets ? 3 : 'getFROMFACETS'			//TODO: actually get from facets
+			data.tempUnits = '°F' || '°F'	//TODO: get from facets on left of ||
+			// functions
+			data.formatTemp = d3.format(`,.${data.tempPrecision}f`);
+			data.formatKwTr = d3.format(`,.${data.kwTrPrecision}f`);
+
+			//widths
+			data.legendBarWidth = data.graphicWidth / 37 || 15;
+			data.yAxisTicksWidth = getTextWidth(`${data.formatTemp(-888.888)}-${data.formatTemp(-888.888)}`, data.yAxisTicksTextFont) + data.paddingRightOfYAxisTicks;
+			data.yAxisTextAreaWidth = getTextHeight(data.yAxisTitleFont) + data.paddingRightOfYAxisTitle + data.yAxisTicksWidth;
+			data.legendWidth = + data.paddingRightOfGrid + getTextHeight(data.legendTitleFont) + data.paddingRightOfLegendTitle + data.legendBarWidth + data.paddingRightOfLegendBar + getTextWidth(`>${data.formatKwTr(8.8888)}`, data.legendTicksTextFont);
+			data.gridWidth = data.graphicWidth - (data.yAxisTextAreaWidth + data.legendWidth)
+			data.cellWidth = data.gridWidth / 12;
+			data.hoveredCellWidth = data.cellWidth * 1.25;
+			data.ttMonthWidth = getTextWidth('May:', data.tooltipMonthFont);
+			data.ttTempWidth = getTextWidth(`${data.formatTemp(-888.888)}-${data.formatTemp(88.888)}${data.tempUnits}`, data.tooltipTempFont);
+			data.ttHoursWidth = getTextWidth('888 Hours', data.tooltipHrsFont);
+			data.ttEffWidth = getTextWidth(data.formatKwTr(8.88888) + ' kW/tR', data.tooltipKwTrFont);
+			data.tooltipWidth = 10 +	// 5 padding on right and left
+				data.ttMonthWidth +
+				data.paddingRightOfTooltipMonth +
+				data.ttTempWidth +
+				data.paddingRightOfTooltipTemp +
+				data.ttHoursWidth +
+				data.paddingRightOfTooltipHrs +
+				data.ttEffWidth;
+			data.settingsBtnSize = data.cellWidth * 0.6;
+			data.modalWidth = data.gridWidth * 0.6;
+			const modalInputTitlesWidth = getTextWidth('Min TemperatureMax Temperature', data.modalLabelsFont);
+			data.paddingBetweenModalInputs = (data.modalWidth - modalInputTitlesWidth) / 3;
 
 
 
-////////////////////////////////////////////////////////////////
-	// Render Widget (invoke setupDefinitions() and, using returned data, append D3 elements into SVG)
-////////////////////////////////////////////////////////////////
+			//heights
+			data.headerAreaHeight = data.dropdownGroupHeight + data.paddingBelowDropdown;
+			data.gridHeight = data.graphicHeight - (data.headerAreaHeight + getTextHeight(data.xAxisTicksTextFont) + data.paddingAboveXAxisTicks);
+			data.cellHeight = data.gridHeight / widget.numOfTempBins;
+			data.hoveredCellHeight = data.cellHeight * 1.25;
+			data.tooltipHeight = getTextHeight(data.tooltipMonthFont) + 10 //5 padding top and bottom
+			data.paddingBetweenLegendTicks = (data.gridHeight - (getTextHeight(data.legendTicksTextFont) * 5)) / 4;
+			data.legendTickSpaceHeight = getTextHeight(data.legendTicksTextFont) + data.paddingBetweenLegendTicks;
+			data.modalHeight = data.gridHeight * 0.75;
 
-	const renderWidget = (widget, data) => {
+			// yAxis Bins
+			const getSmallestNumOfPrecision = decimals => {
+				if (!decimals) return 1;
+				let decimalNums = '0'.repeat(decimals - 1);
+				let num = '0.' + decimalNums + '1';
+				return +num;
+			}
+
+			const smallestNumOfPrecision = getSmallestNumOfPrecision(data.tempPrecision)
+			data.tempBins = [];
+			data.tempBins.push({min: Number.NEGATIVE_INFINITY, max: widget.minTempCategory - 0.00000000000000000000000000000001, display: '<' + data.formatTemp(widget.minTempCategory)})
+			data.tempBinsInterval = (widget.maxTempCategory - widget.minTempCategory) / (widget.numOfTempBins - 2);	// 10 if 12 bins
+			console.log('data.tempBinsInterval', data.tempBinsInterval)
+			for (let i = 0; i <= (widget.numOfTempBins - 3); i++) { // 9 if 12 bins
+				let bin = {};
+				bin.min = widget.minTempCategory + (data.tempBinsInterval * i);
+				bin.max = (bin.min + data.tempBinsInterval) - 0.00000000000000000000000000000000000001;
+				bin.display = data.formatTemp(bin.min) + '-' + data.formatTemp(((bin.min + data.tempBinsInterval) - smallestNumOfPrecision));
+				data.tempBins.push(bin);
+			}
+			data.tempBins.push({min: widget.maxTempCategory, max: Number.POSITIVE_INFINITY, display: '≥' + data.formatTemp(widget.maxTempCategory)})
+			console.log('tempBins: ', data.tempBins)
+
+			// legend range and ticks
+			data.legendRange = [data.minKwTrCategory, data.maxKwTrCategory];
+			const legendInterval = (data.maxKwTrCategory - data.minKwTrCategory) / 4; // to get 5 ticks
+			data.legendTicks = [data.maxKwTrCategory, data.minKwTrCategory + (legendInterval * 3), data.minKwTrCategory + (legendInterval * 2), data.minKwTrCategory + (legendInterval), data.minKwTrCategory]
+				.map((el, i) => {
+					el = data.formatKwTr(el);
+					if (i === 4) el = '<' + el;
+					if (i === 0) el = '>' + el;
+					return el;
+				});
+			
+			// get dataForYear
+			data.dataForYear = getMonthlyDataForYear(data.hourlyData, widget.dropdownYearSelected, data.tempBins, data.legendRange, data.formatKwTr);
+			console.log('dataForYear: ', data.dataForYear)
+
+			// return data
+			return data;
+		};
+
+
+		populateFakeData();
+		return calculateDefs();
+	};
+		
+
+
+
+
+	////////////////////////////////////////////////////////////////
+		// RenderWidget Func
+	////////////////////////////////////////////////////////////////
+
+	const renderWidget = data => {
 		// ********************************************* DRAW ******************************************************* //
+		widget.outer
+			.style('width', data.jqWidth + 'px')	//only for browser
+			.style('height', data.jqHeight + 'px')	//only for browser
+
 		widget.outerDiv
 			.style('width', data.jqWidth + 'px')
 			.style('height', data.jqHeight + 'px')
@@ -739,12 +755,12 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		const chartGroup = widget.svg.append('g')
 			.attr('class', 'chartGroup')
 			.attr('transform', `translate(${data.margin.left}, ${data.headerAreaHeight})`)
-
+		
 
 		// ********************************************* YEAR DROPDOWN ******************************************************* //
-		makeDropdown(data.availableYears.map(yr => +yr), dropdownYearChanged, widget.svg, data.margin.left, data.margin.top, true, data.dropdownWidth, 5, 3, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredDropdownFill, data.dropdownTextFont, data.dropdownTextColor, +widget.dropdownYearSelected, () => {}, () => {}, [widget]);
-
-
+		makeDropdown(data.availableYears.map(yr => +yr), dropdownYearChanged, widget.svg, data.margin.left, data.margin.top, true, data.dropdownWidth, 5, 5, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.dropdownYearSelected, () => {}, () => {}, [widget]);
+	
+		
 		// ********************************************* TOOLTIP ******************************************************* //
 		const tooltipGroup = chartGroup.append('g')
 			.attr('class', 'tooltipGroup')
@@ -755,8 +771,8 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('width', data.tooltipWidth)
 			.attr('fill', data.tooltipFillColor)
 			.attr('rx', data.tooltipHeight * 0.1)
-			.style('opacity', widget.tooltipActive ? 0.9 : 0)
-
+			.style('opacity', widget.tooltipActive ? 1 : 0)
+		
 		const ttTextGroup = tooltipGroup.append('g')
 			.attr('class', 'ttTextGroup')
 			.attr('transform', `translate(5, ${data.tooltipHeight / 2})`)
@@ -811,7 +827,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		const yScale = d3.scaleBand()
 			.domain(data.tempBins.map(bin => bin.display))
 			.range([data.gridHeight, 0])
-
+		
 		const yAxisGenerator = d3.axisLeft()
 			.scale(yScale)
 			.tickFormat(d => d)
@@ -826,7 +842,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		const gridGroup = chartGroup.append('g')
 			.attr('class', 'gridGroup')
 			.attr('transform', `translate(${data.yAxisTextAreaWidth}, 0)`)
-
+	
 		// chart background rect
 		gridGroup.append('rect')
 			.attr('height', data.gridHeight)
@@ -834,8 +850,8 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('stroke', data.gridStrokeColor)
 			.attr('fill', data.gridFillColor)
 			.attr('stroke-width', '0.5pt')
-
-
+			
+		
 		const monthlyGroups = gridGroup.selectAll('.monthlyGroup')
 			.data(data.dataForYear)
 			.enter().append('g')
@@ -853,20 +869,21 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				.attr('fill', d => d.opacity === 0 ? data.gridFillColor : colorScale(d.colorScaleVal))
 				.attr('stroke', data.gridStrokeColor)
 				.attr('stroke-width', (d, i) => widget.hoveredRectIndex === i ? '2pt' : '0.5pt')
-				.on('mousedown', function() {
+				.style('fill-opacity', d => d.opacity)
+				.on('mousedown', function(){
 					d3.event.stopPropagation()
 				})
-				.on('click', function(d, i, nodes) {
+				.on('click', function (d, i, nodes) {
 					if (widget.pinnedRectIndex === i) {
 						unpinAll();
 					} else {
 						pinRect(d, i, nodes, this);
 					}
 				})
-				.on('mouseover', function(d, i, nodes) {
+				.on('mouseover', function (d, i, nodes) {
 					attemptHoverRect(d, i, nodes, this)
 				})
-				.on('mouseout', function(d, i, nodes) {
+				.on('mouseout', function (d, i, nodes) {
 					attemptUnhoverRects(d, i, nodes, this)
 				})
 
@@ -884,7 +901,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		xAxis.selectAll('path')
 			.attr('stroke', 'none')
 
-
+		
 		// y axis
 		const yAxis = gridGroup.append('g')
 			.attr('class', 'y axis')
@@ -905,7 +922,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('x', -(data.gridHeight / 2))
 			.attr('text-anchor', 'middle')
 			.attr('dominant-baseline', 'hanging')
-
+			
 
 
 		// ********************************************* LEGEND ******************************************************* //
@@ -913,7 +930,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		const legendGroup = gridGroup.append('g')
 			.attr('class', 'legendGroup')
 			.attr('transform', `translate(${data.gridWidth + data.paddingRightOfGrid},0)`)
-
+		
 		// gradients
 		const colorGradient = legendGroup.append('defs').append('linearGradient')
 			.attr('id', widget.uniqueId + 'ColorGradient')
@@ -950,12 +967,12 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('x', getTextHeight(data.legendTitleFont) + data.paddingRightOfLegendTitle)
 			.attr('fill', `url(#${widget.uniqueId}ColorGradient)`)
 
-
+		
 		//legend ticks
 		const legendTicks = legendGroup.append('g')
 			.attr('class', 'legendTicks')
 			.attr('transform', `translate(${getTextHeight(data.legendTitleFont) + data.paddingRightOfLegendTitle + data.legendBarWidth + data.paddingRightOfLegendBar},0)`)
-
+		
 		legendTicks.selectAll('text')
 			.data(data.legendTicks)
 			.enter().append('text')
@@ -978,27 +995,26 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('width', widget.settingsBtnHovered ? data.settingsBtnSize * 1.2 : data.settingsBtnSize)
 			.style('cursor', 'pointer')
 			.on('click', () => {toggleModal()})
-			.on('mouseenter', function() {
+			.on('mouseenter', function () {
 				d3.select(this)
 					.attr('height', data.settingsBtnSize * 1.2)
 					.attr('width', data.settingsBtnSize * 1.2)
 					.attr('x', (data.graphicWidth - (data.settingsBtnSize * 1.2)) - halfOfDifferenceInSizeForPosGrowth)
 					.attr('y', data.margin.top * 2)
-
 			})
-			.on('mouseout', function() {
+			.on('mouseout', function () {
 				d3.select(this)
 				.attr('height', data.settingsBtnSize)
 				.attr('width', data.settingsBtnSize)
 				.attr('x', data.graphicWidth - (data.settingsBtnSize * 1.2))
 				.attr('y', (data.margin.top * 2) + halfOfDifferenceInSizeForPosGrowth)
 			})
-
+		
 		const modalGroup = widget.svg.append('g')
 			.attr('class', 'modalGroup')
-			.attr('transform', 	`translate(${(data.graphicWidth / 2) - (data.modalWidth / 2)},${data.margin.top * 1.25})`)
+			.attr('transform', 	`translate(${(data.graphicWidth / 2) - (data.modalWidth / 2)},${(data.margin.top)})`)
 
-		function removeModal(rerenderAfter) {
+		function removeModal (rerenderAfter) {
 			resetElements(widget.outerDiv, '.modalDiv')
 			resetElements(widget.outerDiv, '.overlayDiv')
 			widget.svg.select('.modalBackgroundRect')
@@ -1009,11 +1025,11 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.attr('y', data.modalHeight / 2)
 					.remove()
 					.on('end', () => {
-						if (rerenderAfter) render(widget, true);
+						if (rerenderAfter) render(true);
 					})
 		}
 
-		function renderModal() {
+		function renderModal () {
 			// make box of background color with slight opacity to blur background and then add modal on top
 			const overlay = widget.outerDiv.append('div')
 				.attr('class', 'overlayDiv')
@@ -1023,7 +1039,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				.style('width', data.jqWidth + 'px')
 				.style('background-color', widget.modalActive ? data.backgroundColor : 'none')
 				.style('opacity', 0)
-				.on('mousedown', function() {
+				.on('mousedown', function(){
 					d3.event.stopPropagation()
 					toggleModal()
 				})
@@ -1037,8 +1053,8 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				.attr('stroke', 'black')
 				.attr('stroke-width', '2pt')
 				.attr('rx', data.modalWidth * 0.05)
-				.on('mousedown', function() {d3.event.stopPropagation()})
-				.on('click', function() {d3.event.stopPropagation()})
+				.on('mousedown', function(){d3.event.stopPropagation()})
+				.on('click', function(){d3.event.stopPropagation()})
 				.attr('height', 0)
 				.attr('width', 0)
 				.attr('x', data.modalWidth / 2)
@@ -1048,7 +1064,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.attr('y', 0)
 					.attr('height', data.modalHeight)
 					.attr('width', data.modalWidth)
-					.on('end', function() {
+					.on('end', function () {
 						renderModalDiv()
 					})
 
@@ -1060,15 +1076,15 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.attr('class', 'modalDiv')
 					.style('position', 'absolute')
 					.style('width', data.modalWidth)
-					.style('left', ((data.graphicWidth / 2) - (data.modalWidth / 2)) + 'px')
-					.style('top', (data.margin.top * 1.5) + 'px')
-
+					.style('left', (data.paddingLeftOfDivs + (data.graphicWidth / 2) - (data.modalWidth / 2)) + 'px')
+					.style('top', (data.margin.top * 2) + 'px')
+			
 				const form = modalDiv.append('form')
 					.attr('class', 'modalForm')
 					.style('position', 'relative')
 					.style('width', data.modalWidth + 'px')
 					.style('height', data.modalHeight + 'px')
-					.on('submit', function() {
+					.on('submit', function () {
 						d3.event.preventDefault()
 						if (widget.tempMaxSelection - widget.tempMinSelection < 20) {
 							alert('Temperature range between minimum and maximum must be at least 20°. Please input a lower minimum or higher maximum temperature.')
@@ -1076,7 +1092,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 							handleSubmit()
 						}
 					})
-					.on('reset', function() {
+					.on('reset', function () {
 						d3.select(this).select('.maxTempBinInput')
 							.attr('value', 80)
 						d3.select(this).select('.minTempBinInput')
@@ -1114,7 +1130,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.attr('name', 'minTempBinInput')
 					.attr('value', widget.tempMinSelection)
 					.style('width', data.dropdownWidth / 2 + 'px')
-					.style('border-radius', ((data.dropdownWidth / 2) * 0.1) + 'px')
+					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('color', data.dropdownTextColor)
 					.style('border', widget.minInputHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : `1.5px solid ${data.dropdownStrokeColor}`)
@@ -1124,15 +1140,15 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.style('top', (verticalModalPadding + getTextHeight(data.modalLabelsFont) + (data.paddingAboveDropdown * 2)) + 'px')
 					.style('position', 'absolute')
 					.style('text-align', 'center')
-					.on('mouseover', function() {
+					.on('mouseover', function () {
 						widget.minInputHovered = true;
 						d3.select(this).style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
 					})
-					.on('mouseout', function() {
+					.on('mouseout', function () {
 						widget.minInputHovered = false;
 						d3.select(this).style('border', `1.5px solid ${data.dropdownStrokeColor}`)
 					})
-					.on('change', function() {
+					.on('change', function () {
 						widget.tempMinSelection = +d3.select(this).property("value");
 					});
 
@@ -1142,7 +1158,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.attr('name', 'maxTempBinInput')
 					.attr('value', widget.tempMaxSelection)
 					.style('width', data.dropdownWidth / 2 + 'px')
-					.style('border-radius', ((data.dropdownWidth / 2) * 0.1) + 'px')
+					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('color', data.dropdownTextColor)
 					.style('border', widget.maxInputHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : `1.5px solid ${data.dropdownStrokeColor}`)
@@ -1152,15 +1168,15 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.style('top', (verticalModalPadding + getTextHeight(data.modalLabelsFont) + (data.paddingAboveDropdown * 2)) + 'px')
 					.style('position', 'absolute')
 					.style('text-align', 'center')
-					.on('mouseover', function() {
+					.on('mouseover', function () {
 						widget.maxInputHovered = true;
 						d3.select(this).style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
 					})
-					.on('mouseout', function() {
+					.on('mouseout', function () {
 						widget.maxInputHovered = false;
 						d3.select(this).style('border', `1.5px solid ${data.dropdownStrokeColor}`)
 					})
-					.on('change', function() {
+					.on('change', function () {
 						widget.tempMaxSelection = +d3.select(this).property("value");
 					});
 
@@ -1174,6 +1190,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.style('position', 'absolute')
 					.style('left', ((data.modalWidth / 2) - (getTextWidth('# of Temperature Bins', data.modalLabelsFont) / 2)) + 'px')
 					.style('top', ( (verticalModalPadding * 2) + (getTextHeight(data.modalLabelsFont)) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 2) ) + 'px')
+
 
 				// ROW FOUR
 				const svgForDropdown = form.append('svg')
@@ -1192,7 +1209,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					svgForDropdown.transition().attr('height', getTextHeight(data.dropdownTextFont) + 20)
 				}
 				function renderBinsDropbox (){
-					makeDropdown([12, 11, 10, 9, 8, 7, 6, 5, 4], val => {widget.tempNumOfBins = +val}, svgForDropdown, 2.5, 2.5, false, data.dropdownWidth / 2, 2, 2, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredDropdownFill, data.dropdownTextFont, data.dropdownTextColor, +widget.tempNumOfBins, funcOnOpen, funcOnClose, []);
+					makeDropdown([12, 11, 10, 9, 8, 7, 6, 5, 4], val => {widget.tempNumOfBins = +val}, svgForDropdown, 2.5, 2.5, false, data.dropdownWidth / 2, 2, 2, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.tempNumOfBins, funcOnOpen, funcOnClose, []);
 				}
 				renderBinsDropbox();
 
@@ -1200,9 +1217,10 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				form.append('button')
 					.attr('class', 'formElement')
 					.attr('type', 'submit')
+					.style('cursor', 'pointer')
 					.text('OK')
 					.style('width', getTextWidth('OK', data.modalInputFont) + 30 + 'px')
-					.style('border-radius', ((getTextWidth('OK', data.modalInputFont) + 20) * 0.1) + 'px')
+					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('font-weight', 'bold')
 					.style('border', widget.modalSubmitHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : 'none')
@@ -1211,17 +1229,16 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.style('background-color', data.hoveredInputStrokeColor)
 					.style('position', 'absolute')
 					.style('text-align', 'center')
-					.style('cursor', 'pointer')
 					.style('left', widget.modalSubmitHovered ? (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) - 0.75) + 'px' : ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
 					.style('top', widget.modalSubmitHovered ? (( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px' : ( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
-					.on('mouseover', function() {
+					.on('mouseover', function () {
 						widget.modalSubmitHovered = true;
 						d3.select(this)
 							.style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
 							.style('left', (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) - 0.75) + 'px')
 							.style('top', (( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px')
 						})
-					.on('mouseout', function() {
+					.on('mouseout', function () {
 						widget.modalSubmitHovered = false;
 						d3.select(this)
 							.style('border', 'none')
@@ -1232,38 +1249,41 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				form.append('button')
 					.attr('class', 'formElement')
 					.attr('type', 'reset')
-					.text('Reset')
+					.text('reset')
 					.style('width', getTextWidth('reset', data.modalInputFont) + 20 + 'px')
 					.style('border', 'none')
-					.style('border-radius', ((getTextWidth('reset', data.modalInputFont) + 10) * 0.1) + 'px')
+					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('padding-top', '2px')
 					.style('padding-bottom', '2px')
 					.style('background-color', data.tooltipFillColor)
 					.style('position', 'absolute')
-					.style('text-align', 'center')
 					.style('cursor', 'pointer')
+					.style('text-align', 'center')
+					.style('z-index', 1)
 					.style('left', (data.margin.left + 0.75) + 'px')
 					.style('bottom', (data.margin.bottom) + 'px')
-					.on('mouseover', function() {
+					.on('mouseover', function () {
 						d3.select(this)
 							.style('border', `1.5px solid ${data.tooltipFillColor}`)
 							.style('left', (data.margin.left) + 'px')
 							.style('bottom', (data.margin.bottom - 0.75) + 'px')	
 						})
-					.on('mouseout', function() {
+					.on('mouseout', function () {
 						d3.select(this)
 							.style('border', 'none')
 							.style('left', (data.margin.left + 0.75) + 'px')
 							.style('bottom', (data.margin.bottom) + 'px')
 						})
 
+
+
 				widget.outerDiv.selectAll('.formElement')
 					.style('margin', '0px')
 			}
 		}
 
-		function toggleModal(rerenderAfter) {
+		function toggleModal (rerenderAfter) {
 			widget.modalActive = !widget.modalActive;
 			if (widget.modalActive) {
 				renderModal()
@@ -1272,8 +1292,8 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			}
 		}
 
-		function handleSubmit() {
-			if (widget.minTempCategory === widget.tempMinSelection && widget.maxTempCategory === widget.tempMaxSelection && widget.numOfTempBins === widget.tempNumOfBins) {
+		function handleSubmit () {
+			if (widget.minTempCategory === widget.tempMinSelection && widget.maxTempCategory === widget.tempMaxSelection && widget.numOfTempBins === widget.tempNumOfBins){
 				toggleModal();
 			} else {
 				widget.minTempCategory = widget.tempMinSelection;
@@ -1296,75 +1316,77 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 
 
 
-
+			
 		// ********************************************* FUNCS ******************************************************* //
-			function attemptHoverRect(d, i, nodes, that) {
-				if (widget.pinnedRectIndex === 'none') hoverRect(d, i, nodes, that)
+				function attemptHoverRect (d, i, nodes, that) {
+					if (widget.pinnedRectIndex === 'none') hoverRect(d, i, nodes, that)
+				}
+				function hoverRect (d, i, nodes, that) {
+					unhoverRects();
+					widget.hoveredRectIndex = i;
+					d3.select(that)
+						.attr('stroke-width', '2pt')
+						.transition()
+							.duration(100)
+							.attr('width', data.hoveredCellWidth)
+							.attr('height', data.hoveredCellHeight)
+							.attr('x', (data.cellWidth - data.hoveredCellWidth) / 2)
+							.attr('y', d => yScale(d.thisTempBin.display) + ((data.cellHeight - data.hoveredCellHeight) / 2))
+						.transition()
+							.duration(100)
+							.attr('width', data.cellWidth)
+							.attr('height', data.cellHeight)
+							.attr('x', 0)
+							.attr('y', d => yScale(d.thisTempBin.display))
+
+					widget.tooltipActive = true;
+					widget.ttMonth = nodes[i].parentNode.__data__.thisMonth +':';
+					widget.ttTemp = d.thisTempBin.display + data.tempUnits;
+					widget.ttHours = d.totalHoursInBin + ' Hours';
+					widget.ttEff = d.avgEffInBin + ' kW/tR';
+
+					ttRect.style('opacity', widget.tooltipActive ? 1 : 0);
+					ttMonthText.text(widget.ttMonth);
+					ttTempText.text(widget.ttTemp);
+					ttHrsText.text(widget.ttHours);
+					ttEffText.text(widget.ttEff);
+				}
+			function attemptUnhoverRects (d, i, nodes, that) {
+				if (widget.pinnedRectIndex === 'none') unhoverRects(d, i, nodes, that)
 			}
-			function hoverRect(d, i, nodes, that) {
-				unhoverRects();
-				widget.hoveredRectIndex = i;
-				d3.select(that)
-					.attr('stroke-width', '2pt')
-					.transition()
-						.duration(100)
-						.attr('width', data.hoveredCellWidth)
-						.attr('height', data.hoveredCellHeight)
-						.attr('x', (data.cellWidth - data.hoveredCellWidth) / 2)
-						.attr('y', d => yScale(d.thisTempBin.display) + ((data.cellHeight - data.hoveredCellHeight) / 2))
-					.transition()
-						.duration(100)
-						.attr('width', data.cellWidth)
-						.attr('height', data.cellHeight)
-						.attr('x', 0)
-						.attr('y', d => yScale(d.thisTempBin.display))
+			function unhoverRects () {
+				widget.hoveredRectIndex = 'none';
+				widget.svg.selectAll('.cell')
+					.attr('stroke-width', '0.5pt')
 
-				widget.tooltipActive = true;
-				widget.ttMonth = nodes[i].parentNode.__data__.thisMonth +':';
-				widget.ttTemp = d.thisTempBin.display + data.tempUnits;
-				widget.ttHours = d.totalHoursInBin + ' Hours';
-				widget.ttEff = d.avgEffInBin + ' kW/tR';
 
-				ttRect.style('opacity', widget.tooltipActive ? 0.9 : 0);
+				widget.tooltipActive = false;
+				widget.ttMonth = '';
+				widget.ttTemp = '';
+				widget.ttHours = '';
+				widget.ttEff = '';
+
+				ttRect.style('opacity', widget.tooltipActive ? 1 : 0);
 				ttMonthText.text(widget.ttMonth);
 				ttTempText.text(widget.ttTemp);
 				ttHrsText.text(widget.ttHours);
 				ttEffText.text(widget.ttEff);
 			}
-		function attemptUnhoverRects(d, i, nodes, that) {
-			if (widget.pinnedRectIndex === 'none') unhoverRects(d, i, nodes, that)
-		}
-		function unhoverRects() {
-			widget.hoveredRectIndex = 'none';
-			widget.svg.selectAll('.cell')
-				.attr('stroke-width', '0.5pt')
-
-
-			widget.tooltipActive = false;
-			widget.ttMonth = '';
-			widget.ttTemp = '';
-			widget.ttHours = '';
-			widget.ttEff = '';
-
-			ttRect.style('opacity', widget.tooltipActive ? 0.9 : 0);
-			ttMonthText.text(widget.ttMonth);
-			ttTempText.text(widget.ttTemp);
-			ttHrsText.text(widget.ttHours);
-			ttEffText.text(widget.ttEff);
-		}
-		function unpinAll(d, i, nodes, that) {
-			widget.pinnedRectIndex = 'none';
-			unhoverRects(d, i, nodes, that);
-		}
-		function pinRect(d, i, nodes, that) {
-			unhoverRects(d, i, nodes, that)
-			widget.pinnedRectIndex = i;
-			hoverRect(d, i, nodes, that);
-		}
-
-    
-
+			function unpinAll (d, i, nodes, that) {
+				widget.pinnedRectIndex = 'none';
+				unhoverRects(d, i, nodes, that);
+			}
+			function pinRect (d, i, nodes, that) {
+				unhoverRects(d, i, nodes, that)
+				widget.pinnedRectIndex = i;
+				hoverRect(d, i, nodes, that);
+			}
 	};
+	
+
+
+
+
 
 
 
@@ -1373,16 +1395,14 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 	////////////////////////////////////////////////////////////////
 		// Render Func
 	////////////////////////////////////////////////////////////////
-	function render(widget, inWidgetSettingsChanged) {
-		// invoking setupDefinitions, then returning value from successful promise to renderWidget func
-		return setupDefinitions(widget)
-			.then(data => {
-				if (inWidgetSettingsChanged || !widget.data || needToRedrawWidget(widget, data)) {
-					widget.data = data;
-					renderWidget(widget, data);
-				}
-			})
-			.catch(err => console.error('render did not complete: ' + err));
+	const render = function(settingsChanged) {
+		let theData = setupDefinitions();
+		if (settingsChanged || !widget.data || needToRedrawWidget(widget, theData)) {
+			widget.data = theData;
+			renderWidget(theData);
+		} else {
+			console.log('data not changed enough to redraw widget');
+		}
 	}
 
 
@@ -1390,40 +1410,29 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 
 
 
-////////////////////////////////////////////////////////////////
-	// Initialize Widget
-////////////////////////////////////////////////////////////////
 
-	CxEfficiencyMap.prototype.doInitialize = function(element) {
-		var that = this;
-		element.addClass("CxEfficiencyMapOuter");
-		that.outerDiv = d3.select(element[0])
-			.attr('class', 'heatMapDiv')
-			.style('overflow', 'hidden');
+	////////////////////////////////////////////////////////////////
+		// Initialize Widget
+	////////////////////////////////////////////////////////////////
+	widget.outer = d3.select('#outer')
+		.attr('class', 'heatMapOuter')
+		.style('overflow', 'hidden');
 
-		that.getSubscriber().attach("changed", function(prop, cx) { render(that) });
-	};
+	widget.outerDiv = widget.outer.append('div')
+		.attr('class', 'heatMapDiv')
+		.style('overflow', 'hidden');
+
+	render();
 
 
-////////////////////////////////////////////////////////////////
-	// Extra Widget Methods
-////////////////////////////////////////////////////////////////
 
-	CxEfficiencyMap.prototype.doLayout = CxEfficiencyMap.prototype.doChanged = CxEfficiencyMap.prototype.doLoad = function() {
-		render(this);
-	};
 
-	/* FOR FUTURE NOTE: 
-	CxEfficiencyMap.prototype.doChanged = function (name, value) {
-		  if(name === "value") valueChanged += 'prototypeMethod - ';
-		  render(this);
-	};
-	*/
 
-	CxEfficiencyMap.prototype.doDestroy = function() {
-		this.jq().removeClass("CxEfficiencyMapOuter");
-	};
 
-	return CxEfficiencyMap;
-});
+
+}
+
+defineFuncForTabSpacing();
+
+
 

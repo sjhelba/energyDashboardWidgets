@@ -60,11 +60,6 @@ function defineFuncForTabSpacing () {
 		if (!selectionForCheck.empty()) selectionForCheck.remove();
 	};
 	const getIndexOfBinForTemp = (temp, binArr) => binArr.findIndex(bin => temp >= bin.min && temp <= bin.max);
-	const getBinOpacity = (hrsInBin, hrsInMonth) => {
-		let contOpacity = hrsInBin / hrsInMonth || 0;
-		if (contOpacity === 0) return 0;
-		return contOpacity + 0.5
-	}
 
 	const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwTrFunc) => {
 		const makeAMonthObj = month => {
@@ -107,7 +102,7 @@ function defineFuncForTabSpacing () {
 		hrsPerTempRangePerMonth.forEach(month => {
 			month.tempBinsForMonth.forEach(bin => {
 				bin.avgEffInBin = bin.totalEffInBin / bin.totalHoursInBin ? +formatKwTrFunc(bin.totalEffInBin / bin.totalHoursInBin) : 0;
-				bin.opacity = getBinOpacity(bin.totalHoursInBin, month.totalHoursForMonth);
+				bin.opacity = bin.totalHoursInBin === 0 ? 0 : 1;
 				bin.colorScaleVal = bin.avgEffInBin < effRange[0] ? effRange[0] : (bin.avgEffInBin > effRange[1] ? effRange[1] : bin.avgEffInBin);
 			});
 		});
@@ -869,7 +864,6 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 				.attr('fill', d => d.opacity === 0 ? data.gridFillColor : colorScale(d.colorScaleVal))
 				.attr('stroke', data.gridStrokeColor)
 				.attr('stroke-width', (d, i) => widget.hoveredRectIndex === i ? '2pt' : '0.5pt')
-				.style('fill-opacity', d => d.opacity)
 				.on('mousedown', function(){
 					d3.event.stopPropagation()
 				})
@@ -1199,7 +1193,9 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 					.attr('height', getTextHeight(data.dropdownTextFont) + 20 )
 					.style('z-index', 2)
 					.attr('fill', 'none')
-					.attr('transform', `translate(${((data.modalWidth / 2) - (data.dropdownWidth / 4) - 2.5)},${((verticalModalPadding * 2) + (getTextHeight(data.modalLabelsFont) * 2) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 4) - 2.5)})`);
+					.style('left', (((data.modalWidth / 2) - (data.dropdownWidth / 4) - 2.5)) + 'px')
+					.style('top', (((verticalModalPadding * 2) + (getTextHeight(data.modalLabelsFont) * 2) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 4) - 2.5)) + 'px')
+
 				function funcOnOpen() {
 					svgForDropdown.transition().attr('height', data.graphicHeight)
 				}

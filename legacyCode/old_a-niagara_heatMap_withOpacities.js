@@ -54,6 +54,11 @@ const resetElements = (outerWidgetEl, elementsToReset) => {
 	if (!selectionForCheck.empty()) selectionForCheck.remove();
 };
 const getIndexOfBinForTemp = (temp, binArr) => binArr.findIndex(bin => temp >= bin.min && temp <= bin.max);
+const getBinOpacity = (hrsInBin, hrsInMonth) => {
+	let contOpacity = hrsInBin / hrsInMonth || 0;
+	if (contOpacity === 0) return 0;
+	return contOpacity + 0.5
+}
 const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwTrFunc) => {
 	const makeAMonthObj = month => {
 		const obj = {
@@ -91,7 +96,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 	hrsPerTempRangePerMonth.forEach(month => {
 		month.tempBinsForMonth.forEach(bin => {
 			bin.avgEffInBin = bin.totalEffInBin / bin.totalHoursInBin ? +formatKwTrFunc(bin.totalEffInBin / bin.totalHoursInBin) : 0;
-			bin.opacity = bin.totalHoursInBin ? 1 : 0;
+			bin.opacity = getBinOpacity(bin.totalHoursInBin, month.totalHoursForMonth);
 			bin.colorScaleVal = bin.avgEffInBin < effRange[0] ? effRange[0] : (bin.avgEffInBin > effRange[1] ? effRange[1] : bin.avgEffInBin);
 		});
 	});
@@ -266,12 +271,12 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				typeSpec: 'gx:Color'
 			},
 			{
-				name: 'minKwTrColor',
+				name: 'maxKwTrColor',
 				value: 'rgb(105,202,210)',
 				typeSpec: 'gx:Color'
 			},
 			{
-				name: 'maxKwTrColor',
+				name: 'minKwTrColor',
 				value: 'rgb(54,64,78)',
 				typeSpec: 'gx:Color'
 			},
@@ -853,6 +858,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				.attr('fill', d => d.opacity === 0 ? data.gridFillColor : colorScale(d.colorScaleVal))
 				.attr('stroke', data.gridStrokeColor)
 				.attr('stroke-width', (d, i) => widget.hoveredRectIndex === i ? '2pt' : '0.5pt')
+				.style('fill-opacity', d => d.opacity)
 				.on('mousedown', function() {
 					d3.event.stopPropagation()
 				})

@@ -1497,7 +1497,7 @@ const needToRedrawWidget = (widget, newData) => {
 				.style('font-weight', 'bold')
 
 			textGroups.append('text')
-				.text(d => isStacked ? d.kwh + ' kWh' : Math.round(d.value) + ' kWh')
+				.text(d => isStacked ? Math.round(d.kwh) + ' kWh' : Math.round(d.value) + ' kWh')
 				.attr('dominant-baseline', 'hanging')
 				.style('font', data.tooltipFont)
 				.attr('fill', data.tooltipFontColor)
