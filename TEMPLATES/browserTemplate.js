@@ -43,36 +43,6 @@ function defineFuncForTabSpacing () {
 			value: 'white',
 			typeSpec: 'gx:Color'
 		},
-		{
-			name: 'gridFillColor',
-			value: 'white',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'maxKwTrColor',
-			value: 'rgb(21,67,96)',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'midKwTrColor',
-			value: 'rgb(41,171,226)',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'minKwTrColor',
-			value: 'rgb(34,181,115)',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'dropdownFillColor',
-			value: 'grey',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'tooltipFillColor',
-			value: 'grey',
-			typeSpec: 'gx:Color'
-		},
 		//strokes
 		{
 			name: 'gridStrokeColor',
@@ -85,131 +55,15 @@ function defineFuncForTabSpacing () {
 			value: 'black',
 			typeSpec: 'gx:Color'
 		},
-		{
-			name: 'yAxisTicksTextColor',
-			value: 'black',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'yAxisTitleColor',
-			value: 'black',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'legendUnitsTitleColor',
-			value: 'black',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'legendTicksTextColor',
-			value: 'black',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'yearDropdownTitleColor',
-			value: 'black',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'dropdownTextColor',
-			value: 'black',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'tooltipMonthColor',
-			value: 'black',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'tooltiptempColor',
-			value: 'black',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'tooltipHrsColor',
-			value: 'black',
-			typeSpec: 'gx:Color'
-		},
-		{
-			name: 'tooltipKwTrColor',
-			value: 'black',
-			typeSpec: 'gx:Color'
-		},
 		/* FONT */
 		{
 			name: 'xAxisTicksTextFont',
-			value: '8.0pt Nirmala UI',
-			typeSpec: 'gx:Font'
-		},
-		{
-			name: 'yAxisTicksTextFont',
-			value: '10.0pt Nirmala UI',
-			typeSpec: 'gx:Font'
-		},
-		{
-			name: 'yAxisTitleFont',
-			value: 'bold 10.0pt Nirmala UI',
-			typeSpec: 'gx:Font'
-		},
-		{
-			name: 'legendUnitsTitleFont',
-			value: 'bold 10.0pt Nirmala UI',
-			typeSpec: 'gx:Font'
-		},
-		{
-			name: 'legendTicksTextFont',
-			value: '10.0pt Nirmala UI',
-			typeSpec: 'gx:Font'
-		},
-		{
-			name: 'yearDropdownTitleFont',
-			value: 'bold 12.0pt Nirmala UI',
-			typeSpec: 'gx:Font'
-		},
-		{
-			name: 'dropdownTextFont',
-			value: '10.5pt Nirmala UI',
-			typeSpec: 'gx:Font'
-		},
-		{
-			name: 'tooltipMonthFont',
-			value: 'bold 12.0pt Nirmala UI',
-			typeSpec: 'gx:Font'
-		},
-		{
-			name: 'tooltipTempFont',
-			value: 'bold 12.0pt Nirmala UI',
-			typeSpec: 'gx:Font'
-		},
-		{
-			name: 'tooltipHrsFont',
-			value: '12.0pt Nirmala UI',
-			typeSpec: 'gx:Font'
-		},
-		{
-			name: 'tooltipKwTrFont',
-			value: '12.0pt Nirmala UI',
+			value: 'bold 8.0pt Nirmala UI',
 			typeSpec: 'gx:Font'
 		},
 	/* PADDING */
 		{
-			name: 'paddingBetweenTHINGS',				// TODO: REPLACE THESE
-			value: 5
-		},
-		{
-			name: 'paddingBetweenTHINGS',				// TODO: REPLACE THESE
-			value: 5
-		},
-		{
-			name: 'paddingBetweenTHINGS',				// TODO: REPLACE THESE
-			value: 5
-		},
-		{
-			name: 'paddingBetweenTHINGS',				// TODO: REPLACE THESE
-			value: 5
-		},
-		{
-			name: 'paddingBetweenTHINGS',				// TODO: REPLACE THESE
+			name: 'paddingBetweenTHINGS',
 			value: 5
 		},
 	/* OTHER */
@@ -221,18 +75,6 @@ function defineFuncForTabSpacing () {
 			name: 'minDegreesCategory',
 			value: 30
 		},
-		{
-			name: 'maxDegreesCategory',
-			value: 80
-		},
-		{
-			name: 'minKwTrCategory',
-			value: 0.250
-		},
-		{
-			name: 'maxKwTrCategory',
-			value: 1.250
-		}
 	];
 
 
@@ -263,7 +105,7 @@ function defineFuncForTabSpacing () {
 
 		// FAKE DATA //
 		const populateFakeData = () => {
-			fakeData.unshift('datum1');
+			data.fakeData.unshift('datum1');
 
 
 
@@ -316,16 +158,12 @@ function defineFuncForTabSpacing () {
 	
 
 		const graphicGroup = widget.svg.append('g').attr('class', 'graphicGroup');
-		const graphicRectForTestingOnly = graphicGroup.append('rect')	//TODO: Remove
-			.attr('fill', 'none')
-			.attr('stroke', 'black')
-			.attr('height', data.graphicHeight)
-			.attr('width', data.graphicWidth);
+
 
 		const centeredGroup = graphicGroup.append('g')
 			.attr('class', 'centeredGroup')
-			.attr('transform', `translate(${data.graphicWidth / 2}, ${data.graphicHeight / 2})`);
-
+			.attr('transform', `translate(${data.jqWidth / 2}, ${data.jqHeight / 2})`);
+		
 		// ********************************************* OUTER ELLIPSE ******************************************************* //
 		centeredGroup.append('ellipse')
 			.attr('rx', 40)
