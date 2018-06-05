@@ -61,7 +61,7 @@ function defineFuncForTabSpacing () {
     },
     {
 			name: 'numbersFont',
-			value: 'bold 38.0pt Nirmala UI',
+			value: 'bold 35.0pt Nirmala UI',
 			typeSpec: 'gx:Font'
     },
     {
@@ -77,7 +77,7 @@ function defineFuncForTabSpacing () {
 	/* PADDING */
 		{
 			name: 'paddingBetweenRows',
-			value: 25
+			value: 30
     },
     {
       name: 'paddingWithinRows',
@@ -86,7 +86,11 @@ function defineFuncForTabSpacing () {
     {
 			name: 'margin',
 			value: 10
-		},
+    },
+    {
+      name: 'additionalNumbersSpacing',
+      value: 0
+    },
 	/* OTHER */
     {
       name: 'includeChillers',
@@ -128,18 +132,13 @@ function defineFuncForTabSpacing () {
     data.graphicHeight = data.jqHeight - (data.margin * 2);
     data.graphicWidth = data.jqWidth - (data.margin * 2);
     data.rowHeight = (data.graphicHeight - ((data.paddingBetweenRows * 3) + getTextHeight(data.lastMonthFont) + data.paddingWithinRows)) / 4;
-    data.imgSize = data.rowHeight - (getTextHeight(data.descriptionsFont) + data.paddingWithinRows);
+    data.imgSize = data.rowHeight - (getTextHeight(data.descriptionsFont));
     data.halfImgWidth = data.imgSize / 2;
     data.centerOfRow = data.graphicWidth / 2;
     data.centerLeftOfImg = (data.centerOfRow - ( data.halfImgWidth + data.paddingWithinRows) ) / 2;
     data.rightOfImg = data.centerOfRow + data.halfImgWidth + data.paddingWithinRows;
 
 
-
-		// GLOBALS PER INSTANCE //
-		if (!widget.hovered) widget.hovered = { optimized: false, standard: false, current: 'neither' };
-		if (!widget.activeModule) widget.activeModule = 'none';
-		if (!widget.percentIsHovered) widget.percentIsHovered = false;
 
 		// DATA TO POPULATE //
     data.savings = {
@@ -168,7 +167,7 @@ function defineFuncForTabSpacing () {
 
 		// CALCULATED DEFS //
 		const calculateDefs = () => {
-      if (!data.savings.measuredKwh || !data.savings.baselineKwh){
+      if ( (!data.savings.measuredKwh || !data.savings.baselineKwh) || data.savings.baselineKwh < data.savings.measuredKwh ){
         data.savings.kwhSaved = '-';
         data.savings.tonsCo2 = '-';
         data.savings.greenhouseGas = '-';
@@ -240,7 +239,7 @@ function defineFuncForTabSpacing () {
 
     const rowsGroup = graphicGroup.append('g')
       .attr('class', 'rowsGroup')
-      .attr('transform', `translate(0,${getTextHeight(data.lastMonthFont) + data.paddingWithinRows})`);
+      .attr('transform', `translate(0,${getTextHeight(data.lastMonthFont)})`);
 
     const row1 = rowsGroup.append('g')
       .attr('class', 'row1')
@@ -277,6 +276,7 @@ function defineFuncForTabSpacing () {
       .style('font', data.numbersFont)
       .attr('fill', data.textColor)
       .attr('dominant-baseline', 'hanging')
+
     
     const tonsCo2Width = getTextWidth(data.savings.tonsCo2, data.numbersFont);
     const centerOfTonsCo2 = data.centerOfRow + (data.graphicWidth / 4);
@@ -334,6 +334,7 @@ function defineFuncForTabSpacing () {
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.centerLeftOfImg)
       .attr('text-anchor', 'middle')
+      .attr('y', ( -(getTextHeight(data.numbersFont) / 4)) + data.additionalNumbersSpacing)
 
     row2Graphic.append('text')
       .text('Passenger Cars Driven')
@@ -355,6 +356,7 @@ function defineFuncForTabSpacing () {
       .attr('height', data.imgSize)
       .attr('width', data.imgSize)
       .attr('x', data.centerOfRow - data.halfImgWidth)
+      .attr('y', -data.paddingWithinRows / 2)
   
 
 		// ********************************************* ROW3 ******************************************************* //
@@ -386,6 +388,8 @@ function defineFuncForTabSpacing () {
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.centerLeftOfImg)
       .attr('text-anchor', 'middle')
+      .attr('y', ( -(getTextHeight(data.numbersFont) / 4)) + data.additionalNumbersSpacing)
+
 
     row3Graphic.append('text')
       .text('Homes\' Energy Use')
@@ -407,6 +411,7 @@ function defineFuncForTabSpacing () {
       .attr('height', data.imgSize)
       .attr('width', data.imgSize)
       .attr('x', data.centerOfRow - data.halfImgWidth)
+      .attr('y', -data.paddingWithinRows / 2)
 
 
 
@@ -425,6 +430,8 @@ function defineFuncForTabSpacing () {
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.centerLeftOfImg)
       .attr('text-anchor', 'middle')
+      .attr('y', ( -(getTextHeight(data.numbersFont) / 4)) + data.additionalNumbersSpacing)
+
 
     row4Graphic.append('text')
       .text('Acres of U.S. Forests')
@@ -446,6 +453,7 @@ function defineFuncForTabSpacing () {
       .attr('height', data.imgSize)
       .attr('width', data.imgSize)
       .attr('x', data.centerOfRow - data.halfImgWidth)
+      .attr('y', -data.paddingWithinRows / 2)
 
 
 
