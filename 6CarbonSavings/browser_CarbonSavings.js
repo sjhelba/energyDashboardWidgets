@@ -455,7 +455,7 @@ function defineFuncForTabSpacing () {
       .attr('x', data.centerOfRow - data.halfImgWidth)
       .attr('y', -data.paddingWithinRows / 2)
 
-
+console.log(data)
 
 	};
 	
