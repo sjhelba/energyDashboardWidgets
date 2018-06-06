@@ -61,7 +61,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       },
       //text
       {
-        name: 'textColor',
+        name: 'numbersTextColor',
+        value: 'black',
+        typeSpec: 'gx:Color'
+      },
+      {
+        name: 'descriptionsTextColor',
         value: 'black',
         typeSpec: 'gx:Color'
       },
@@ -312,19 +317,19 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
     row1.append('text')
       .text(data.savings.kwhSaved)
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
 
-
+    
     const tonsCo2Width = getTextWidth(data.savings.tonsCo2, data.numbersFont);
     const centerOfTonsCo2 = data.centerOfRow + (data.graphicWidth / 4);
     const leftOfTonsCo2 = centerOfTonsCo2 - (tonsCo2Width / 2);
-    const midwayBetweenCenterOfRowAndTonsCo2 = data.centerOfRow + ((leftOfTonsCo2 - data.centerOfRow) / 2)
+    const midwayBetweenCenterOfRowAndTonsCo2 = data.centerOfRow + ( (leftOfTonsCo2 - data.centerOfRow) / 2)
 
     row1.append('text')
       .text(data.savings.tonsCo2)
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', centerOfTonsCo2)
       .attr('text-anchor', 'middle')
@@ -332,7 +337,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
     row1.append('text')
       .text('=')
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', midwayBetweenCenterOfRowAndTonsCo2)
       .attr('text-anchor', 'middle')
@@ -340,51 +345,51 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
     row1Descriptions.append('text')
       .text('Kilowatt-Hours Saved')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
 
     row1Descriptions.append('text')
       .text('Tons CO')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', leftOfTonsCo2)
 
     row1Descriptions.append('text')
       .text('2')
       .style('font', data.base2Font)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'middle')
       .attr('x', leftOfTonsCo2 + getTextWidth('Tons CO', data.descriptionsFont))
       .attr('y', getTextHeight(data.descriptionsFont))
 
-    // ********************************************* ROW2 ******************************************************* //
+		// ********************************************* ROW2 ******************************************************* //
     row2.append('text')
       .text('Greenhouse Gas Emissions From')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
 
     row2Graphic.append('text')
       .text(data.savings.greenhouseGas)
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.centerLeftOfImg)
       .attr('text-anchor', 'middle')
-      .attr('y', (-(getTextHeight(data.numbersFont) / 4)) + data.additionalNumbersSpacing)
+      .attr('y', ( -(getTextHeight(data.numbersFont) / 4)) + data.additionalNumbersSpacing)
 
     row2Graphic.append('text')
       .text('Passenger Cars Driven')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
 
     row2Graphic.append('text')
       .text('For One Year')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
       .attr('y', getTextHeight(data.descriptionsFont))
@@ -395,19 +400,19 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       .attr('width', data.imgSize)
       .attr('x', data.centerOfRow - data.halfImgWidth)
       .attr('y', -data.paddingWithinRows / 2)
+  
 
-
-    // ********************************************* ROW3 ******************************************************* //
+		// ********************************************* ROW3 ******************************************************* //
     row3.append('text')
       .text('CO')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
 
     row3.append('text')
       .text('2')
       .style('font', data.base2Font)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'middle')
       .attr('x', getTextWidth('CO', data.descriptionsFont))
       .attr('y', getTextHeight(data.descriptionsFont))
@@ -415,30 +420,31 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
     row3.append('text')
       .text('Emissions From')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', getTextWidth('CO ', data.descriptionsFont) + getTextWidth('2', data.base2Font))  //space added in x due to preceeding space not counting in d3 text
 
     row3Graphic.append('text')
       .text(data.savings.co2Emissions)
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.centerLeftOfImg)
       .attr('text-anchor', 'middle')
-      .attr('y', (-(getTextHeight(data.numbersFont) / 4)) + data.additionalNumbersSpacing)
+      .attr('y', ( -(getTextHeight(data.numbersFont) / 4)) + data.additionalNumbersSpacing)
+
 
     row3Graphic.append('text')
       .text('Homes\' Energy Use')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
 
     row3Graphic.append('text')
       .text('For One Year')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
       .attr('y', getTextHeight(data.descriptionsFont))
@@ -452,33 +458,35 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
 
-    // ********************************************* ROW4 ******************************************************* //
+		// ********************************************* ROW4 ******************************************************* //
     row4.append('text')
       .text('Carbon Sequestered By')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
+
 
     row4Graphic.append('text')
       .text(data.savings.carbonSequestered)
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.centerLeftOfImg)
       .attr('text-anchor', 'middle')
-      .attr('y', (-(getTextHeight(data.numbersFont) / 4)) + data.additionalNumbersSpacing)
+      .attr('y', ( -(getTextHeight(data.numbersFont) / 4)) + data.additionalNumbersSpacing)
+
 
     row4Graphic.append('text')
       .text('Acres of U.S. Forests')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
 
     row4Graphic.append('text')
       .text('In One Year')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
       .attr('y', getTextHeight(data.descriptionsFont))

@@ -49,7 +49,12 @@ function defineFuncForTabSpacing () {
 		},
 		//text
 		{
-			name: 'textColor',
+			name: 'numbersTextColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
+    },
+    {
+			name: 'descriptionsTextColor',
 			value: 'black',
 			typeSpec: 'gx:Color'
 		},
@@ -234,7 +239,7 @@ function defineFuncForTabSpacing () {
     graphicGroup.append('text')
       .text('Last Month')
       .style('font', data.lastMonthFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
 
     const rowsGroup = graphicGroup.append('g')
@@ -274,7 +279,7 @@ function defineFuncForTabSpacing () {
     row1.append('text')
       .text(data.savings.kwhSaved)
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
 
     
@@ -286,7 +291,7 @@ function defineFuncForTabSpacing () {
     row1.append('text')
       .text(data.savings.tonsCo2)
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', centerOfTonsCo2)
       .attr('text-anchor', 'middle')
@@ -294,7 +299,7 @@ function defineFuncForTabSpacing () {
     row1.append('text')
       .text('=')
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', midwayBetweenCenterOfRowAndTonsCo2)
       .attr('text-anchor', 'middle')
@@ -302,20 +307,20 @@ function defineFuncForTabSpacing () {
     row1Descriptions.append('text')
       .text('Kilowatt-Hours Saved')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
 
     row1Descriptions.append('text')
       .text('Tons CO')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', leftOfTonsCo2)
 
     row1Descriptions.append('text')
       .text('2')
       .style('font', data.base2Font)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'middle')
       .attr('x', leftOfTonsCo2 + getTextWidth('Tons CO', data.descriptionsFont))
       .attr('y', getTextHeight(data.descriptionsFont))
@@ -324,13 +329,13 @@ function defineFuncForTabSpacing () {
     row2.append('text')
       .text('Greenhouse Gas Emissions From')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
 
     row2Graphic.append('text')
       .text(data.savings.greenhouseGas)
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.centerLeftOfImg)
       .attr('text-anchor', 'middle')
@@ -339,14 +344,14 @@ function defineFuncForTabSpacing () {
     row2Graphic.append('text')
       .text('Passenger Cars Driven')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
 
     row2Graphic.append('text')
       .text('For One Year')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
       .attr('y', getTextHeight(data.descriptionsFont))
@@ -363,13 +368,13 @@ function defineFuncForTabSpacing () {
     row3.append('text')
       .text('CO')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
 
     row3.append('text')
       .text('2')
       .style('font', data.base2Font)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'middle')
       .attr('x', getTextWidth('CO', data.descriptionsFont))
       .attr('y', getTextHeight(data.descriptionsFont))
@@ -377,14 +382,14 @@ function defineFuncForTabSpacing () {
     row3.append('text')
       .text('Emissions From')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', getTextWidth('CO ', data.descriptionsFont) + getTextWidth('2', data.base2Font))  //space added in x due to preceeding space not counting in d3 text
 
     row3Graphic.append('text')
       .text(data.savings.co2Emissions)
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.centerLeftOfImg)
       .attr('text-anchor', 'middle')
@@ -394,14 +399,14 @@ function defineFuncForTabSpacing () {
     row3Graphic.append('text')
       .text('Homes\' Energy Use')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
 
     row3Graphic.append('text')
       .text('For One Year')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
       .attr('y', getTextHeight(data.descriptionsFont))
@@ -419,14 +424,14 @@ function defineFuncForTabSpacing () {
     row4.append('text')
       .text('Carbon Sequestered By')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
 
 
     row4Graphic.append('text')
       .text(data.savings.carbonSequestered)
       .style('font', data.numbersFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.centerLeftOfImg)
       .attr('text-anchor', 'middle')
@@ -436,14 +441,14 @@ function defineFuncForTabSpacing () {
     row4Graphic.append('text')
       .text('Acres of U.S. Forests')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
 
     row4Graphic.append('text')
       .text('In One Year')
       .style('font', data.descriptionsFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsTextColor)
       .attr('dominant-baseline', 'hanging')
       .attr('x', data.rightOfImg)
       .attr('y', getTextHeight(data.descriptionsFont))
