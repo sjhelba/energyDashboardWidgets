@@ -277,7 +277,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
     graphicGroup.append('text')
       .text('Last Month')
       .style('font', data.lastMonthFont)
-      .attr('fill', data.textColor)
+      .attr('fill', data.descriptionsFont)
       .attr('dominant-baseline', 'hanging')
 
     const rowsGroup = graphicGroup.append('g')
