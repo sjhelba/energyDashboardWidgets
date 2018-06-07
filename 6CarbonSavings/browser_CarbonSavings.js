@@ -44,18 +44,18 @@ function defineFuncForTabSpacing () {
 		//fills
 		{
 			name: 'backgroundColor',
-			value: 'white',
+			value: '#F5F5f5',
 			typeSpec: 'gx:Color'
 		},
 		//text
 		{
 			name: 'numbersTextColor',
-			value: 'black',
+			value: '#404040',
 			typeSpec: 'gx:Color'
     },
     {
 			name: 'descriptionsTextColor',
-			value: 'black',
+			value: '#606060',
 			typeSpec: 'gx:Color'
 		},
 		/* FONT */
