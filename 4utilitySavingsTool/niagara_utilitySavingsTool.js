@@ -642,7 +642,7 @@ const needToRedrawWidget = (widget, newData) => {
 
 		// SIZING //
 		function chooseSize (jqH, jqW) {
-			if(jqW < 1200 || jqH < 700) {
+			if (jqW < 1200 || jqH < 700) {
 				return [small, 'small'];		//880, 440
 			} else if (jqW < 1600 || jqH < 850) {
 				return [medium, 'medium'];		// 1200, 700
@@ -1461,11 +1461,12 @@ const needToRedrawWidget = (widget, newData) => {
 			widget.resetElements('.kwhTooltip')
 			const isStacked = widget.activeChartType === 'stacked'
 			const kwhDataForDate = widget.activeChartType === 'stacked' ? widget.dataForDate.categoryDataForDate : widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].kwh;
-			const maxWidthCat = kwhDataForDate.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${isStacked ? curr.kwh : curr.value}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${isStacked ? accum.kwh : accum.value}`, 'bold ' + data.tooltipFont) ?
+			const maxWidthCat = kwhDataForDate.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${isStacked ? Math.round(curr.kwh) : Math.round(curr.value)}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${isStacked ? Math.round(accum.kwh) : Math.round(accum.value)}`, 'bold ' + data.tooltipFont) ?
 				curr :
 				accum
 			);
-			const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}:`, 'bold ' + data.tooltipFont) + getTextWidth(`${isStacked ? maxWidthCat.kwh + ' kWh' : maxWidthCat.value + ' kWh'}`, data.tooltipFont) + (data.tooltipPadding * 2.5) + data.paddingAfterLegendCat
+
+			const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}:`, 'bold ' + data.tooltipFont) + getTextWidth(`${isStacked ? Math.round(maxWidthCat.kwh) + ' kWh' : Math.round(maxWidthCat.value) + ' kWh'}`, data.tooltipFont) + (data.tooltipPadding * 2.5) + data.paddingAfterLegendCat
 			const tooltipHeight = (data.tooltipPadding * 2) + (3 * getTextHeight(data.tooltipFont)) + (2 * data.paddingBetweenTooltipText);
 
 			const tooltip = kwhBarSection.append('g')
@@ -1817,11 +1818,11 @@ const needToRedrawWidget = (widget, newData) => {
 		function appendTrhTooltip () {
 			widget.resetElements('.trhTooltip')
 			const maxWidthCat = trhCategoryDataForDate
-				.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${curr.trh}`, data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${accum.trh}`, 'bold ' + data.tooltipFont) ?
+				.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}:${Math.round(curr.trh)}`, data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}:${Math.round(accum.trh)}`, 'bold ' + data.tooltipFont) ?
 					curr :
 					accum
 				);
-			const trhTooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}: ${maxWidthCat.trh + ' tRh'}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2)
+			const trhTooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}: ${Math.round(maxWidthCat.trh) + ' tRh'}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2)
 			const trhTooltipHeight = data.widgetSize === 'medium' ? 40 : (data.widgetSize === 'small' ? 35 : 50);
 			const trhTooltip = trhBarSection.append('g')
 				.attr('class', 'trhTooltip')
