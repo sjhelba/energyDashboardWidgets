@@ -495,6 +495,18 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				value: 1.250
 			},
 			{
+				name: 'minTempCategory',
+				value: 30
+			},
+			{
+				name: 'maxTempCategory',
+				value: 80
+			},
+			{
+				name: 'numOfTempBins',
+				value: 12
+			},
+			{
 				name: 'dropdownWidth',
 				value: 100
 			}
@@ -544,12 +556,12 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		}
 		if (!widget.hoveredRectIndex) widget.hoveredRectIndex = 'none';
 		if (!widget.pinnedRectIndex) widget.pinnedRectIndex = 'none';
-		if (!widget.numOfTempBins) widget.numOfTempBins = 12;
+		if (!widget.numOfTempBins) widget.numOfTempBins = data.numOfTempBins;
 		if (!widget.yearDropdownHovered) widget.yearDropdownHovered = false;
 		if (!widget.modalDropdownHovered) widget.modalDropdownHovered = false;
 		if (!widget.modalActive) widget.modalActive = false;
-		if (!widget.minTempCategory) widget.minTempCategory = 30;
-		if (!widget.maxTempCategory) widget.maxTempCategory = 80;
+		if (!widget.minTempCategory) widget.minTempCategory = data.minTempCategory;
+		if (!widget.maxTempCategory) widget.maxTempCategory = data.maxTempCategory;
 		if (!widget.tempMaxSelection) widget.tempMaxSelection = widget.maxTempCategory;
 		if (!widget.tempMinSelection) widget.tempMinSelection = widget.minTempCategory;
 		if (!widget.tempNumOfBins) widget.tempNumOfBins = widget.numOfTempBins;
@@ -557,6 +569,10 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		if (!widget.maxInputHovered) widget.maxInputHovered = false;
 		if (!widget.modalSubmitHovered) widget.modalSubmitHovered = false;
 		if (!widget.settingsBtnHovered) widget.settingsBtnHovered = false;
+		if (!widget.minKwTrCategory) widget.minKwTrCategory = data.minKwTrCategory;
+		if (!widget.maxKwTrCategory) widget.maxKwTrCategory = data.maxKwTrCategory;
+		if (!widget.kwTrMaxSelection) widget.kwTrMaxSelection = widget.maxkwTrCategory;
+		if (!widget.kwTrMinSelection) widget.kwTrMinSelection = widget.minkwTrCategory;
 
 
 		// DATA TO POPULATE //
@@ -1078,12 +1094,12 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					})
 					.on('reset', function() {
 						d3.select(this).select('.maxTempBinInput')
-							.attr('value', 80)
+							.attr('value', data.maxTempCategory)
 						d3.select(this).select('.minTempBinInput')
-							.attr('value', 30)
-						widget.tempMinSelection = 30;
-						widget.tempMaxSelection = 80;
-						widget.tempNumOfBins = 12;
+							.attr('value', data.minTempCategory)
+						widget.tempMinSelection = data.minTempCategory;
+						widget.tempMaxSelection = data.maxTempCategory;
+						widget.tempNumOfBins = data.numOfTempBins;
 						resetElements(svgForDropdown, '.dropdownGroup')
 						renderBinsDropbox();
 					})

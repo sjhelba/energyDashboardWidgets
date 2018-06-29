@@ -2340,7 +2340,6 @@ const needToRedrawWidget = (widget, newData) => {
 		}
 
 
-
 		let kwhPercentObj = JSON.parse(JSON.stringify(systemOrHoveredData[0].percent));
 		kwhPercentObj.current = kwhPercentObj.last.slice();
 		let costPercentObj = JSON.parse(JSON.stringify(systemOrHoveredData[1].percent));

@@ -518,6 +518,18 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 			value: 1.250
 		},
 		{
+			name: 'minTempCategory',
+			value: 30
+		},
+		{
+			name: 'maxTempCategory',
+			value: 80
+		},
+		{
+			name: 'numOfTempBins',
+			value: 12
+		},
+		{
 			name: 'dropdownWidth',
 			value: 100
 		},
@@ -559,12 +571,12 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 		}
 		if (!widget.hoveredRectIndex) widget.hoveredRectIndex = 'none';
 		if (!widget.pinnedRectIndex) widget.pinnedRectIndex = 'none';
-		if (!widget.numOfTempBins) widget.numOfTempBins = 12;
+		if (!widget.numOfTempBins) widget.numOfTempBins = data.numOfTempBins;
 		if (!widget.yearDropdownHovered) widget.yearDropdownHovered = false;
 		if (!widget.modalDropdownHovered) widget.modalDropdownHovered = false;
 		if (!widget.modalActive) widget.modalActive = false;
-		if (!widget.minTempCategory) widget.minTempCategory = 30;
-		if (!widget.maxTempCategory) widget.maxTempCategory = 80;
+		if (!widget.minTempCategory) widget.minTempCategory = data.minTempCategory;
+		if (!widget.maxTempCategory) widget.maxTempCategory = data.maxTempCategory;
 		if (!widget.tempMaxSelection) widget.tempMaxSelection = widget.maxTempCategory;
 		if (!widget.tempMinSelection) widget.tempMinSelection = widget.minTempCategory;
 		if (!widget.tempNumOfBins) widget.tempNumOfBins = widget.numOfTempBins;
@@ -572,7 +584,10 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 		if (!widget.maxInputHovered) widget.maxInputHovered = false;
 		if (!widget.modalSubmitHovered) widget.modalSubmitHovered = false;
 		if (!widget.settingsBtnHovered) widget.settingsBtnHovered = false;
-
+		if (!widget.minKwTrCategory) widget.minKwTrCategory = data.minKwTrCategory;
+		if (!widget.maxKwTrCategory) widget.maxKwTrCategory = data.maxKwTrCategory;
+		if (!widget.kwTrMaxSelection) widget.kwTrMaxSelection = widget.maxkwTrCategory;
+		if (!widget.kwTrMinSelection) widget.kwTrMinSelection = widget.minkwTrCategory;
 
 
 
@@ -1024,6 +1039,27 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 		}
 
 		function renderModal () {
+/*
+		{
+			name: 'minKwTrCategory',
+			value: 0.250
+		},
+		{
+			name: 'maxKwTrCategory',
+			value: 1.250
+		},
+
+
+		if (!widget.minKwTrCategory) widget.minKwTrCategory = data.minKwTrCategory;
+		if (!widget.maxKwTrCategory) widget.maxKwTrCategory = data.maxKwTrCategory;
+		if (!widget.kwTrMaxSelection) widget.kwTrMaxSelection = widget.maxkwTrCategory;
+		if (!widget.kwTrMinSelection) widget.kwTrMinSelection = widget.minkwTrCategory;
+
+
+*/
+
+
+
 			// make box of background color with slight opacity to blur background and then add modal on top
 			const overlay = widget.outerDiv.append('div')
 				.attr('class', 'overlayDiv')
@@ -1088,12 +1124,12 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 					})
 					.on('reset', function () {
 						d3.select(this).select('.maxTempBinInput')
-							.attr('value', 80)
+							.attr('value', data.maxTempCategory)
 						d3.select(this).select('.minTempBinInput')
-							.attr('value', 30)
-						widget.tempMinSelection = 30;
-						widget.tempMaxSelection = 80;
-						widget.tempNumOfBins = 12;
+							.attr('value', data.minTempCategory)
+						widget.tempMinSelection = data.minTempCategory;
+						widget.tempMaxSelection = data.maxTempCategory;
+						widget.tempNumOfBins = data.numOfTempBins;
 						resetElements(svgForDropdown, '.dropdownGroup')
 						renderBinsDropbox();
 					})
