@@ -530,8 +530,12 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 			value: 12
 		},
 		{
-			name: 'dropdownWidth',
+			name: 'yearDropdownWidth',
 			value: 100
+		},
+		{
+			name: 'modalInputWidth',
+			value: 50
 		},
 		{
 			name: 'tooltipRoundedness',
@@ -586,9 +590,8 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 		if (!widget.settingsBtnHovered) widget.settingsBtnHovered = false;
 		if (!widget.minKwTrCategory) widget.minKwTrCategory = data.minKwTrCategory;
 		if (!widget.maxKwTrCategory) widget.maxKwTrCategory = data.maxKwTrCategory;
-		if (!widget.kwTrMaxSelection) widget.kwTrMaxSelection = widget.maxkwTrCategory;
-		if (!widget.kwTrMinSelection) widget.kwTrMinSelection = widget.minkwTrCategory;
-
+		if (!widget.kwTrMaxSelection) widget.kwTrMaxSelection = widget.maxKwTrCategory;
+		if (!widget.kwTrMinSelection) widget.kwTrMinSelection = widget.minKwTrCategory;
 
 
 		// DATA TO POPULATE //
@@ -668,9 +671,18 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 				data.paddingRightOfTooltipHrs +
 				data.ttEffWidth;
 			data.settingsBtnSize = data.cellWidth * 0.6;
-			data.modalWidth = data.gridWidth * 0.6;
-			const modalInputTitlesWidth = getTextWidth('Min TemperatureMax Temperature', data.modalLabelsFont);
-			data.paddingBetweenModalInputs = (data.modalWidth - modalInputTitlesWidth) / 3;
+			data.modalWidth = data.gridWidth * 1.2; // was 0.6	**CHANGED**
+			data.modalLabelsHeight = getTextHeight(data.modalLabelsFont);
+			data.minTempLabelWidth = getTextWidth('Min Temperature', data.modalLabelsFont);
+			data.maxTempLabelWidth = getTextWidth('Max Temperature', data.modalLabelsFont);
+			data.numTempBinsLabelWidth = getTextWidth('# of Temperature Bins', data.modalLabelsFont);
+			const modalTempInputTitlesWidth = data.minTempLabelWidth + data.maxTempLabelWidth + data.numTempBinsLabelWidth;
+			data.paddingBetweenTempInputs = (data.modalWidth - modalTempInputTitlesWidth) / 4;
+
+			data.minKwTrLabelWidth = getTextWidth('Min kW/tR', data.modalLabelsFont);
+			data.maxKwTrLabelWidth = getTextWidth('Max kW/tR', data.modalLabelsFont);
+			const modalKwTrInputTitlesWidth = data.minKwTrLabelWidth + data.maxKwTrLabelWidth;
+			data.paddingBetweenKwTrInputs = (data.modalWidth - modalKwTrInputTitlesWidth) / 3;
 
 
 
@@ -708,9 +720,9 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 			console.log('tempBins: ', data.tempBins)
 
 			// legend range and ticks
-			data.legendRange = [data.minKwTrCategory, data.maxKwTrCategory];
-			const legendInterval = (data.maxKwTrCategory - data.minKwTrCategory) / 4; // to get 5 ticks
-			data.legendTicks = [data.maxKwTrCategory, data.minKwTrCategory + (legendInterval * 3), data.minKwTrCategory + (legendInterval * 2), data.minKwTrCategory + (legendInterval), data.minKwTrCategory]
+			data.legendRange = [widget.minKwTrCategory, widget.maxKwTrCategory];
+			const legendInterval = (widget.maxKwTrCategory - widget.minKwTrCategory) / 4; // to get 5 ticks
+			data.legendTicks = [widget.maxKwTrCategory, widget.minKwTrCategory + (legendInterval * 3), widget.minKwTrCategory + (legendInterval * 2), widget.minKwTrCategory + (legendInterval), widget.minKwTrCategory]
 				.map((el, i) => {
 					el = data.formatKwTr(el);
 					if (i === 4) el = '<' + el;
@@ -845,7 +857,7 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 			.tickSize(0)
 
 		const colorScale = d3.scaleLinear()
-			.domain([data.minKwTrCategory, data.maxKwTrCategory])
+			.domain([widget.minKwTrCategory, widget.maxKwTrCategory])
 			.range([data.minKwTrColor, data.maxKwTrColor])
 
 		// ********************************************* CHART ******************************************************* //
@@ -1039,26 +1051,6 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 		}
 
 		function renderModal () {
-/*
-		{
-			name: 'minKwTrCategory',
-			value: 0.250
-		},
-		{
-			name: 'maxKwTrCategory',
-			value: 1.250
-		},
-
-
-		if (!widget.minKwTrCategory) widget.minKwTrCategory = data.minKwTrCategory;
-		if (!widget.maxKwTrCategory) widget.maxKwTrCategory = data.maxKwTrCategory;
-		if (!widget.kwTrMaxSelection) widget.kwTrMaxSelection = widget.maxkwTrCategory;
-		if (!widget.kwTrMinSelection) widget.kwTrMinSelection = widget.minkwTrCategory;
-
-
-*/
-
-
 
 			// make box of background color with slight opacity to blur background and then add modal on top
 			const overlay = widget.outerDiv.append('div')
@@ -1099,7 +1091,7 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 					})
 
 			function renderModalDiv() {
-				const verticalModalPadding = (data.modalHeight - ( (data.paddingAboveDropdown * 4) + (getTextHeight(data.modalInputFont) * 3) + (25) + (getTextHeight(data.modalLabelsFont) * 2) )) / 4
+				const verticalModalPadding = (data.modalHeight - ( (data.paddingAboveDropdown * 4) + (getTextHeight(data.modalInputFont) * 3) + (25) + (data.modalLabelsHeight * 2) )) / 4
 
 				//modal div
 				const modalDiv = widget.outerDiv.append('div')
@@ -1118,6 +1110,10 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 						d3.event.preventDefault()
 						if (widget.tempMaxSelection - widget.tempMinSelection < 20) {
 							alert('Temperature range between minimum and maximum must be at least 20°. Please input a lower minimum or higher maximum temperature.')
+						} else if (widget.kwTrMinSelection < 0) {
+							alert('Minimum kW/tR selection may not be a negative number. Please input a higher minimum kW/tR.')
+						} else if (widget.kwTrMinSelection >= widget.kwTrMaxSelection) {
+							alert('Minimum kW/tR selection must be less than maximum kW/tR selection. Please input a lower minimum kW/tR or higher maximum kW/tR.')
 						} else {
 							handleSubmit()
 						}
@@ -1127,9 +1123,15 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 							.attr('value', data.maxTempCategory)
 						d3.select(this).select('.minTempBinInput')
 							.attr('value', data.minTempCategory)
+						d3.select(this).select('.maxKwTrBinInput')
+							.attr('value', data.maxKwTrCategory)
+						d3.select(this).select('.minKwTrBinInput')
+							.attr('value', data.minKwTrCategory)
 						widget.tempMinSelection = data.minTempCategory;
 						widget.tempMaxSelection = data.maxTempCategory;
 						widget.tempNumOfBins = data.numOfTempBins;
+						widget.kwTrMinSelection = data.minKwTrCategory;
+						widget.kwTrMaxSelection = data.maxKwTrCategory;
 						resetElements(svgForDropdown, '.dropdownGroup')
 						renderBinsDropbox();
 					})
@@ -1140,7 +1142,7 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 					.text('Min Temperature')
 					.style('color', data.dropdownTitleColor)
 					.style('font', data.modalLabelsFont)
-					.style('left', (data.paddingBetweenModalInputs) + 'px')
+					.style('left', (data.paddingBetweenTempInputs) + 'px')
 					.style('top', verticalModalPadding + 'px')
 					.style('position', 'absolute')
 
@@ -1149,9 +1151,19 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 					.text('Max Temperature')
 					.style('color', data.dropdownTitleColor)
 					.style('font', data.modalLabelsFont)
-					.style('right', (data.paddingBetweenModalInputs) + 'px')
+					.style('left', (data.paddingBetweenTempInputs * 2) + data.minTempLabelWidth + 'px')
 					.style('top', verticalModalPadding + 'px')
 					.style('position', 'absolute')
+
+				form.append('h4')
+					.attr('class', 'formElement')
+					.text('# of Temperature Bins')
+					.style('color', data.dropdownTitleColor)
+					.style('font', data.modalLabelsFont)
+					.style('position', 'absolute')
+					.style('right', (data.paddingBetweenTempInputs) + 'px')
+					.style('top', verticalModalPadding + 'px');
+
 
 				// ROW TWO
 				form.append('input')
@@ -1159,15 +1171,15 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 					.attr('type', 'text')
 					.attr('name', 'minTempBinInput')
 					.attr('value', widget.tempMinSelection)
-					.style('width', data.dropdownWidth / 2 + 'px')
+					.style('width', data.modalInputWidth + 'px')
 					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('color', data.dropdownTextColor)
 					.style('border', widget.minInputHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : `1.5px solid ${data.dropdownStrokeColor}`)
 					.style('padding', '2px')
 					.style('background-color', data.dropdownFillColor)
-					.style('left', ((data.modalWidth / 4) - (data.dropdownWidth / 4)) + 'px')
-					.style('top', (verticalModalPadding + getTextHeight(data.modalLabelsFont) + (data.paddingAboveDropdown * 2)) + 'px')
+					.style('left', ((data.paddingBetweenTempInputs + (data.minTempLabelWidth / 2)) - (data.modalInputWidth / 2)) + 'px')
+					.style('top', (verticalModalPadding + data.modalLabelsHeight + (data.paddingAboveDropdown * 2)) + 'px')
 					.style('position', 'absolute')
 					.style('text-align', 'center')
 					.on('mouseover', function () {
@@ -1187,15 +1199,15 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 					.attr('type', 'text')
 					.attr('name', 'maxTempBinInput')
 					.attr('value', widget.tempMaxSelection)
-					.style('width', data.dropdownWidth / 2 + 'px')
+					.style('width', data.modalInputWidth + 'px')
 					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('color', data.dropdownTextColor)
 					.style('border', widget.maxInputHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : `1.5px solid ${data.dropdownStrokeColor}`)
 					.style('padding', '2px')
 					.style('background-color', data.dropdownFillColor)
-					.style('right', ((data.modalWidth / 4) - (data.dropdownWidth / 4)) + 'px')
-					.style('top', (verticalModalPadding + getTextHeight(data.modalLabelsFont) + (data.paddingAboveDropdown * 2)) + 'px')
+					.style('left', (((data.paddingBetweenTempInputs * 2) + data.minTempLabelWidth + (data.maxTempLabelWidth / 2)) - (data.modalInputWidth / 2)) + 'px')
+					.style('top', (verticalModalPadding + data.modalLabelsHeight + (data.paddingAboveDropdown * 2)) + 'px')
 					.style('position', 'absolute')
 					.style('text-align', 'center')
 					.on('mouseover', function () {
@@ -1210,27 +1222,15 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 						widget.tempMaxSelection = +d3.select(this).property("value");
 					});
 
-				// ROW THREE
-				form.append('h4')
-					.attr('class', 'formElement')
-					.text('# of Temperature Bins')
-					.attr('dominant-baseline', 'hanging')
-					.style('color', data.dropdownTitleColor)
-					.style('font', data.modalLabelsFont)
-					.style('position', 'absolute')
-					.style('left', ((data.modalWidth / 2) - (getTextWidth('# of Temperature Bins', data.modalLabelsFont) / 2)) + 'px')
-					.style('top', ( (verticalModalPadding * 2) + (getTextHeight(data.modalLabelsFont)) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 2) ) + 'px')
-
-
-				// ROW FOUR
+				
 				const svgForDropdown = form.append('svg')
-					.attr('width', (data.dropdownWidth / 2) + 15)
+					.attr('width', (data.modalInputWidth) + 15)
 					.style('position', 'absolute')
 					.attr('height', getTextHeight(data.dropdownTextFont) + 20 )
 					.style('z-index', 2)
 					.attr('fill', 'none')
-					.style('left', (((data.modalWidth / 2) - (data.dropdownWidth / 4) - 2.5)) + 'px')
-					.style('top', (((verticalModalPadding * 2) + (getTextHeight(data.modalLabelsFont) * 2) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 4) - 2.5)) + 'px')
+					.style('left', (((data.paddingBetweenTempInputs * 3) + data.minTempLabelWidth + data.maxTempLabelWidth + (data.numTempBinsLabelWidth / 2)) - (data.modalInputWidth / 2)) + 'px')
+					.style('top', (verticalModalPadding + data.modalLabelsHeight + (data.paddingAboveDropdown * 2)) + 'px')
 
 				function funcOnOpen() {
 					svgForDropdown.transition().attr('height', data.graphicHeight)
@@ -1239,9 +1239,85 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 					svgForDropdown.transition().attr('height', getTextHeight(data.dropdownTextFont) + 20)
 				}
 				function renderBinsDropbox (){
-					makeDropdown([12, 11, 10, 9, 8, 7, 6, 5, 4], val => {widget.tempNumOfBins = +val}, svgForDropdown, 2.5, 2.5, false, data.dropdownWidth / 2, 2, 2, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.tempNumOfBins, funcOnOpen, funcOnClose, []);
+					makeDropdown([12, 11, 10, 9, 8, 7, 6, 5, 4], val => {widget.tempNumOfBins = +val}, svgForDropdown, 2.5, 2.5, false, data.modalInputWidth, 2, 2, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.tempNumOfBins, funcOnOpen, funcOnClose, []);
 				}
 				renderBinsDropbox();
+
+				// // ROW THREE
+
+			form.append('h4')
+				.attr('class', 'formElement')
+				.text('Min kW/tR')
+				.style('color', data.dropdownTitleColor)
+				.style('font', data.modalLabelsFont)
+				.style('left', (data.paddingBetweenKwTrInputs) + 'px')
+				.style('top', ( (verticalModalPadding * 2) + (data.modalLabelsHeight) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 2) ) + 'px')
+				.style('position', 'absolute')
+
+			form.append('h4')
+				.attr('class', 'formElement')
+				.text('Max kW/tR')
+				.style('color', data.dropdownTitleColor)
+				.style('font', data.modalLabelsFont)
+				.style('right', (data.paddingBetweenKwTrInputs) + 'px')
+				.style('top', ( (verticalModalPadding * 2) + (data.modalLabelsHeight) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 2) ) + 'px')
+				.style('position', 'absolute')
+
+
+				// // ROW FOUR
+				form.append('input')
+					.attr('class', 'formElement minKwTrBinInput')
+					.attr('type', 'text')
+					.attr('name', 'minKwTrBinInput')
+					.attr('value', widget.kwTrMinSelection)
+					.style('width', data.modalInputWidth + 'px')
+					.style('border-radius', '5px')
+					.style('font', data.modalInputFont)
+					.style('color', data.dropdownTextColor)
+					.style('border', `1.5px solid ${data.dropdownStrokeColor}`)
+					.style('padding', '2px')
+					.style('background-color', data.dropdownFillColor)
+					.style('left', ((data.paddingBetweenKwTrInputs + (data.minKwTrLabelWidth / 2)) - (data.modalInputWidth / 2)) + 'px')
+					.style('top', (((verticalModalPadding * 2) + (data.modalLabelsHeight * 2) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 4) - 2.5)) + 'px')
+					.style('position', 'absolute')
+					.style('text-align', 'center')
+					.on('mouseover', function () {
+						d3.select(this).style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
+					})
+					.on('mouseout', function () {
+						d3.select(this).style('border', `1.5px solid ${data.dropdownStrokeColor}`)
+					})
+					.on('change', function () {
+						widget.kwTrMinSelection = +d3.select(this).property("value");
+					});
+
+				form.append('input')
+					.attr('class', 'formElement maxKwTrBinInput')
+					.attr('type', 'text')
+					.attr('name', 'maxKwTrBinInput')
+					.attr('value', widget.kwTrMaxSelection)
+					.style('width', data.modalInputWidth + 'px')
+					.style('border-radius', '5px')
+					.style('font', data.modalInputFont)
+					.style('color', data.dropdownTextColor)
+					.style('border', `1.5px solid ${data.dropdownStrokeColor}`)
+					.style('padding', '2px')
+					.style('background-color', data.dropdownFillColor)
+					.style('left', (((data.paddingBetweenKwTrInputs * 2) + data.minKwTrLabelWidth + (data.maxKwTrLabelWidth / 2)) - (data.modalInputWidth / 2)) + 'px')
+					.style('top', (((verticalModalPadding * 2) + (data.modalLabelsHeight * 2) + 10 + (getTextHeight(data.modalInputFont)) + (data.paddingAboveDropdown * 4) - 2.5)) + 'px')
+					.style('position', 'absolute')
+					.style('text-align', 'center')
+					.on('mouseover', function () {
+						d3.select(this).style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
+					})
+					.on('mouseout', function () {
+						d3.select(this).style('border', `1.5px solid ${data.dropdownStrokeColor}`)
+					})
+					.on('change', function () {
+						widget.kwTrMaxSelection = +d3.select(this).property("value");
+					});
+
+
 
 				// ROW FIVE
 				form.append('button')
@@ -1260,20 +1336,20 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 					.style('position', 'absolute')
 					.style('text-align', 'center')
 					.style('left', widget.modalSubmitHovered ? (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) - 0.75) + 'px' : ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
-					.style('top', widget.modalSubmitHovered ? (( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px' : ( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
+					.style('top', widget.modalSubmitHovered ? (( (verticalModalPadding * 3) + (data.modalLabelsHeight * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px' : ( (verticalModalPadding * 3) + (data.modalLabelsHeight * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
 					.on('mouseover', function () {
 						widget.modalSubmitHovered = true;
 						d3.select(this)
 							.style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
 							.style('left', (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) - 0.75) + 'px')
-							.style('top', (( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px')
+							.style('top', (( (verticalModalPadding * 3) + (data.modalLabelsHeight * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px')
 						})
 					.on('mouseout', function () {
 						widget.modalSubmitHovered = false;
 						d3.select(this)
 							.style('border', 'none')
 							.style('left', ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
-							.style('top', ( (verticalModalPadding * 3) + (getTextHeight(data.modalLabelsFont) * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
+							.style('top', ( (verticalModalPadding * 3) + (data.modalLabelsHeight * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
 						})
 
 				form.append('button')
@@ -1323,12 +1399,19 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 		}
 
 		function handleSubmit () {
-			if (widget.minTempCategory === widget.tempMinSelection && widget.maxTempCategory === widget.tempMaxSelection && widget.numOfTempBins === widget.tempNumOfBins){
+			if (widget.minTempCategory === widget.tempMinSelection
+					&& widget.maxTempCategory === widget.tempMaxSelection
+					&& widget.numOfTempBins === widget.tempNumOfBins
+					&& widget.minKwTrCategory === widget.kwTrMinSelection
+					&& widget.maxKwTrCategory === widget.kwTrMaxSelection
+				){
 				toggleModal();
 			} else {
 				widget.minTempCategory = widget.tempMinSelection;
 				widget.maxTempCategory = widget.tempMaxSelection;
 				widget.numOfTempBins = widget.tempNumOfBins;
+				widget.minKwTrCategory = widget.kwTrMinSelection;
+				widget.maxKwTrCategory = widget.kwTrMaxSelection;
 				toggleModal(true);
 			}
 		}
