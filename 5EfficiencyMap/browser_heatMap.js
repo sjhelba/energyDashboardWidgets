@@ -697,14 +697,6 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 			data.modalHeight = data.gridHeight * 0.75;
 
 			// yAxis Bins
-			const getSmallestNumOfPrecision = decimals => {
-				if (!decimals) return 1;
-				let decimalNums = '0'.repeat(decimals - 1);
-				let num = '0.' + decimalNums + '1';
-				return +num;
-			}
-
-			const smallestNumOfPrecision = getSmallestNumOfPrecision(data.tempPrecision)
 			data.tempBins = [];
 			data.tempBins.push({min: Number.NEGATIVE_INFINITY, max: widget.minTempCategory - 0.00000000000000000000000000000001, display: '<' + data.formatTemp(widget.minTempCategory)})
 			data.tempBinsInterval = (widget.maxTempCategory - widget.minTempCategory) / (widget.numOfTempBins - 2);	// 10 if 12 bins
@@ -713,7 +705,8 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 				let bin = {};
 				bin.min = widget.minTempCategory + (data.tempBinsInterval * i);
 				bin.max = (bin.min + data.tempBinsInterval) - 0.00000000000000000000000000000000000001;
-				bin.display = data.formatTemp(bin.min) + '-' + data.formatTemp(((bin.min + data.tempBinsInterval) - smallestNumOfPrecision));
+				bin.display = data.formatTemp(bin.min) + '-' + data.formatTemp(((bin.min + data.tempBinsInterval)));
+
 				data.tempBins.push(bin);
 			}
 			data.tempBins.push({min: widget.maxTempCategory, max: Number.POSITIVE_INFINITY, display: '≥' + data.formatTemp(widget.maxTempCategory)})
