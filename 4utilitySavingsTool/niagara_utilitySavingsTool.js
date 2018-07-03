@@ -751,11 +751,12 @@ const needToRedrawWidget = (widget, newData) => {
 							const rowValue = +row.get('value');
 							const rowMonth = timestamp.getMonth();
 							const rowYear = timestamp.getFullYear();
-
-							if (!blendedRateDates[rowYear]) blendedRateDates[rowYear] = {};
-							if (!blendedRateDates[rowYear][rowMonth]) blendedRateDates[rowYear][rowMonth] = {total: 0, count: 0};
-							blendedRateDates[rowYear][rowMonth].total += rowValue;
-							blendedRateDates[rowYear][rowMonth].count ++;
+							if (rowValue > 0){
+								if (!blendedRateDates[rowYear]) blendedRateDates[rowYear] = {};
+								if (!blendedRateDates[rowYear][rowMonth]) blendedRateDates[rowYear][rowMonth] = {total: 0, count: 0};
+								blendedRateDates[rowYear][rowMonth].total += rowValue;
+								blendedRateDates[rowYear][rowMonth].count ++;
+							}
 						}
 					});
 				})
