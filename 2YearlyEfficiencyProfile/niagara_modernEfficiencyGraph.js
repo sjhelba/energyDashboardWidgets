@@ -786,7 +786,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		}
 		
 		function resetPins () {
-			console.log('pins getting reset')
 			closeTooltip(widget.pinned);
 			widget.pinned = 'none';
 		}
@@ -807,21 +806,17 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		}
 		
 		function pinTooltip (d, i) {
-			console.log('in tooltip before reset. widget.pinned: ', widget.pinned);
 			if (widget.pinned !== 'none') resetPins();
 			openTooltip(d, i);
 			widget.pinned = d;
-			console.log('In tooltip after widget.pinned is set to d.\nwidget.pinned: ', widget.pinned, '\nd: ', d);
 
 		}
 
 		function toggleTooltipPin (d, i) {
 			// d3.event.stopPropagation();
 			if (widget.pinned === d) {
-				console.log('d is equal')
 				resetPins();
 			} else {
-				console.log('d is not equal.\nwidget.pinned: ', widget.pinned, '\nd: ', d);
 				pinTooltip(d, i);
 			}
 		}
