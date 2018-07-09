@@ -440,6 +440,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				];
 
 
+				// Click To Stick Widget Data
+				if (!widget.pinned) widget.pinned = 'none';
+
+
+
 				// if '/' in unit's name, format xAxisUnitsLabel to have spaces around '/' and unitsLabel (for tooltip) not to
 				let indexOfSlash = data.unitsLabel.indexOf('/');
 				data.xAxisUnitsLabel = data.unitsLabel;
@@ -473,7 +478,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.attr('width', data.graphicWidth)
 			.attr('height', data.graphicHeight);
 
-		d3.select(svg.node().parentNode).style('background-color', data.backgroundColor)
+		d3.select(svg.node().parentNode)
+			.style('background-color', data.backgroundColor)
+			.on('click', resetPins);
 
 
 		// delete leftover elements from versions previously rendered
@@ -678,39 +685,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.attr('x', d => xScale(parseDate(d.month + '-' + data.yrPerMonth[d.month])) - (monthRectWidth / 2))
 			.attr('y', 20)      // 20 rather than 0 so as to include the x axis tick values
 			.style('opacity', '0')
-			.on('mouseover', function (d, i) {
-				svg.selectAll('.' + d.month)
-					.attr('r', data.dataPointRadius * 1.5)
-					.attr('stroke-width', data.dataPointStrokeWidth * 1.5);
-				tooltipRect
-					.attr('display', 'block')
-				monthText.text(`${d.month + ' ' + data.yrPerMonth[d.month]}:`)
-				if (i >= data.baselineIndicesRemoved) {
-					baselineTextGroup.attr('transform', `translate(0,${data.tooltipPadding})`);
-					baselineTextGroup.select('.typeText').text(`B:`)
-					baselineTextGroup.select('.valueText').text(`${d3.format(`,.${data.precision}f`)(data.baselineDataWMissingData[i].value)} ${data.unitsLabel}`)
-				}
-				if (i >= data.projectedIndicesRemoved) {
-					projectedTextGroup.attr('transform', `translate(0,${data.tooltipPadding * (i >= data.baselineIndicesRemoved ? 2 : 1)})`);
-					projectedTextGroup.select('.typeText').text(`P:`)
-					projectedTextGroup.select('.valueText').text(`${d3.format(`,.${data.precision}f`)(data.projectedDataWMissingData[i].value)} ${data.unitsLabel}`)
-				}
-				if (i >= data.measuredIndicesRemoved) {
-					measuredTextGroup.attr('transform', `translate(0,${data.tooltipPadding * (i >= data.baselineIndicesRemoved && i >= data.projectedIndicesRemoved ? 3 : (i >= data.projectedIndicesRemoved || i >= data.baselineIndicesRemoved ? 2 : 1))})`);
-					measuredTextGroup.select('.typeText').text(`M:`)
-					measuredTextGroup.select('.valueText').text(`${d3.format(`,.${data.precision}f`)(data.measuredDataWMissingData[i].value)} ${data.unitsLabel}`)
-				}
-			})
-			.on('mouseout', function (d) {
-				svg.selectAll('.' + d.month)
-					.attr('r', data.dataPointRadius)
-					.attr('stroke-width', data.dataPointStrokeWidth);
-				tooltipRect.attr('display', 'none');
-				monthText.text('');
-				baselineTextGroup.selectAll('text').text('');
-				projectedTextGroup.selectAll('text').text('');
-				measuredTextGroup.selectAll('text').text('');
-			});
+			.on('mouseover', attemptOpenTooltip)
+			.on('mouseout', attemptCloseTooltip)
+			.on('click', pinTooltip);
 
 
 
@@ -771,6 +748,71 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.style('cursor', 'default')
 			.style('text-decoration', d => widget.active && widget.active[d.category] || !widget.active ? 'none' : 'line-through');
 
+
+
+
+
+
+		/*** CLICK TO STICK FUNCTIONS ****/
+		function openTooltip (d, i) {
+			svg.selectAll('.' + d.month)
+				.attr('r', data.dataPointRadius * 1.5)
+				.attr('stroke-width', data.dataPointStrokeWidth * 1.5);
+			tooltipRect
+				.attr('display', 'block')
+			monthText.text(`${d.month + ' ' + data.yrPerMonth[d.month]}:`)
+			if (i >= data.baselineIndicesRemoved) {
+				baselineTextGroup.attr('transform', `translate(0,${data.tooltipPadding})`);
+				baselineTextGroup.select('.typeText').text(`B:`)
+				baselineTextGroup.select('.valueText').text(`${d3.format(`,.${data.precision}f`)(data.baselineDataWMissingData[i].value)} ${data.unitsLabel}`)
+			}
+			if (i >= data.projectedIndicesRemoved) {
+				projectedTextGroup.attr('transform', `translate(0,${data.tooltipPadding * (i >= data.baselineIndicesRemoved ? 2 : 1)})`);
+				projectedTextGroup.select('.typeText').text(`P:`)
+				projectedTextGroup.select('.valueText').text(`${d3.format(`,.${data.precision}f`)(data.projectedDataWMissingData[i].value)} ${data.unitsLabel}`)
+			}
+			if (i >= data.measuredIndicesRemoved) {
+				measuredTextGroup.attr('transform', `translate(0,${data.tooltipPadding * (i >= data.baselineIndicesRemoved && i >= data.projectedIndicesRemoved ? 3 : (i >= data.projectedIndicesRemoved || i >= data.baselineIndicesRemoved ? 2 : 1))})`);
+				measuredTextGroup.select('.typeText').text(`M:`)
+				measuredTextGroup.select('.valueText').text(`${d3.format(`,.${data.precision}f`)(data.measuredDataWMissingData[i].value)} ${data.unitsLabel}`)
+			}
+		}
+		
+		function attemptOpenTooltip (d, i) {
+			if (widget.pinned === 'none') openTooltip(d, i);
+		}
+		
+		function resetPins () {
+			closeTooltip(widget.pinned);
+			widget.pinned = 'none';
+		}
+		
+		function closeTooltip (d) {
+			svg.selectAll('.' + d.month)
+				.attr('r', data.dataPointRadius)
+				.attr('stroke-width', data.dataPointStrokeWidth);
+			tooltipRect.attr('display', 'none');
+			monthText.text('');
+			baselineTextGroup.selectAll('text').text('');
+			projectedTextGroup.selectAll('text').text('');
+			measuredTextGroup.selectAll('text').text('');
+		}
+		
+		function attemptCloseTooltip (d) {
+			if (widget.pinned === 'none') closeTooltip(d);
+		}
+		
+		function pinTooltip (d, i) {
+			if (widget.pinned !== 'none') resetPins();
+			widget.pinned = d;
+			openTooltip(d, i);
+		}
+
+
+
+
+
+
 	};
 
 	function render(widget) {
@@ -782,6 +824,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				}
 				widget.data = data;
 			});
+
 	}
 
 

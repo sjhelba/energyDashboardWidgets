@@ -1,3 +1,4 @@
+const widget = {};
 const getTextWidth = (text, font) => {
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
@@ -82,6 +83,8 @@ const data = {
   ]
 }
 
+// Click To Stick Widget Data
+if (!widget.pinned) widget.pinned = 'none';
 
 
 // if '/' in units name, format xAxisUnitsLabel to have spaces around '/' and unitsLabel (for tooltip) not to
@@ -252,7 +255,12 @@ const topBorderPathGenerator = d3.line()
 
 /* INITIALIZATION */
 const svg = d3.select('body').append('svg').attr('height', graphicHeight).attr('width', graphicWidth)
-const backgroundRect = svg.append('rect').attr('height', graphicHeight).attr('width', graphicWidth).attr('fill', backgroundColor).attr('stroke', 'black')
+const backgroundRect = svg.append('rect')
+  .attr('height', graphicHeight)
+  .attr('width', graphicWidth)
+  .attr('fill', backgroundColor)
+  .attr('stroke', 'black')
+  .on('click', resetPins);
 const chartGroup = svg.append('g').attr('transform', `translate(${margin.left + yAxisWidth}, ${margin.top})`)  //We shifted the whole chart because otherwise the y axis labels were to the left of 0px x, and so we needed to push the axis over (also we wanted to push it further down so it'd be easier to see).
 
 
@@ -389,37 +397,9 @@ chartGroup.selectAll('.monthRect')
     .attr('x', d => xScale(parseDate(d.month + '-' + yrPerMonth[d.month])) - (monthRectWidth / 2))
     .attr('y', 0)
     .style('opacity', '0')
-    .on('mouseover', function (d, i) {
-      d3.selectAll('.' + d.month)
-        .attr('r', dataPointRadius * 1.5)
-        .attr('stroke-width', dataPointStrokeWidth * 1.5)
-      tooltipRect
-        .attr('display', 'block')
-      monthTspan.text(`${d.month + ' ' + yrPerMonth[d.month]}:`)
-      if (i >= baselineIndicesRemoved){
-        baselineTspan.text(`BL: ${d3.format(`,.${precision}f`)(baselineDataWMissingData[i].value)} ${unitsLabel}`)
-          .attr('y', tooltipPadding)
-      }
-      if (i >= targetIndicesRemoved) {
-        targetTspan.text(`TG: ${d3.format(`,.${precision}f`)(targetDataWMissingData[i].value)} ${unitsLabel}`)
-          .attr('y', tooltipPadding * (i >= baselineIndicesRemoved ? 2 : 1))
-      }
-      if (i >= actualIndicesRemoved) {
-        actualTspan.text(`AC: ${d3.format(`,.${precision}f`)(actualDataWMissingData[i].value)} ${unitsLabel}`)
-          .attr('y', tooltipPadding * (i >= baselineIndicesRemoved && i >= targetIndicesRemoved ? 3 : (i >= targetIndicesRemoved || i >= baselineIndicesRemoved ? 2 : 1) ))
-      }
-    })
-    .on('mouseout', function(d, i) {
-      d3.selectAll('.' + d.month)
-        .attr('r', dataPointRadius)
-        .attr('stroke-width', dataPointStrokeWidth)
-      tooltipRect.attr('display', 'none')
-        monthTspan.text('')
-        baselineTspan.text('')
-        targetTspan.text('')
-        actualTspan.text('')
-    })
-
+    .on('mouseover', attemptOpenTooltip)
+    .on('mouseout', attemptCloseTooltip)
+    .on('click', pinTooltip);
 
 
 
@@ -478,3 +458,57 @@ legendCategories.append('text')
   .style('font', legendFont);
 
 
+
+
+/*** CLICK TO STICK FUNCTIONS ***/
+
+function openTooltip (d, i) {
+  d3.selectAll('.' + d.month)
+    .attr('r', dataPointRadius * 1.5)
+    .attr('stroke-width', dataPointStrokeWidth * 1.5)
+  tooltipRect
+    .attr('display', 'block')
+  monthTspan.text(`${d.month + ' ' + yrPerMonth[d.month]}:`)
+  if (i >= baselineIndicesRemoved){
+    baselineTspan.text(`BL: ${d3.format(`,.${precision}f`)(baselineDataWMissingData[i].value)} ${unitsLabel}`)
+      .attr('y', tooltipPadding)
+  }
+  if (i >= targetIndicesRemoved) {
+    targetTspan.text(`TG: ${d3.format(`,.${precision}f`)(targetDataWMissingData[i].value)} ${unitsLabel}`)
+      .attr('y', tooltipPadding * (i >= baselineIndicesRemoved ? 2 : 1))
+  }
+  if (i >= actualIndicesRemoved) {
+    actualTspan.text(`AC: ${d3.format(`,.${precision}f`)(actualDataWMissingData[i].value)} ${unitsLabel}`)
+      .attr('y', tooltipPadding * (i >= baselineIndicesRemoved && i >= targetIndicesRemoved ? 3 : (i >= targetIndicesRemoved || i >= baselineIndicesRemoved ? 2 : 1) ))
+  }
+}
+
+function attemptOpenTooltip (d, i) {
+  if (widget.pinned === 'none') openTooltip(d, i);
+}
+
+function resetPins () {
+  closeTooltip(widget.pinned);
+  widget.pinned = 'none';
+}
+
+function closeTooltip (d) {
+  d3.selectAll('.' + d.month)
+    .attr('r', dataPointRadius)
+    .attr('stroke-width', dataPointStrokeWidth);
+  tooltipRect.attr('display', 'none');
+  monthTspan.text('');
+  baselineTspan.text('');
+  targetTspan.text('');
+  actualTspan.text('');
+}
+
+function attemptCloseTooltip (d) {
+  if (widget.pinned === 'none') closeTooltip(d);
+}
+
+function pinTooltip (d, i) {
+  if (widget.pinned !== 'none') resetPins();
+  widget.pinned = d;
+  openTooltip(d, i);
+}
