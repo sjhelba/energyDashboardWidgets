@@ -259,6 +259,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		if (!widget.activeModule) widget.activeModule = 'none';
 		if (!widget.percentIsHovered) widget.percentIsHovered = false;
 
+		if (!widget.legendPinned) widget.legendPinned = 'none';
+		if (!widget.overallPinned) widget.overallPinned = 'none';
+
 
 		// GET ORD DATA //
 		data.modulesData = [
@@ -354,7 +357,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	const renderWidget = (widget, data) => {
 		/* RENDER INITIALIZATION */
 
-		d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor)
+		d3.select(widget.svg.node().parentNode)
+			.style('background-color', data.backgroundColor)
+			.on('mousedown', function(){
+				resetLegendPins();
+				resetOverallPins();
+			})
 
 		// delete leftover elements from versions previously rendered
 		if (!widget.svg.empty()) widget.svg.selectAll('*').remove();
@@ -658,8 +666,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				.attr('r', data.tooltipDiameter / 2)
 				.attr('opacity', 0)
 				.on('mouseenter', function () {
-					widget.percentIsHovered = true;
-					renderPercentageDescription();
+					if (widget.legendPinned === 'none' && widget.overallPinned === 'none'){
+						widget.percentIsHovered = true;
+						renderPercentageDescription();
+					}
 				})
 				.on('mouseleave', function () {
 					widget.percentIsHovered = false;
@@ -676,53 +686,29 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		optimizedPathsHoverArc
 			.on('mouseenter', function () {
-				widget.hovered.optimized = true;
-				widget.hovered.current = 'optimized'
-
-				widget.svg.selectAll('.percentage').style('opacity', 0)
-				optimizedPaths.style('fill-opacity', 1);
-				standardPaths.style('fill-opacity', theUnhoveredArcOpacity)
-				widget.svg.selectAll('.optimizedModulePath')
-					.transition()
-					.attr('d', hoveredModuleArcPathGenerator)
-				renderTooltip()
+				attemptOverallTooltipOpen('optimized');
 			})
 			.on('mouseleave', function () {
-				widget.hovered.optimized = false;
-				widget.hovered.current = 'neither'
-
-				widget.svg.selectAll('.percentage').style('opacity', 1)
-				standardPaths.style('fill-opacity', normalArcOpacity)
-				optimizedPaths.style('fill-opacity', normalArcOpacity);
-				widget.svg.selectAll('.optimizedModulePath')
-					.transition()
-					.attr('d', moduleArcPathGenerator)
-				renderTooltip()
+				attemptOverallTooltipClose('optimized');
+			})
+			.on('mousedown', function() {
+				d3.event.stopPropagation();
+			})
+			.on('click', function() {
+				toggleOverallTooltipPin('optimized');
 			});
 		standardPathsHoverArc
 			.on('mouseenter', function () {
-				widget.hovered.standard = true;
-				widget.hovered.current = 'standard'
-
-				widget.svg.selectAll('.percentage').style('opacity', 0)
-				standardPaths.style('fill-opacity', 1);
-				optimizedPaths.style('fill-opacity', theUnhoveredArcOpacity)
-				widget.svg.selectAll('.standardModulePath')
-					.transition()
-					.attr('d', hoveredModuleArcPathGenerator)
-				renderTooltip()
+				attemptOverallTooltipOpen('standard');
 			})
 			.on('mouseleave', function () {
-				widget.hovered.standard = false;
-				widget.hovered.current = 'neither'
-
-				widget.svg.selectAll('.percentage').style('opacity', 1)
-				standardPaths.style('fill-opacity', normalArcOpacity);
-				optimizedPaths.style('fill-opacity', normalArcOpacity);
-				widget.svg.selectAll('.standardModulePath')
-					.transition()
-					.attr('d', moduleArcPathGenerator)
-				renderTooltip()
+				attemptOverallTooltipClose('standard');
+			})
+			.on('mousedown', function() {
+				d3.event.stopPropagation();
+			})
+			.on('click', function() {
+				toggleOverallTooltipPin('standard');
 			});
 
 
@@ -743,36 +729,19 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.attr('class', d => `legendModuleGroup .${d.type}LegendModuleGroup`)
 			.attr('transform', (d, i) => `translate(${i * data.legendColorRectsWidth}, 0)`)
 			.on('mouseenter', function (d) {
-				const that = d3.select(this);
-				that.selectAll('rect').style('stroke-opacity', '1')
-				that.selectAll('text').style('font-weight', 'bold')
-
-				widget.activeModule = d.type;
-				widget.svg.selectAll('.percentage').style('opacity', 0)
-				widget.svg.selectAll('.modulePath').style('fill-opacity', theUnhoveredArcOpacity)
-				widget.svg.selectAll('.arcPath').style('fill-opacity', theUnhoveredArcOpacity)
-				widget.svg.selectAll(`.${d.type}ArcPath`)
-					.style('fill-opacity', 1)
-					.transition()
-					.attr('d', hoveredModuleArcPathGenerator);
-				renderTooltip(d);
+				attemptLegendTooltipOpen(d, d3.select(this));
 			})
 			.on('mouseleave', function (d) {
-				const that = d3.select(this);
-				that.selectAll('rect').style('stroke-opacity', '0')
-				that.selectAll('text').style('font-weight', 'normal')
-
-				widget.activeModule = 'none';
-				widget.svg.selectAll('.percentage').style('opacity', 1)
-				widget.svg.selectAll('.modulePath').style('fill-opacity', normalArcOpacity)
-				widget.svg.selectAll('.arcPath').style('fill-opacity', normalArcOpacity)
-				widget.svg.selectAll(`.${d.type}ArcPath`)
-					.transition()
-					.attr('d', moduleArcPathGenerator);
-				renderTooltip();
+				attemptLegendTooltipClose(d);
+			})
+			.on('mousedown', function () {
+				d3.event.stopPropagation();
+			})
+			.on('click', function (d) {
+				toggleLegendTooltipPin(d, d3.select(this));
 			})
 
-		legendModuleGroups.append('rect')
+		const legendRects = legendModuleGroups.append('rect')
 			.attr('height', data.moduleArcThickness)
 			.attr('width', data.legendColorRectsWidth)
 			.attr('y', data.paddingUnderLegendText)
@@ -780,13 +749,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.attr('stroke', 'black')
 			.style('stroke-opacity', d => widget.activeModule === d.type ? '1' : '0')
 
-		legendModuleGroups.append('text')
+		const legendTexts = legendModuleGroups.append('text')
 			.attr('text-anchor', 'middle')
 			.attr('x', data.legendColorRectsWidth / 2)
 			.text(d => d.type)
 			.style('font', data.legendFont)
 			.style('cursor', 'default')
-			.style('font-weight', d => widget.activeModule === d.type ? 'bold' : 'normal')
+			.style('font-weight', d => widget.activeModule === d.type ? 'bold' : 'normal');
 
 
 
@@ -805,10 +774,161 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.on('mouseleave', function () {
 				widget.percentIsHovered = false;
 				widget.svg.selectAll('.percentageDescription').remove();
-			})
+			});
 
 
-	};
+
+
+
+
+
+
+
+	/**** CLICK TO STICK FUNCTIONS ****/
+
+	//OVERALL FUNCS
+	function openOverallTooltip(optimizedOrStandard) {
+		widget.svg.selectAll('.percentage').style('opacity', 0)
+		if (optimizedOrStandard === 'optimized') {
+			widget.hovered.optimized = true;
+			widget.hovered.current = 'optimized'
+			standardPaths.style('fill-opacity', theUnhoveredArcOpacity);
+			optimizedPaths.style('fill-opacity', 1)
+			widget.svg.selectAll('.optimizedModulePath')
+				.transition()
+				.attr('d', hoveredModuleArcPathGenerator)
+			renderTooltip()
+		} else {
+			widget.hovered.standard = true;
+			widget.hovered.current = 'standard'
+			standardPaths.style('fill-opacity', 1);
+			optimizedPaths.style('fill-opacity', theUnhoveredArcOpacity)
+			widget.svg.selectAll('.standardModulePath')
+				.transition()
+				.attr('d', hoveredModuleArcPathGenerator)
+			renderTooltip()
+		}
+	}
+
+	function attemptOverallTooltipOpen(optimizedOrStandard) {
+		if (widget.overallPinned === 'none' && widget.legendPinned === 'none') openOverallTooltip(optimizedOrStandard);
+	}
+
+	function resetOverallPins() {
+		if (widget.overallPinned !== 'none') {
+			closeOverallTooltip(widget.overallPinned);
+			widget.overallPinned = 'none';
+		}
+	}
+
+	function closeOverallTooltip(optimizedOrStandard) {
+		widget.hovered.optimized = false;
+		widget.hovered.current = 'neither'
+		widget.svg.selectAll('.percentage').style('opacity', 1)
+		standardPaths.style('fill-opacity', normalArcOpacity)
+		optimizedPaths.style('fill-opacity', normalArcOpacity);
+		if (optimizedOrStandard === 'optimized') {
+			widget.svg.selectAll('.optimizedModulePath')
+				.transition()
+				.attr('d', moduleArcPathGenerator)
+		} else {
+			widget.svg.selectAll('.standardModulePath')
+				.transition()
+				.attr('d', moduleArcPathGenerator)
+		}
+		renderTooltip()
+	}
+
+	function attemptOverallTooltipClose(optimizedOrStandard) {
+		if (widget.overallPinned === 'none' && widget.legendPinned === 'none') closeOverallTooltip(optimizedOrStandard);
+	}
+
+	function pinOverallTooltip(optimizedOrStandard) {
+		if (widget.legendPinned !== 'none' || widget.overallPinned !== 'none') {
+			resetLegendPins();
+			resetOverallPins();
+		}
+		openOverallTooltip(optimizedOrStandard);
+		widget.overallPinned = optimizedOrStandard;
+	}
+
+	function toggleOverallTooltipPin(optimizedOrStandard) {
+		if (widget.overallPinned === optimizedOrStandard) {
+			resetOverallPins();
+		} else {
+			pinOverallTooltip(optimizedOrStandard);
+		}
+	}
+
+
+	// LEGEND FUNCS
+	function openLegendTooltip(d, that) {
+		that.selectAll('rect').style('stroke-opacity', '1')
+		that.selectAll('text').style('font-weight', 'bold')
+
+		widget.activeModule = d.type;
+		widget.svg.selectAll('.percentage').style('opacity', 0)
+		widget.svg.selectAll('.modulePath').style('fill-opacity', theUnhoveredArcOpacity)
+		widget.svg.selectAll('.arcPath').style('fill-opacity', theUnhoveredArcOpacity)
+		widget.svg.selectAll(`.${d.type}ArcPath`)
+			.style('fill-opacity', 1)
+			.transition()
+			.attr('d', hoveredModuleArcPathGenerator);
+		renderTooltip(d);
+	}
+
+	function attemptLegendTooltipOpen(d, that) {
+		if (widget.legendPinned === 'none' && widget.overallPinned === 'none') openLegendTooltip(d, that);
+	}
+
+	function resetLegendPins() {
+		if (widget.legendPinned !== 'none') {
+			closeLegendTooltip(widget.legendPinned);
+			widget.legendPinned = 'none';
+		}
+	}
+
+	function closeLegendTooltip(d) {
+		legendRects.style('stroke-opacity', '0')
+		legendTexts.style('font-weight', 'normal')
+
+		widget.activeModule = 'none';
+		widget.svg.selectAll('.percentage').style('opacity', 1)
+		widget.svg.selectAll('.modulePath').style('fill-opacity', normalArcOpacity)
+		widget.svg.selectAll('.arcPath').style('fill-opacity', normalArcOpacity)
+		widget.svg.selectAll(`.${d.type}ArcPath`)
+			.transition()
+			.attr('d', moduleArcPathGenerator);
+		renderTooltip();
+	}
+
+	function attemptLegendTooltipClose(d) {
+		if (widget.legendPinned === 'none' && widget.overallPinned === 'none') closeLegendTooltip(d);
+	}
+
+	function pinLegendTooltip(d, that) {
+		if (widget.legendPinned !== 'none' || widget.overallPinned !== 'none') {
+			resetLegendPins();
+			resetOverallPins();
+		}
+		openLegendTooltip(d, that);
+		widget.legendPinned = d;
+	}
+
+	function toggleLegendTooltipPin(d, that) {
+		if (widget.legendPinned === d) {
+			resetLegendPins();
+		} else {
+			pinLegendTooltip(d, that);
+		}
+	}
+
+};
+
+
+
+
+
 
 	function render(widget) {
 		// invoking setupDefinitions, then returning value from successful promise to renderWidget func
@@ -821,6 +941,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			})
 			.catch(err => console.error('render did not run properly: ' + err));
 	}
+
+
+
+
 
 
 	////////////////////////////////////////////////////////////////
