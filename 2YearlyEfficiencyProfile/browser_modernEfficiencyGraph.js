@@ -399,7 +399,7 @@ chartGroup.selectAll('.monthRect')
     .style('opacity', '0')
     .on('mouseover', attemptOpenTooltip)
     .on('mouseout', attemptCloseTooltip)
-    .on('click', pinTooltip);
+    .on('click', togglePin);
 
 
 
@@ -509,6 +509,14 @@ function attemptCloseTooltip (d) {
 
 function pinTooltip (d, i) {
   if (widget.pinned !== 'none') resetPins();
-  widget.pinned = d;
   openTooltip(d, i);
+  widget.pinned = d;
+}
+
+function togglePin (d, i) {
+  if (widget.pinned === d) {
+    resetPins()
+  } else {
+    pinTooltip(d, i)
+  }
 }

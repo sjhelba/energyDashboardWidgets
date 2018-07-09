@@ -440,7 +440,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				];
 
 
-				// Click To Stick Widget Data
+				// click To Stick Widget Data
 				if (!widget.pinned) widget.pinned = 'none';
 
 
@@ -480,7 +480,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		d3.select(svg.node().parentNode)
 			.style('background-color', data.backgroundColor)
-			.on('click', resetPins);
+			.on('mousedown', resetPins);
 
 
 		// delete leftover elements from versions previously rendered
@@ -679,15 +679,18 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		chartGroup.selectAll('.monthRect')
 			.data(data.measuredDataWMissingData)
 			.enter().append('rect')
-			.attr('class', d => `monthRect ${d.month}Rect`)
-			.attr('height', data.chartHeight)
-			.attr('width', monthRectWidth)
-			.attr('x', d => xScale(parseDate(d.month + '-' + data.yrPerMonth[d.month])) - (monthRectWidth / 2))
-			.attr('y', 20)      // 20 rather than 0 so as to include the x axis tick values
-			.style('opacity', '0')
-			.on('mouseover', attemptOpenTooltip)
-			.on('mouseout', attemptCloseTooltip)
-			.on('click', pinTooltip);
+				.attr('class', d => `monthRect ${d.month}Rect`)
+				.attr('height', data.chartHeight)
+				.attr('width', monthRectWidth)
+				.attr('x', d => xScale(parseDate(d.month + '-' + data.yrPerMonth[d.month])) - (monthRectWidth / 2))
+				.attr('y', 20)      // 20 rather than 0 so as to include the x axis tick values
+				.style('opacity', '0')
+				.on('mouseover', attemptOpenTooltip)
+				.on('mouseout', attemptCloseTooltip)
+				.on('mousedown', function () {
+					d3.event.stopPropagation();
+				})
+				.on('click', toggleTooltipPin);
 
 
 
@@ -753,7 +756,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
 
-		/*** CLICK TO STICK FUNCTIONS ****/
+		/*** click TO STICK FUNCTIONS ****/
 		function openTooltip (d, i) {
 			svg.selectAll('.' + d.month)
 				.attr('r', data.dataPointRadius * 1.5)
@@ -783,6 +786,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		}
 		
 		function resetPins () {
+			console.log('pins getting reset')
 			closeTooltip(widget.pinned);
 			widget.pinned = 'none';
 		}
@@ -803,11 +807,24 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		}
 		
 		function pinTooltip (d, i) {
+			console.log('in tooltip before reset. widget.pinned: ', widget.pinned);
 			if (widget.pinned !== 'none') resetPins();
-			widget.pinned = d;
 			openTooltip(d, i);
+			widget.pinned = d;
+			console.log('In tooltip after widget.pinned is set to d.\nwidget.pinned: ', widget.pinned, '\nd: ', d);
+
 		}
 
+		function toggleTooltipPin (d, i) {
+			// d3.event.stopPropagation();
+			if (widget.pinned === d) {
+				console.log('d is equal')
+				resetPins();
+			} else {
+				console.log('d is not equal.\nwidget.pinned: ', widget.pinned, '\nd: ', d);
+				pinTooltip(d, i);
+			}
+		}
 
 
 
