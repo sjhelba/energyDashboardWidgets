@@ -4,7 +4,132 @@ function defineFuncForTabSpacing () {
 	
 
 
-	////////// Hard Coded Defs //////////
+  ////////// Hard Coded Defs //////////
+  function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection => console.log('selected: ' + valOfSelection), elementToAppendTo = d3.select('svg'), x = 5, y = 50, leftAligned = true, minDropdownWidth = 125, horizontalPadding = 5, verticalPadding = 5, strokeColor = 'black', backgroundFill = 'white', hoveredFill = '#d5d6d4', font = '10.0pt Nirmala UI', textColor = 'black', defaultSelection, funcToRunOnOpen, funcToRunOnClose, arrOfArgsToPassInToFuncsAfterVal, dropdownBorderRadius = 5) {
+    const arrowWidth = getTextWidth('8', font) / 1.5;
+    const textWidth = (arrowWidth * 2) + arrOfOptions.reduce((accum, curr) => {
+      let currTextWidth = getTextWidth(curr, font);
+      return currTextWidth > accum ? currTextWidth : accum;
+    }, 0);
+    const textHeight = getTextHeight(font);
+    const dropdownWidth = minDropdownWidth > textWidth + (horizontalPadding * 2) ? minDropdownWidth : textWidth + (horizontalPadding * 2);
+    const rowHeight = textHeight + (verticalPadding * 2);
+    const textY = verticalPadding + (textHeight / 2);
+    let clickedSelection = defaultSelection || defaultSelection === 0 ? defaultSelection : arrOfOptions[0];
+    const dropdownHeight = rowHeight * (arrOfOptions.length + 1);
+    let open = false;
+    function generatePath () {
+      let x1, y1, x2, y2, x3, y3;
+      x1 = dropdownWidth - (horizontalPadding + arrowWidth);
+      x2 = x1 + arrowWidth;
+      x3 = x1 + (arrowWidth / 2);
+      y1 = textY;
+      y2 = textY;
+      y3 = textY + (arrowWidth / 2);
+      return `M${x1},${y1} L${x2},${y2} L${x3},${y3} z`;
+    }
+    // dropdownGroup
+    const dropdownGroup = elementToAppendTo.append('g')
+      .attr('class', 'dropdownGroup')
+      .attr('transform', `translate(${x + 6},${y + 6})`)
+    //outer container
+    const outerContainer = dropdownGroup.append('rect')
+      .attr('class', 'outerContainerRect')
+      .attr('width', dropdownWidth + 12)
+      .attr('height', rowHeight + 12)
+      .attr('fill', backgroundFill)
+      .attr('rx', dropdownBorderRadius)
+      .attr('stroke', strokeColor)
+      .attr('x', - 6)
+      .attr('y', - 6)
+      .attr('stroke-width', '0.5px')
+      .on('click', function () {
+        toggleDrop()
+      })
+    //rows
+    const dropdownRows = dropdownGroup.selectAll('.dropdownRows')
+      .data(arrOfOptions)
+      .enter().append('g')
+        .attr('class', (d, i) => 'dropdownRows ' + i + 'dropdownRow')
+        .attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : 'translate(0,0)')
+        .on('mouseenter', function() {
+          dropdownRows.selectAll('rect').attr('fill', backgroundFill);
+          d3.select(this).select('rect').attr('fill', hoveredFill);
+        })
+        .on('mouseleave', function() {
+          d3.select(this).select('rect').attr('fill', backgroundFill);
+        })
+        .on('click', function (d) {
+          changeClickedSelection(d);
+          toggleDrop();
+        });
+    const rowRects = dropdownRows.append('rect')
+      .attr('class', (d, i) => 'rowRect ' + i + 'rowRect')
+      .attr('width', dropdownWidth)
+      .attr('height', rowHeight)
+      .attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill)
+    dropdownRows.append('text')
+      .attr('class', (d, i) => 'rowText ' + i + 'rowText')
+      .text(d => d)
+      .attr('dominant-baseline', 'middle')
+      .attr('x', d => leftAligned ? horizontalPadding : (dropdownWidth / 2) - (getTextWidth(d, font) / 2))
+      .attr('y', textY)
+      .style('font', font)
+      .style('fill', textColor)
+      .style('cursor', 'default')
+    // Selected window
+    const selectedGroup = dropdownGroup.append('g')
+      .attr('class', 'selectedGroup')
+      .on('mouseenter', function() {
+        selectedRect.attr('fill', hoveredFill);
+      })
+      .on('mouseleave', function() {
+        if (!open) selectedRect.attr('fill', backgroundFill);
+      })
+      .on('click', function () {
+        toggleDrop()
+      });
+    const selectedRect = selectedGroup.append('rect')
+      .attr('class', 'selectedRect')
+      .attr('width', dropdownWidth)
+      .attr('height', rowHeight)
+      .attr('fill', backgroundFill)
+    const selectedText = selectedGroup.append('text')
+      .attr('class', 'selectedText')
+      .text(clickedSelection)
+      .attr('dominant-baseline', 'middle')
+      .attr('x', leftAligned ? horizontalPadding : ((dropdownWidth - (arrowWidth * 2)) / 2) - ((getTextWidth(clickedSelection, font)) / 2))
+      .attr('y', textY)
+      .style('font', font)
+      .style('fill', textColor)
+			.style('cursor', 'default')
+    selectedGroup.append('path')
+      .attr('class', 'arrowPath')
+      .attr('d', generatePath())
+      .attr('fill', textColor)
+      .attr('stroke', textColor)
+    function changeClickedSelection (newSelectionValue) {
+      selectedRect.attr('fill', backgroundFill);
+      clickedSelection = newSelectionValue;
+      selectedText.text(clickedSelection);
+      funcToRunOnSelection(newSelectionValue, ...arrOfArgsToPassInToFuncsAfterVal);
+    }
+    function toggleDrop () {
+      open = !open;
+      if (open) {
+        funcToRunOnOpen(...arrOfArgsToPassInToFuncsAfterVal)
+      } else {
+        funcToRunOnClose(...arrOfArgsToPassInToFuncsAfterVal)
+      }
+      rowRects.attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill);
+      outerContainer.transition()
+        .attr('height', open ? dropdownHeight + 12: rowHeight + 12);
+      dropdownRows.transition()
+        .attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : `translate(0,0)`);
+    }
+    return dropdownGroup;
+  }
+
 	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 	const formatNumber = d3.format(`,.${0}f`)
 	const getTextWidth = (text, font) => {
@@ -36,6 +161,10 @@ function defineFuncForTabSpacing () {
   }
 
 
+
+
+
+
 	////////////////////////////////////////////////////////////////
 		// Define Widget Constructor & Exposed Properties
 	////////////////////////////////////////////////////////////////
@@ -46,7 +175,17 @@ function defineFuncForTabSpacing () {
 			name: 'backgroundColor',
 			value: '#F5F5f5',
 			typeSpec: 'gx:Color'
-		},
+    },
+    {
+      name: 'dropdownFillColor',
+      value: 'white',
+			typeSpec: 'gx:Color'
+    },
+    {
+      name: 'hoveredFillColor',
+      value: '#d5d6d4',
+			typeSpec: 'gx:Color'
+    },
 		//text
 		{
 			name: 'numbersTextColor',
@@ -57,13 +196,24 @@ function defineFuncForTabSpacing () {
 			name: 'descriptionsTextColor',
 			value: '#606060',
 			typeSpec: 'gx:Color'
-		},
-		/* FONT */
-		{
-			name: 'lastMonthFont',
-			value: 'bold 13.0pt Nirmala UI',
-			typeSpec: 'gx:Font'
     },
+    {
+      name: 'dropdownLabelColor',
+      value: '#333333',
+			typeSpec: 'gx:Color'
+    },
+    {
+      name: 'dropdownTextColor',
+      value: 'black',
+			typeSpec: 'gx:Color'
+    },
+    //strokes
+    {
+      name: 'dropdownStrokeColor',
+      value: 'black',
+			typeSpec: 'gx:Color'
+    },
+		/* FONT */
     {
 			name: 'numbersFont',
 			value: 'bold 35.0pt Nirmala UI',
@@ -78,8 +228,18 @@ function defineFuncForTabSpacing () {
 			name: 'base2Font',
 			value: '8.0pt Nirmala UI',
 			typeSpec: 'gx:Font'
-		},
-	/* PADDING */
+    },
+    {
+      name: 'dropdownLabelFont',
+      value: 'bold 11pt Nirmala UI',
+			typeSpec: 'gx:Font'
+    },
+    {
+      name: 'dropdownFont',
+      value: '12pt Nirmala UI',
+			typeSpec: 'gx:Font'
+    },
+	/* PADDING AND SIZING*/
 		{
 			name: 'paddingBetweenRows',
 			value: 30
@@ -95,6 +255,26 @@ function defineFuncForTabSpacing () {
     {
       name: 'additionalNumbersSpacing',
       value: 0
+    },
+    {
+      name: 'paddingLeftOfDropdowns',
+      value: 5
+    },
+    {
+      name: 'paddingUnderDropdownLabels',
+      value: 8
+    },
+    {
+      name: 'dateDropdownWidth',
+      value: 100
+    },
+    {
+      name: 'dropdownBorderRadius',
+      value: 5
+    },
+    {
+      name: 'paddingBetweenDropdowns',
+      value: 25
     },
 	/* OTHER */
     {
@@ -133,10 +313,15 @@ function defineFuncForTabSpacing () {
 		data.jqWidth = 450;
 
 
+
+
+
+
     // SIZING //
-    data.graphicHeight = data.jqHeight - (data.margin * 2);
+    data.dropdownGroupHeight = data.margin + getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels + getTextHeight(data.dropdownFont) + data.margin;
+    data.graphicHeight = data.jqHeight - (data.dropdownGroupHeight + data.margin);
     data.graphicWidth = data.jqWidth - (data.margin * 2);
-    data.rowHeight = (data.graphicHeight - ((data.paddingBetweenRows * 3) + getTextHeight(data.lastMonthFont) + data.paddingWithinRows)) / 4;
+    data.rowHeight = (data.graphicHeight - ((data.paddingBetweenRows * 3) + data.paddingWithinRows)) / 4;
     data.imgSize = data.rowHeight - (getTextHeight(data.descriptionsFont));
     data.halfImgWidth = data.imgSize / 2;
     data.centerOfRow = data.graphicWidth / 2;
@@ -146,7 +331,7 @@ function defineFuncForTabSpacing () {
 
 
 		// DATA TO POPULATE //
-    data.savings = {
+    data.savings = {    // IGNORE OLD DATA COLLECTION HERE FOR NIAGARA VERSION
       baselineKwh: 0,
       measuredKwh: 0,
       kwhSaved: 0,
@@ -155,17 +340,82 @@ function defineFuncForTabSpacing () {
       co2Emissions: 0,
       carbonSequestered: 0
     };
+    data.monthlyBaselineKwh = {
+      Jan: 0,
+      Feb: 0,
+      Mar: 0,
+      Apr: 0,
+      May: 0,
+      Jun: 0,
+      Jul: 0,
+      Aug: 0,
+      Sep: 0,
+      Oct: 0,
+      Nov: 0,
+      Dec: 0
+    };
+    const savingsDataTemplate = {    // Template used in data collection. Added to each new month measured data available for in data.datedSavings
+      measuredKwh: 0,
+      kwhSaved: 0,
+      tonsCo2: 0,
+      greenhouseGas: 0,
+      co2Emissions: 0,
+      carbonSequestered: 0
+    };
+    data.availableDates = {   // In Niagara version, this should be an empty object filled in with measured data
+      2016: ['Oct', 'Nov', 'Dec'],
+      2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      2018: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+    };  
+    data.datedSavings = {};  
+    /*
+    eg: {
+      2016: {
+        Nov: {
+          measuredKwh: 5345350,
+          kwhSaved: 361557,
+          tonsCo2: 297,
+          greenhouseGas: 58,
+          co2Emissions: 29,
+          carbonSequestered: 317
+        },
+        Dec: {
+          measuredKwh: 5345350,
+          kwhSaved: 361557,
+          tonsCo2: 297,
+          greenhouseGas: 58,
+          co2Emissions: 29,
+          carbonSequestered: 317
+        }
+      },
+      2017: {
+        Jan: {
+          measuredKwh: 5345350,
+          kwhSaved: 361557,
+          tonsCo2: 297,
+          greenhouseGas: 58,
+          co2Emissions: 29,
+          carbonSequestered: 317
+        }
+      }
+    }
+
+    */
 
 		// FAKE DATA //
 		const populateFakeData = () => {
+      // IGNORE OLD DATA COLLECTION HERE FOR NIAGARA VERSION
       equipmentGroups.forEach(eq => {
         if (data[`include${eq}`]) {
-          //get measured history for last month for that eq group and add to data.savings.measuredKwh
+          //get measured history for each date for that eq group and add to data.savings.measuredKwh
           data.savings.measuredKwh += 109610.75;
-          //get baseline history for that eq group and add to data.savings.baselineKwh
+          //get baseline history for that month for that eq group and add to data.savings.baselineKwh
           data.savings.baselineKwh += 200000;
         }
       })
+
+      
+      data.availableYears = Object.keys(data.availableDates).sort((a, b) => b - a);
 		};
 
 
@@ -189,6 +439,21 @@ function defineFuncForTabSpacing () {
         data.savings.tonsCo2 = formatNumber(data.savings.tonsCo2);
       }
 
+      // GLOBAL DROPDOWN DATA //
+      if (!widget.yearSelected) widget.yearSelected = data.availableYears[0];
+      if (!widget.monthSelected) widget.monthSelected = data.availableDates[widget.yearSelected][data.availableDates[widget.yearSelected].length - 1];
+      if (!widget.updateDateWidgetRendering) widget.updateDateWidgetRendering = () => {
+        renderWidget(data);
+      }
+      if (!widget.dropdownYearChanged) widget.dropdownYearChanged = val => {
+        widget.yearSelected = val;
+        widget.monthSelected = data.availableDates[widget.yearSelected].includes(widget.monthSelected) ? widget.monthSelected : data.availableDates[widget.yearSelected][data.availableDates[widget.yearSelected].length - 1];
+        widget.updateDateWidgetRendering();
+      };
+      if (!widget.dropdownMonthChanged) widget.dropdownMonthChanged = val => {
+        widget.monthSelected = val;
+        widget.updateDateWidgetRendering();
+      };
 
 
 
@@ -224,10 +489,11 @@ function defineFuncForTabSpacing () {
 		// delete leftover elements from versions previously rendered
 		if (!widget.svg.empty()) resetElements(widget.svg, '*');
 
-		// ********************************************* ROWS AND TITLE ******************************************************* //
+
+		// ********************************************* ROWS AND TITLES ******************************************************* //
     const graphicGroup = widget.svg.append('g')
       .attr('class', 'graphicGroup')
-      .attr('transform', `translate(${data.margin},${data.margin})`);
+      .attr('transform', `translate(${data.margin}, ${data.dropdownGroupHeight})`)
 
     // graphicGroup.append('line')      //TODO: DELETE
     //   .attr('x1', data.graphicWidth / 2)
@@ -236,15 +502,9 @@ function defineFuncForTabSpacing () {
     //   .attr('y2', data.graphicHeight)
     //   .attr('stroke', 'blue')
 
-    graphicGroup.append('text')
-      .text('Last Month')
-      .style('font', data.lastMonthFont)
-      .attr('fill', data.descriptionsTextColor)
-      .attr('dominant-baseline', 'hanging')
 
     const rowsGroup = graphicGroup.append('g')
       .attr('class', 'rowsGroup')
-      .attr('transform', `translate(0,${getTextHeight(data.lastMonthFont)})`);
 
     const row1 = rowsGroup.append('g')
       .attr('class', 'row1')
@@ -460,7 +720,43 @@ function defineFuncForTabSpacing () {
       .attr('x', data.centerOfRow - data.halfImgWidth)
       .attr('y', -data.paddingWithinRows / 2)
 
-console.log(data)
+
+
+
+
+    //************************ DROPDOWNS *************************//
+
+
+
+
+    // APPEND DROPDOWNS
+
+    const dropdownsGroup = widget.svg.append('g')
+      .attr('class', 'dropdownsGroup')
+      .attr('transform', `translate(${data.margin + data.paddingLeftOfDropdowns},${data.margin})`)
+
+    //Year Dropdown
+    dropdownsGroup.append('text')
+      .attr('dominant-baseline', 'hanging')
+      .text('Year')
+      .attr('x', 5)
+      .attr('fill', data.dropdownLabelColor)
+      .style('font', data.dropdownLabelFont);
+
+    makeDropdown(data.availableYears, widget.dropdownYearChanged, dropdownsGroup, 0, getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels, true, data.dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.yearSelected, () => {}, () => {}, [], data.dropdownBorderRadius)
+
+    //Month Dropdown
+    dropdownsGroup.append('text')
+      .attr('dominant-baseline', 'hanging')
+      .attr('x', data.dateDropdownWidth + data.paddingBetweenDropdowns + 10)
+      .text('Month')
+      .attr('fill', data.dropdownLabelColor)
+      .style('font', data.dropdownLabelFont);
+
+    makeDropdown(data.availableDates[widget.yearSelected], widget.dropdownMonthChanged, dropdownsGroup, data.dateDropdownWidth + data.paddingBetweenDropdowns, getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels, true, data.dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.monthSelected, () => {}, () => {}, [], data.dropdownBorderRadius)
+
+      
+    console.log(data)
 
 	};
 	

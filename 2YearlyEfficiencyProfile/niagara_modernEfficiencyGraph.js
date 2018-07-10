@@ -756,7 +756,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
 
-		/*** click TO STICK FUNCTIONS ****/
+		/*** CLICK TO STICK FUNCTIONS ****/
 		function openTooltip (d, i) {
 			svg.selectAll('.' + d.month)
 				.attr('r', data.dataPointRadius * 1.5)
@@ -813,7 +813,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		}
 
 		function toggleTooltipPin (d, i) {
-			// d3.event.stopPropagation();
 			if (widget.pinned === d) {
 				resetPins();
 			} else {
