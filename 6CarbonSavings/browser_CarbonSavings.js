@@ -239,7 +239,7 @@ function defineFuncForTabSpacing () {
       value: '12pt Nirmala UI',
 			typeSpec: 'gx:Font'
     },
-	/* PADDING AND SIZING*/
+	/* PADDING AND SIZING */
 		{
 			name: 'paddingBetweenRows',
 			value: 30
@@ -311,10 +311,6 @@ function defineFuncForTabSpacing () {
 		// FROM JQ //
 		data.jqHeight = 460;
 		data.jqWidth = 450;
-
-
-
-
 
 
     // SIZING //
@@ -725,12 +721,6 @@ function defineFuncForTabSpacing () {
 
 
     //************************ DROPDOWNS *************************//
-
-
-
-
-    // APPEND DROPDOWNS
-
     const dropdownsGroup = widget.svg.append('g')
       .attr('class', 'dropdownsGroup')
       .attr('transform', `translate(${data.margin + data.paddingLeftOfDropdowns},${data.margin})`)

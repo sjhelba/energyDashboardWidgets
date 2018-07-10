@@ -126,7 +126,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
     }
     return dropdownGroup;
   }
-  
+	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
   const formatNumber = d3.format(`,.${0}f`)
   const getTextWidth = (text, font) => {
@@ -162,7 +162,24 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
     // check primitives for equivalence
     if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
     //check obj of primitives for equivalence
-    if (!arePrimitiveValsInObjsSame(lastData.savings, newData.savings)) return true;
+    if (!arePrimitiveValsInObjsSame(lastData.monthlyBaselineKwh, newData.monthlyBaselineKwh)) return true;
+    //check objs of objs of objs of primitives for equivalence (datedSavings)
+    const lastDataYearKeys = Object.keys(lastData.datedSavings);
+    const newDataYearKeys = Object.keys(newData.datedSavings);
+    if (lastDataYearKeys.length !== newDataYearKeys.length) return true;
+    const discrepencyFound = lastDataYearKeys.some(year => {
+      const lastDataMonthKeys = Object.keys(lastData.datedSavings[year]);
+      const newDataMonthKeys = Object.keys(newData.datedSavings[year]);
+      if (lastDataMonthKeys.length !== newDataMonthKeys.length) return true;
+      const innerDiscrepencyFound = lastDataMonthKeys.some(month => {
+        if (!arePrimitiveValsInObjsSame(lastData.datedSavings[year][month], newData.datedSavings[year][month])) return true;
+        return false;
+      })
+      if (innerDiscrepencyFound) return true;
+      return false;
+    })
+    if (discrepencyFound) return true;
+
     //return false if nothing prompted true
     return false;
   };
@@ -184,6 +201,16 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
         value: '#F5F5f5',
         typeSpec: 'gx:Color'
       },
+      {
+        name: 'dropdownFillColor',
+        value: 'white',
+        typeSpec: 'gx:Color'
+      },
+      {
+        name: 'hoveredFillColor',
+        value: '#d5d6d4',
+        typeSpec: 'gx:Color'
+      },
       //text
       {
         name: 'numbersTextColor',
@@ -195,12 +222,23 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
         value: '#606060',
         typeSpec: 'gx:Color'
       },
-      /* FONT */
       {
-        name: 'lastMonthFont',
-        value: 'bold 13.0pt Nirmala UI',
-        typeSpec: 'gx:Font'
+        name: 'dropdownLabelColor',
+        value: '#333333',
+        typeSpec: 'gx:Color'
       },
+      {
+        name: 'dropdownTextColor',
+        value: 'black',
+        typeSpec: 'gx:Color'
+      },
+      //strokes
+      {
+        name: 'dropdownStrokeColor',
+        value: 'black',
+        typeSpec: 'gx:Color'
+      },
+      /* FONT */
       {
         name: 'numbersFont',
         value: 'bold 35.0pt Nirmala UI',
@@ -216,7 +254,17 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
         value: '8.0pt Nirmala UI',
         typeSpec: 'gx:Font'
       },
-      /* PADDING */
+      {
+        name: 'dropdownLabelFont',
+        value: 'bold 11pt Nirmala UI',
+        typeSpec: 'gx:Font'
+      },
+      {
+        name: 'dropdownFont',
+        value: '12pt Nirmala UI',
+        typeSpec: 'gx:Font'
+      },
+      /* PADDING AND SIZING */
       {
         name: 'paddingBetweenRows',
         value: 30
@@ -232,6 +280,26 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       {
         name: 'additionalNumbersSpacing',
         value: 0
+      },
+      {
+        name: 'paddingLeftOfDropdowns',
+        value: 5
+      },
+      {
+        name: 'paddingUnderDropdownLabels',
+        value: 8
+      },
+      {
+        name: 'dateDropdownWidth',
+        value: 100
+      },
+      {
+        name: 'dropdownBorderRadius',
+        value: 5
+      },
+      {
+        name: 'paddingBetweenDropdowns',
+        value: 25
       },
       /* OTHER */
       {
@@ -282,18 +350,31 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
     // SIZING //
-    data.graphicHeight = data.jqHeight - (data.margin * 2);
+    data.dropdownGroupHeight = data.margin + getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels + getTextHeight(data.dropdownFont) + data.margin;
+    data.graphicHeight = data.jqHeight - (data.dropdownGroupHeight + data.margin);
     data.graphicWidth = data.jqWidth - (data.margin * 2);
-    data.rowHeight = (data.graphicHeight - ((data.paddingBetweenRows * 3) + getTextHeight(data.lastMonthFont) + data.paddingWithinRows)) / 4;
-    data.imgSize = data.rowHeight - (getTextHeight(data.descriptionsFont));
+    data.rowHeight = (data.graphicHeight - ((data.paddingBetweenRows * 3) + data.paddingWithinRows)) / 4;    data.imgSize = data.rowHeight - (getTextHeight(data.descriptionsFont));
     data.halfImgWidth = data.imgSize / 2;
     data.centerOfRow = data.graphicWidth / 2;
     data.centerLeftOfImg = (data.centerOfRow - (data.halfImgWidth + data.paddingWithinRows)) / 2;
     data.rightOfImg = data.centerOfRow + data.halfImgWidth + data.paddingWithinRows;
 
     // DATA TO POPULATE //
-    data.savings = {
-      baselineKwh: 0,
+    data.monthlyBaselineKwh = {
+      Jan: 0,
+      Feb: 0,
+      Mar: 0,
+      Apr: 0,
+      May: 0,
+      Jun: 0,
+      Jul: 0,
+      Aug: 0,
+      Sep: 0,
+      Oct: 0,
+      Nov: 0,
+      Dec: 0
+    };
+    const savingsDataTemplate = {    // Template used in data collection. Added to each new month measured data available for in data.datedSavings
       measuredKwh: 0,
       kwhSaved: 0,
       tonsCo2: 0,
@@ -301,18 +382,54 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       co2Emissions: 0,
       carbonSequestered: 0
     };
+    data.availableDates = {};  /*
+    e.g.: {
+      2016: ['Oct', 'Nov', 'Dec'],
+      2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      2018: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+    }
+    */
+
+    data.datedSavings = {};  /*
+    eg: {
+      2016: {
+        Nov: {
+          measuredKwh: 5345350,
+          kwhSaved: 361557,
+          tonsCo2: 297,
+          greenhouseGas: 58,
+          co2Emissions: 29,
+          carbonSequestered: 317
+        },
+        Dec: {
+          measuredKwh: 5345350,
+          kwhSaved: 361557,
+          tonsCo2: 297,
+          greenhouseGas: 58,
+          co2Emissions: 29,
+          carbonSequestered: 317
+        }
+      },
+      2017: {
+        Jan: {
+          measuredKwh: 5345350,
+          kwhSaved: 361557,
+          tonsCo2: 297,
+          greenhouseGas: 58,
+          co2Emissions: 29,
+          carbonSequestered: 317
+        }
+      }
+    }
+    */
 
     // GET DATA
-    const today = new Date();
-    const thisMonthIndex = today.getMonth()
-    const lastMonthIndex = thisMonthIndex ? thisMonthIndex - 1 : 11;
-
     const baselinePromises = [];
     const measuredPromises = [];
     equipmentGroups.forEach(eq => {
       if (data[`include${eq}`]) {
         baselinePromises.push(widget.resolve(`history:^${eq}_BlKwHm`))
-        measuredPromises.push(widget.resolve(`history:^${eq}_MsKwHm|bql:select * where timestamp in bqltime.lastmonth`))
+        measuredPromises.push(widget.resolve(`history:^${eq}_MsKwHm`))
       }
     })
     return Promise.all(baselinePromises)
@@ -320,13 +437,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
         const populateBaselineHistories = historyTable => {
           return historyTable.cursor({
-            limit: 3000,  // default is 10
+            limit: 300,  // default is 10
             each: function (row, idx) {
               const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
               const rowMonthIndex = timestamp.getMonth();
-              if (rowMonthIndex === lastMonthIndex) {
-                data.savings.baselineKwh += (+row.get('value'));
-              }
+              data.monthlyBaselineKwh[months[rowMonthIndex]] += (+row.get('value'));
             }
           })
         }
@@ -343,9 +458,20 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
         const populateMeasuredHistories = historyTable => {
           return historyTable.cursor({
-            limit: 1,  // default is 10
+            limit: 70000,  // default is 10
             each: function (row, idx) {
-              data.savings.measuredKwh += (+row.get('value'));
+              const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+              const rowMonthIndex = timestamp.getMonth();
+              const rowYear = timestamp.getFullYear();
+              if (!data.availableDates[rowYear]) {
+                data.availableDates[rowYear] = [];
+                data.datedSavings[rowYear] = {};
+              }
+              if (!data.availableDates[rowYear].includes(months[rowMonthIndex])) {
+                data.availableDates[rowYear].push(months[rowMonthIndex]);
+                data.datedSavings[rowYear][months[rowMonthIndex]] = Object.assign({}, savingsDataTemplate);
+              }
+              data.datedSavings[rowYear][months[rowMonthIndex]].measuredKwh += (+row.get('value'));
             }
           })
         }
@@ -358,23 +484,44 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       })
       .catch(err => console.error('measured history cursors failed: ' + err))
       .then(folders => {
-        if ((!data.savings.measuredKwh || !data.savings.baselineKwh) || data.savings.baselineKwh < data.savings.measuredKwh) {
-          data.savings.kwhSaved = '-';
-          data.savings.tonsCo2 = '-';
-          data.savings.greenhouseGas = '-';
-          data.savings.co2Emissions = '-';
-          data.savings.carbonSequestered = '-';
-        } else {
-          data.savings.kwhSaved = Math.round(data.savings.baselineKwh - data.savings.measuredKwh);
-          data.savings.tonsCo2 = Math.round(0.00082035 * data.savings.kwhSaved);
-          data.savings.greenhouseGas = formatNumber(data.savings.tonsCo2 / 5.153);
-          data.savings.co2Emissions = formatNumber(data.savings.tonsCo2 / 10.207);
-          data.savings.carbonSequestered = formatNumber(data.savings.tonsCo2 / 0.936);
+        data.availableYears = Object.keys(data.availableDates).sort((a, b) => b - a);
+        data.noMeasuredData = data.availableYears.length ? false : true;
+        data.availableYears.forEach(year => {
+          data.availableDates[year].forEach(month => {
+            const monthDataObject = data.datedSavings[year][month];
+            if (data.monthlyBaselineKwh[month] < monthDataObject.measuredKwh) {
+              monthDataObject.kwhSaved = '-';
+              monthDataObject.tonsCo2 = '-';
+              monthDataObject.greenhouseGas = '-';
+              monthDataObject.co2Emissions = '-';
+              monthDataObject.carbonSequestered = '-';
+            } else {
+              monthDataObject.kwhSaved = Math.round(data.monthlyBaselineKwh[month] - monthDataObject.measuredKwh);
+              monthDataObject.tonsCo2 = Math.round(0.00082035 * monthDataObject.kwhSaved);
+              monthDataObject.greenhouseGas = formatNumber(monthDataObject.tonsCo2 / 5.153);
+              monthDataObject.co2Emissions = formatNumber(monthDataObject.tonsCo2 / 10.207);
+              monthDataObject.carbonSequestered = formatNumber(monthDataObject.tonsCo2 / 0.936);
+              monthDataObject.kwhSaved = formatNumber(monthDataObject.kwhSaved);
+              monthDataObject.tonsCo2 = formatNumber(monthDataObject.tonsCo2);
+            }
+          })
+        })
 
-          data.savings.kwhSaved = formatNumber(data.savings.kwhSaved);
-          data.savings.tonsCo2 = formatNumber(data.savings.tonsCo2);
+        // GLOBAL DROPDOWN DATA //
+        if (!widget.yearSelected) widget.yearSelected = data.availableYears[0];
+        if (!widget.monthSelected) widget.monthSelected = data.availableDates[widget.yearSelected][data.availableDates[widget.yearSelected].length - 1];
+        if (!widget.updateDateWidgetRendering) widget.updateDateWidgetRendering = () => {
+          render(widget, true);
         }
-
+        if (!widget.dropdownYearChanged) widget.dropdownYearChanged = val => {
+          widget.yearSelected = val;
+          widget.monthSelected = data.availableDates[widget.yearSelected].includes(widget.monthSelected) ? widget.monthSelected : data.availableDates[widget.yearSelected][data.availableDates[widget.yearSelected].length - 1];
+          widget.updateDateWidgetRendering();
+        };
+        if (!widget.dropdownMonthChanged) widget.dropdownMonthChanged = val => {
+          widget.monthSelected = val;
+          widget.updateDateWidgetRendering();
+        };
 
 
         return data;
@@ -390,24 +537,19 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
   ////////////////////////////////////////////////////////////////
 
   const renderWidget = (widget, data) => {
-    d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
+    d3.select(widget.svg.node().parentNode)
+      .style('background-color', data.backgroundColor)
+
     // delete leftover elements from versions previously rendered
     if (!widget.svg.empty()) resetElements(widget.svg, '*');
 
     // ********************************************* ROWS AND TITLE ******************************************************* //
     const graphicGroup = widget.svg.append('g')
       .attr('class', 'graphicGroup')
-      .attr('transform', `translate(${data.margin},${data.margin})`);
-
-    graphicGroup.append('text')
-      .text('Last Month')
-      .style('font', data.lastMonthFont)
-      .attr('fill', data.descriptionsFont)
-      .attr('dominant-baseline', 'hanging')
+      .attr('transform', `translate(${data.margin},${data.dropdownGroupHeight})`);
 
     const rowsGroup = graphicGroup.append('g')
       .attr('class', 'rowsGroup')
-      .attr('transform', `translate(0,${getTextHeight(data.lastMonthFont)})`);
 
     const row1 = rowsGroup.append('g')
       .attr('class', 'row1')
@@ -440,19 +582,19 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
     // ********************************************* ROW1 ******************************************************* //
     row1.append('text')
-      .text(data.savings.kwhSaved)
+      .text(data.noMeasuredData ? '-' : data.datedSavings[widget.yearSelected][widget.monthSelected].kwhSaved)
       .style('font', data.numbersFont)
       .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
 
     
-    const tonsCo2Width = getTextWidth(data.savings.tonsCo2, data.numbersFont);
+    const tonsCo2Width = getTextWidth(data.noMeasuredData ? '-' : data.datedSavings[widget.yearSelected][widget.monthSelected].tonsCo2, data.numbersFont);
     const centerOfTonsCo2 = data.centerOfRow + (data.graphicWidth / 4);
     const leftOfTonsCo2 = centerOfTonsCo2 - (tonsCo2Width / 2);
     const midwayBetweenCenterOfRowAndTonsCo2 = data.centerOfRow + ( (leftOfTonsCo2 - data.centerOfRow) / 2)
 
     row1.append('text')
-      .text(data.savings.tonsCo2)
+      .text(data.noMeasuredData ? '-' : data.datedSavings[widget.yearSelected][widget.monthSelected].tonsCo2)
       .style('font', data.numbersFont)
       .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
@@ -466,6 +608,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       .attr('dominant-baseline', 'hanging')
       .attr('x', midwayBetweenCenterOfRowAndTonsCo2)
       .attr('text-anchor', 'middle')
+
 
     row1Descriptions.append('text')
       .text('Kilowatt-Hours Saved')
@@ -496,7 +639,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       .attr('dominant-baseline', 'hanging')
 
     row2Graphic.append('text')
-      .text(data.savings.greenhouseGas)
+      .text(data.noMeasuredData ? '-' : data.datedSavings[widget.yearSelected][widget.monthSelected].greenhouseGas)
       .style('font', data.numbersFont)
       .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
@@ -550,7 +693,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       .attr('x', getTextWidth('CO ', data.descriptionsFont) + getTextWidth('2', data.base2Font))  //space added in x due to preceeding space not counting in d3 text
 
     row3Graphic.append('text')
-      .text(data.savings.co2Emissions)
+      .text(data.noMeasuredData ? '-' : data.datedSavings[widget.yearSelected][widget.monthSelected].co2Emissions)
       .style('font', data.numbersFont)
       .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
@@ -592,7 +735,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
     row4Graphic.append('text')
-      .text(data.savings.carbonSequestered)
+      .text(data.noMeasuredData ? '-' : data.datedSavings[widget.yearSelected][widget.monthSelected].carbonSequestered)
       .style('font', data.numbersFont)
       .attr('fill', data.numbersTextColor)
       .attr('dominant-baseline', 'hanging')
@@ -625,6 +768,37 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
 
+    //************************ DROPDOWNS *************************//
+    const dropdownsGroup = widget.svg.append('g')
+      .attr('class', 'dropdownsGroup')
+      .attr('transform', `translate(${data.margin + data.paddingLeftOfDropdowns},${data.margin})`)
+
+    //Year Dropdown
+    dropdownsGroup.append('text')
+      .attr('dominant-baseline', 'hanging')
+      .text('Year')
+      .attr('x', 5)
+      .attr('fill', data.dropdownLabelColor)
+      .style('font', data.dropdownLabelFont);
+
+    makeDropdown(data.availableYears, widget.dropdownYearChanged, dropdownsGroup, 0, getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels, true, data.dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.yearSelected, () => {}, () => {}, [], data.dropdownBorderRadius)
+
+    //Month Dropdown
+    dropdownsGroup.append('text')
+      .attr('dominant-baseline', 'hanging')
+      .attr('x', data.dateDropdownWidth + data.paddingBetweenDropdowns + 10)
+      .text('Month')
+      .attr('fill', data.dropdownLabelColor)
+      .style('font', data.dropdownLabelFont);
+
+    makeDropdown(data.availableDates[widget.yearSelected], widget.dropdownMonthChanged, dropdownsGroup, data.dateDropdownWidth + data.paddingBetweenDropdowns, getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels, true, data.dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.monthSelected, () => {}, () => {}, [], data.dropdownBorderRadius)
+
+
+
+
+
+
+
 
 
   };
@@ -632,11 +806,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
 
-  function render(widget) {
+  function render(widget, force) {
     // invoking setupDefinitions, then returning value from successful promise to renderWidget func
     return setupDefinitions(widget)
       .then(data => {
-        if (!widget.data || needToRedrawWidget(widget, data)) {
+        if (force || !widget.data || needToRedrawWidget(widget, data)) {
 					widget.data = data;
 					renderWidget(widget, data);
 				}
