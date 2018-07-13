@@ -6,6 +6,130 @@ const width = 365;
 /*** DEFS ***/
 
 // hard coded
+function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection => console.log('selected: ' + valOfSelection), elementToAppendTo = d3.select('svg'), x = 5, y = 50, leftAligned = true, minDropdownWidth = 125, horizontalPadding = 5, verticalPadding = 5, strokeColor = 'black', backgroundFill = 'white', hoveredFill = '#d5d6d4', font = '10.0pt Nirmala UI', textColor = 'black', defaultSelection, funcToRunOnOpen, funcToRunOnClose, arrOfArgsToPassInToFuncsAfterVal, dropdownBorderRadius = 5) {
+	const arrowWidth = getTextWidth('8', font) / 1.5;
+	const textWidth = (arrowWidth * 2) + arrOfOptions.reduce((accum, curr) => {
+		let currTextWidth = getTextWidth(curr, font);
+		return currTextWidth > accum ? currTextWidth : accum;
+	}, 0);
+	const textHeight = getTextHeight(font);
+	const dropdownWidth = minDropdownWidth > textWidth + (horizontalPadding * 2) ? minDropdownWidth : textWidth + (horizontalPadding * 2);
+	const rowHeight = textHeight + (verticalPadding * 2);
+	const textY = verticalPadding + (textHeight / 2);
+	let clickedSelection = defaultSelection || defaultSelection === 0 ? defaultSelection : arrOfOptions[0];
+	const dropdownHeight = rowHeight * (arrOfOptions.length + 1);
+	let open = false;
+	function generatePath () {
+		let x1, y1, x2, y2, x3, y3;
+		x1 = dropdownWidth - (horizontalPadding + arrowWidth);
+		x2 = x1 + arrowWidth;
+		x3 = x1 + (arrowWidth / 2);
+		y1 = textY;
+		y2 = textY;
+		y3 = textY + (arrowWidth / 2);
+		return `M${x1},${y1} L${x2},${y2} L${x3},${y3} z`;
+	}
+	// dropdownGroup
+	const dropdownGroup = elementToAppendTo.append('g')
+		.attr('class', 'dropdownGroup')
+		.attr('transform', `translate(${x + 6},${y + 6})`)
+	//outer container
+	const outerContainer = dropdownGroup.append('rect')
+		.attr('class', 'outerContainerRect')
+		.attr('width', dropdownWidth + 12)
+		.attr('height', rowHeight + 12)
+		.attr('fill', backgroundFill)
+		.attr('rx', dropdownBorderRadius)
+		.attr('stroke', strokeColor)
+		.attr('x', - 6)
+		.attr('y', - 6)
+		.attr('stroke-width', '0.5px')
+		.on('click', function () {
+			toggleDrop()
+		})
+	//rows
+	const dropdownRows = dropdownGroup.selectAll('.dropdownRows')
+		.data(arrOfOptions)
+		.enter().append('g')
+			.attr('class', (d, i) => 'dropdownRows ' + i + 'dropdownRow')
+			.attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : 'translate(0,0)')
+			.on('mouseenter', function() {
+				dropdownRows.selectAll('rect').attr('fill', backgroundFill);
+				d3.select(this).select('rect').attr('fill', hoveredFill);
+			})
+			.on('mouseleave', function() {
+				d3.select(this).select('rect').attr('fill', backgroundFill);
+			})
+			.on('click', function (d) {
+				changeClickedSelection(d);
+				toggleDrop();
+			});
+	const rowRects = dropdownRows.append('rect')
+		.attr('class', (d, i) => 'rowRect ' + i + 'rowRect')
+		.attr('width', dropdownWidth)
+		.attr('height', rowHeight)
+		.attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill)
+	dropdownRows.append('text')
+		.attr('class', (d, i) => 'rowText ' + i + 'rowText')
+		.text(d => d)
+		.attr('dominant-baseline', 'middle')
+		.attr('x', d => leftAligned ? horizontalPadding : (dropdownWidth / 2) - (getTextWidth(d, font) / 2))
+		.attr('y', textY)
+		.style('font', font)
+		.style('fill', textColor)
+		.style('cursor', 'default')
+	// Selected window
+	const selectedGroup = dropdownGroup.append('g')
+		.attr('class', 'selectedGroup')
+		.on('mouseenter', function() {
+			selectedRect.attr('fill', hoveredFill);
+		})
+		.on('mouseleave', function() {
+			if (!open) selectedRect.attr('fill', backgroundFill);
+		})
+		.on('click', function () {
+			toggleDrop()
+		});
+	const selectedRect = selectedGroup.append('rect')
+		.attr('class', 'selectedRect')
+		.attr('width', dropdownWidth)
+		.attr('height', rowHeight)
+		.attr('fill', backgroundFill)
+	const selectedText = selectedGroup.append('text')
+		.attr('class', 'selectedText')
+		.text(clickedSelection)
+		.attr('dominant-baseline', 'middle')
+		.attr('x', leftAligned ? horizontalPadding : ((dropdownWidth - (arrowWidth * 2)) / 2) - ((getTextWidth(clickedSelection, font)) / 2))
+		.attr('y', textY)
+		.style('font', font)
+		.style('fill', textColor)
+		.style('cursor', 'default')
+	selectedGroup.append('path')
+		.attr('class', 'arrowPath')
+		.attr('d', generatePath())
+		.attr('fill', textColor)
+		.attr('stroke', textColor)
+	function changeClickedSelection (newSelectionValue) {
+		selectedRect.attr('fill', backgroundFill);
+		clickedSelection = newSelectionValue;
+		selectedText.text(clickedSelection);
+		funcToRunOnSelection(newSelectionValue, ...arrOfArgsToPassInToFuncsAfterVal);
+	}
+	function toggleDrop () {
+		open = !open;
+		if (open) {
+			funcToRunOnOpen(...arrOfArgsToPassInToFuncsAfterVal)
+		} else {
+			funcToRunOnClose(...arrOfArgsToPassInToFuncsAfterVal)
+		}
+		rowRects.attr('fill', d => d === clickedSelection ? hoveredFill : backgroundFill);
+		outerContainer.transition()
+			.attr('height', open ? dropdownHeight + 12: rowHeight + 12);
+		dropdownRows.transition()
+			.attr('transform', (d, i) => open ? `translate(0, ${rowHeight * (i + 1)})` : `translate(0,0)`);
+	}
+	return dropdownGroup;
+}
 const getTextWidth = (text, font) => {
 	const canvas = document.createElement('canvas');
 	const context = canvas.getContext('2d');
@@ -13,6 +137,15 @@ const getTextWidth = (text, font) => {
 	const width = context.measureText(text).width;
 	d3.select(canvas).remove()
 	return width;
+};
+const getTextHeight = font => {
+	let num = '';
+	const indexOfLastDigit = font.indexOf('pt') - 1;
+	for (let i = 0; i <= indexOfLastDigit; i++){
+		if (!isNaN(font[i]) || font[i] === '.') num += font[i];
+	}
+	num = +num;
+	return num * 1.33333333333;
 };
 const margin = { top: 5, left: 5, right: 5, bottom: (height * 0.02) + 5 };
 const normalArcOpacity = 0.9;
@@ -69,6 +202,69 @@ const data = {
 };
 
 
+const properties = [
+	{
+		name: 'dropdownFillColor',
+		value: 'white',
+		typeSpec: 'gx:Color'
+	},
+	{
+		name: 'hoveredFillColor',
+		value: '#d5d6d4',
+		typeSpec: 'gx:Color'
+	},
+	{
+		name: 'dropdownLabelColor',
+		value: '#333333',
+		typeSpec: 'gx:Color'
+	},
+	{
+		name: 'dropdownTextColor',
+		value: 'black',
+		typeSpec: 'gx:Color'
+	},
+	{
+		name: 'dropdownStrokeColor',
+		value: 'black',
+		typeSpec: 'gx:Color'
+	},
+	{
+		name: 'dropdownLabelFont',
+		value: 'bold 11pt Nirmala UI',
+		typeSpec: 'gx:Font'
+	},
+	{
+		name: 'dropdownFont',
+		value: '11pt Nirmala UI',
+		typeSpec: 'gx:Font'
+	},
+	{
+		name: 'paddingLeftOfDropdowns',
+		value: 5
+	},
+	{
+		name: 'paddingUnderDropdownLabels',
+		value: 8
+	},
+	{
+		name: 'dateDropdownWidth',
+		value: 100
+	},
+	{
+		name: 'dropdownBorderRadius',
+		value: 5
+	},
+	{
+		name: 'paddingBetweenDropdowns',
+		value: 25
+	},
+	{
+		name: 'paddingUnderDropdowns',
+		value: 15
+	}
+];
+
+properties.forEach(prop => data[prop.name] = prop.value);
 
 // other sources:
 
@@ -81,6 +277,13 @@ data.activeModule = 'none'
 data.percentIsHovered = false;
 
 // calculated
+	// SIZING //
+data.dropdownGroupHeight = margin.top + getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels + getTextHeight(data.dropdownFont) + data.paddingUnderDropdowns;
+data.graphicHeight = data.graphicHeight - (data.dropdownGroupHeight + margin.top);
+data.graphicWidth = data.graphicWidth - (margin.left + margin.right);
+
+
+
 data.maxTooltipTextWidths = {
 	type: getTextWidth('TWPs:', 'bold ' + data.tooltipFont),
 	hours: getTextWidth('5555 HRS', data.tooltipFont),
@@ -101,7 +304,7 @@ data.tooltipDiameter = (data.overallInnerRadius * 2) - data.tooltipPadding || 18
 
 
 
-
+// IGNORE OLD DATA COLLECTION HERE FOR NIAGARA VERSION
 // TODO: Calculate from data resolves and props 
 //Chillers
 const CHS = { type: 'CHs', optimizedHours: 1199, standardHours: 1200, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined, color: data.color_CHs };
@@ -140,15 +343,47 @@ data.overallData = [{ category: 'standard', hours: standardHours }, { category: 
 data.percent = formatIntoPercentage(data.overallData[1].hours / (data.overallData[0].hours + data.overallData[1].hours));
 
 
-data.legendWidth = data.moduleOuterRadius * 2;
+data.legendWidth = width - ((margin.left * 4) + (margin.right * 4));
 data.legendColorRectsWidth = data.legendWidth / data.modulesData.length;
+
 
 
 
 data.percentDescriptionRectWidth = getTextWidth(percentageDescription, data.percentDescriptionFont) + 10;
 
+
+
+
+/* fake data for dropdowns */
+data.availableDates = {   // In Niagara version, this should be an empty object filled in with measured data
+	2016: ['Oct', 'Nov', 'Dec'],
+	2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+	2018: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+};  
+data.availableYears = Object.keys(data.availableDates).sort((a, b) => b - a);
+
+
+
+//GLOBAL VARS
 if (!widget.legendPinned) widget.legendPinned = 'none';
 if (!widget.overallPinned) widget.overallPinned = 'none';
+	//for dropdowns
+if (!widget.yearSelected) widget.yearSelected = data.availableYears[0];
+if (!widget.monthSelected) widget.monthSelected = data.availableDates[widget.yearSelected][data.availableDates[widget.yearSelected].length - 1];
+if (!widget.updateDateWidgetRendering) widget.updateDateWidgetRendering = () => {
+	// renderWidget(data);
+	console.log('rerender widget for ' + widget.monthSelected + ' ' + widget.yearSelected);
+}
+if (!widget.dropdownYearChanged) widget.dropdownYearChanged = val => {
+	widget.yearSelected = val;
+	widget.monthSelected = data.availableDates[widget.yearSelected].includes(widget.monthSelected) ? widget.monthSelected : data.availableDates[widget.yearSelected][data.availableDates[widget.yearSelected].length - 1];
+	widget.updateDateWidgetRendering();
+};
+if (!widget.dropdownMonthChanged) widget.dropdownMonthChanged = val => {
+	widget.monthSelected = val;
+	widget.updateDateWidgetRendering();
+};
+
 
 
 
@@ -160,8 +395,9 @@ const outerDiv = d3.select('#outer')
 	.style('width', width + 'px')
 widget.svg = outerDiv.append('svg')
 	.attr('class', 'log')
-	.attr('width', '95%')
-	.attr('height', '95%');
+	.attr('width', '100%')
+	.attr('height', '100%')
+	.style('overflow', 'hidden');
 
 
 d3.select(widget.svg.node().parentNode)
@@ -171,25 +407,21 @@ d3.select(widget.svg.node().parentNode)
 		resetOverallPins();
 	})
 
-const graphicGroup = widget.svg.append('g').attr('class', 'graphicGroup');
-const graphicRectForTestingOnly = graphicGroup.append('rect')	//TODO: Remove
-	.attr('fill', 'none')
-	.attr('stroke', 'black')
-	.attr('height', data.graphicHeight)
-	.attr('width', data.graphicWidth)
+const graphicGroup = widget.svg.append('g')
+	.attr('class', 'graphicGroup')
+	.attr('transform', `translate(0,${data.dropdownGroupHeight})`);
 
 
 
 
 
-
-
+	
 
 /*** ARCS ***/
 
 const allDonutGroupsGroup = graphicGroup.append('g')
 	.attr('class', 'allDonutGroupsGroup')
-	.attr('transform', `translate(${(data.graphicWidth - (margin.left + margin.right)) / 2}, ${margin.top + data.hoveredOuterRadius})`)
+	.attr('transform', `translate(${(data.graphicWidth - (margin.left + margin.right)) / 2}, ${data.hoveredOuterRadius})`)
 
 
 //overall arcs
@@ -481,7 +713,7 @@ standardPathsHoverArc
 
 /*** LEGEND ***/
 
-const legendGroup = graphicGroup.append('g').attr('transform', `translate(${((data.graphicWidth - (margin.left + margin.right)) / 2) - (data.legendWidth / 2)}, ${margin.top + (data.hoveredOuterRadius * 2) + data.paddingAboveLegendBars})`);
+const legendGroup = widget.svg.append('g').attr('transform', `translate(${margin.left * 4}, ${margin.top + (data.hoveredOuterRadius * 2) + data.paddingAboveLegendBars + data.dropdownGroupHeight})`);
 
 const legendModuleGroups = legendGroup.selectAll('.legendModuleGroup')
 	.data(data.modulesData)
@@ -569,11 +801,41 @@ function renderPercentageDescription() {
 			.text(percentageDescription)
 			.attr('pointer-events', 'none');
 	}
-	console.log('data: ', data)
 }
-
-
 renderPercentageDescription();
+
+
+
+
+
+
+//************************ DROPDOWNS *************************//
+const dropdownsGroup = widget.svg.append('g')
+	.attr('class', 'dropdownsGroup')
+	.attr('transform', `translate(${margin.left + data.paddingLeftOfDropdowns},${margin.top})`)
+
+//Year Dropdown
+dropdownsGroup.append('text')
+	.attr('dominant-baseline', 'hanging')
+	.text('Year')
+	.attr('x', 5)
+	.attr('fill', data.dropdownLabelColor)
+	.style('font', data.dropdownLabelFont);
+
+makeDropdown(data.availableYears, widget.dropdownYearChanged, dropdownsGroup, 0, getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels, true, data.dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.yearSelected, () => {}, () => {}, [], data.dropdownBorderRadius)
+
+//Month Dropdown
+dropdownsGroup.append('text')
+	.attr('dominant-baseline', 'hanging')
+	.attr('x', data.dateDropdownWidth + data.paddingBetweenDropdowns + 10)
+	.text('Month')
+	.attr('fill', data.dropdownLabelColor)
+	.style('font', data.dropdownLabelFont);
+
+makeDropdown(data.availableDates[widget.yearSelected], widget.dropdownMonthChanged, dropdownsGroup, data.dateDropdownWidth + data.paddingBetweenDropdowns, getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels, true, data.dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.monthSelected, () => {}, () => {}, [], data.dropdownBorderRadius)
+
+
+
 
 
 
