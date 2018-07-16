@@ -152,14 +152,32 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	const percentDescriptionRectOpacity = 0.8
 	const moduleNamesForHistories = {CHs: 'Chillers', PCPs: 'Pcwps', SCPs: 'Scwps', TWPs: 'Twps', CTFs: 'Towers'};
 	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
+	// 0 layers means obj only has primitive values
+	// this func only works with obj literals layered with obj literals until base layer only primitive
+	const checkNestedObjectsEquivalence = (objA, objB, layers) => {
+		if (layers === 0) {
+			return arePrimitiveValsInObjsSame(objA, objB);
+		} else {
+			const objAKeys = Object.keys(objA);
+			const objBKeys = Object.keys(objB);
+			if (objAKeys.length !== objBKeys.length) return false;
+			const somethingIsNotEquivalent = objAKeys.some(key => {
+				return !checkNestedObjectsEquivalence(objA[key], objB[key], layers - 1);
+			})
+			return !somethingIsNotEquivalent;
+		}
+	};
 	const needToRedrawWidget = (widget, newData) => {
 		const lastData = widget.data;
 		// check primitives for equivalence
 		if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
-		// check nested modulesData arr for equivalence
-		if (lastData.modulesArray.length !== newData.modulesArray.length) return true;
-		const isDiscrepency = lastData.modulesArray.some((obj, objIndex) => !arePrimitiveValsInObjsSame(obj, newData.modulesArray[objIndex]));
-		if (isDiscrepency) return true;
+		// check nested objs for equivalence
+		const monthlyModulesAreSame = checkNestedObjectsEquivalence(lastData.monthlyModulesData, newData.monthlyModulesData, 3);
+		const monthlyOverallAreSame = checkNestedObjectsEquivalence(lastData.monthlyOverallData, newData.monthlyOverallData, 2);
+		const annualModulesAreSame = checkNestedObjectsEquivalence(lastData.annualModulesData, newData.annualModulesData, 2);
+		const annualOverallAreSame = checkNestedObjectsEquivalence(lastData.annualOverallData, newData.annualOverallData, 1);
+		if (!monthlyModulesAreSame || !monthlyOverallAreSame || !annualModulesAreSame || !annualOverallAreSame) return true;
+
 		//return false if nothing prompted true
 		return false;
 	};
@@ -540,10 +558,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		data.modulesArray.forEach(eqGroup => {
 			const historyNameForEqType = moduleNamesForHistories[eqGroup.type];
-			optHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_OptHrsHm`);
-			optHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_OptHrsCm`);
-			stdHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_StdHrsHm`)
-			stdHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_StdHrsCm`)
+			optHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_OpthHm`);
+			optHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_OpthCm`);
+			stdHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_StdhHm`)
+			stdHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_StdhCm`)
 		})
 
 		function iterateThrough(table, type, optimized) {
@@ -1371,11 +1389,11 @@ makeDropdown(data.availableDates[widget.yearSelected], widget.dropdownMonthChang
 	CxOptimizationHoursLog.prototype.doInitialize = function (element) {
 		var that = this;
 		element.addClass("CxOptimizationHoursLogOuter");
-
-		that.svg = d3.select(element[0]).append('svg')
+		
+		const outerContainer = d3.select(element[0])
+			.style('overflow', 'hidden')
+		that.svg = outerContainer.append('svg')
 			.attr('class', 'CxOptimizationHoursLog')
-			.attr('top', 0)
-			.attr('left', 0)
 			.attr('width', "100%")
 			.attr('height', "100%")
 			.style('overflow', 'hidden');
