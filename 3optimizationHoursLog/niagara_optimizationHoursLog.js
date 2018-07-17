@@ -212,19 +212,19 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				value: true,
 			},
 			{
-				name: 'IncludePcwps',
+				name: 'includePcwps',
 				value: true,
 			},
 			{
-				name: 'IncludeScwps',
+				name: 'includeScwps',
 				value: true,
 			},
 			{
-				name: 'IncludeTwps',
+				name: 'includeTwps',
 				value: true,
 			},
 			{
-				name: 'IncludeTowers',
+				name: 'includeTowers',
 				value: false,
 			},
 			{
@@ -328,8 +328,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				typeSpec: 'gx:Color'
 			},
 			{
-				name: 'paddingAboveLegendBars',
-				value: 25
+				name: 'paddingAboveLegendText',
+				value: 5
 			},
 			{
 				name: 'paddingUnderLegendText',
@@ -463,8 +463,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			};
 			data.totalTooltipTextWidth = data.maxTooltipTextWidths.type + data.maxTooltipTextWidths.hours + data.maxTooltipTextWidths.percent + (data.tooltipHorizontalTextPadding * 2);
 
-			const maxChartHeight = data.graphicHeight - (data.margin.top + data.margin.bottom + data.paddingAboveLegendBars + data.paddingUnderLegendText + data.moduleArcThickness)
-			const maxChartWidth = data.graphicWidth - (data.margin.left + data.margin.right);
+			const maxChartHeight = data.graphicHeight - (data.margin.top + data.margin.bottom + data.paddingAboveLegendText + data.paddingUnderLegendText + getTextHeight(data.legendFont) + data.moduleArcThickness)
+			const maxChartWidth = data.graphicWidth;
 			data.hoveredOuterRadius = maxChartHeight < maxChartWidth ? maxChartHeight / 2 : maxChartWidth / 2;
 			data.moduleOuterRadius = data.hoveredOuterRadius - data.moduleArcThickness;
 			data.moduleInnerRadius = data.moduleOuterRadius - data.moduleArcThickness;
@@ -480,7 +480,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		/*** DATA TO POPULATE ***/
 		const hrsDataTemplate = {
-			optimizedHours: 0, standardHours: 0, totalHours: undefined, normalizedStandardHours: undefined, normalizedOptimizedHours: undefined
+			optimizedHours: 0, standardHours: 0, totalHours: 0, normalizedStandardHours: 0, normalizedOptimizedHours: 0
 		};
 		data.availableDates = {}; /*
     e.g.: {
@@ -524,40 +524,31 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		data.modulesArray = [
 			//Chillers
-			{
-				type: 'CHs',
-			},
+				'CHs',
 			//Primary Pumps
-			{
-				type: 'PCPs'
-			},
+				'PCPs',
 			//Secondary Pumps
-			{
-				type: 'SCPs'
-			},
+				'SCPs',
 			//Condenser Pumps
-			{
-				type: 'TWPs'
-			},
+				'TWPs',
 			//Chiller Towers
-			{
-				type: 'CTFs'
-			}
+				'CTFs'
 		];
 		// filter out modulesArray eqGroups that are marked false in exposed properties
-		data.modulesArray.filter(eqGroup => data[`include${eqGroup.type}`]);
+		data.modulesArray = data.modulesArray.filter(eqGroup => data[`include${moduleNamesForHistories[eqGroup]}`]);
 
 		function getEqTypeFromHistoryIndex(index) {
 			// if index is odd number, subtract one (because 2 historyOrds per eq type)
 			if (index % 2) index--;
-			return data.modulesArray[index].type;
+			index = index === 0 ? 0 : index / 2;
+			return data.modulesArray[index];
 		}
 
 		const optHrsHistoriesToResolve = [];
 		const stdHrsHistoriesToResolve = [];
 
 		data.modulesArray.forEach(eqGroup => {
-			const historyNameForEqType = moduleNamesForHistories[eqGroup.type];
+			const historyNameForEqType = moduleNamesForHistories[eqGroup];
 			optHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_OpthHm`);
 			optHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_OpthCm`);
 			stdHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_StdhHm`)
@@ -582,10 +573,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 						data.availableDates[rowYear].push(rowMonth);
 						data.monthlyModulesData[rowYear][rowMonth] = {};
 					}
-					if (!data.monthlyModulesData[rowYear][rowMonth].includes(type)) {
+					if (!Object.keys(data.monthlyModulesData[rowYear][rowMonth]).includes(type)) {									
 						data.monthlyModulesData[rowYear][rowMonth][type] = Object.assign({}, hrsDataTemplate);
 					}
-					if (!data.annualModulesData[rowYear].includes(type)) {
+					if (!Object.keys(data.annualModulesData[rowYear]).includes(type)) {
 						data.annualModulesData[rowYear][type] = Object.assign({}, hrsDataTemplate);
 					}
 					data.monthlyModulesData[rowYear][rowMonth][type][optimized ? 'optimizedHours' : 'standardHours'] += rowValue;
@@ -600,6 +591,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		var stdBatchResolve = new baja.BatchResolve(stdHrsHistoriesToResolve);
 
 		return Promise.all([optBatchResolve.resolve(), stdBatchResolve.resolve()])
+		.catch(err => console.error('OHL ERROR History resolves failed: ' + err))
 		.then(() => {
 			const cursorPromises = [];
 
@@ -609,11 +601,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			optHistoryTables.forEach((table, idx) => cursorPromises.push(iterateThrough(table, getEqTypeFromHistoryIndex(idx), true)));
 			stdHistoryTables.forEach((table, idx) => cursorPromises.push(iterateThrough(table, getEqTypeFromHistoryIndex(idx), false)));
 
-			Promise.all(cursorPromises);
+			return Promise.all(cursorPromises);
 		})
-		.catch(err => console.error('OHL ERROR History resolves or cursors failed: ' + err))
+		.catch(err => console.error('OHL ERROR History cursors failed: ' + err))
 		.then(() => {
-			
 
 			//set overallData
 			data.annualOverallData = {}; /*
@@ -640,7 +631,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				data.monthlyOverallData[year] = {};
 				const availableMonths = Object.keys(data.monthlyModulesData[year]);
 				const annualEqTypes = Object.keys(data.annualModulesData[year]);
-				const minTotalAnnualHours = annualEqTypes.reduce((accum, curr) => !accum || (accum && curr.totalHours < accum) ? curr.totalHours : accum, 0);
+				const minTotalAnnualHours = annualEqTypes.reduce((accum, curr) => !accum || (accum && data.annualModulesData[year][curr].totalHours < accum) ? data.annualModulesData[year][curr].totalHours : accum, 0);
 
 				annualEqTypes.forEach(eqType => {
 					const annualModuleHours = data.annualModulesData[year][eqType];
@@ -651,13 +642,14 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 					//add to annual overall hours
 					data.annualOverallData[year].optimizedHours += annualModuleHours.normalizedOptimizedHours;
 					data.annualOverallData[year].standardHours += annualModuleHours.normalizedStandardHours;
-					data.annualOverallData[year].percent += formatIntoPercentage(annualModuleHours.normalizedOptimizedHours / (annualModuleHours.normalizedOptimizedHours + annualModuleHours.normalizedStandardHours));
 				});
+				data.annualOverallData[year].percent = formatIntoPercentage(data.annualOverallData[year].optimizedHours / (data.annualOverallData[year].optimizedHours + data.annualOverallData[year].standardHours));
+
 
 				availableMonths.forEach(month => {
 					data.monthlyOverallData[year][month] = {optimizedHours: 0, standardHours: 0, percent: 0};
 					const availableEqTypes = Object.keys(data.monthlyModulesData[year][month]);
-					const minTotalMonthlyHours = availableEqTypes.reduce((accum, curr) => !accum || (accum && curr.totalHours < accum) ? curr.totalHours : accum, 0);
+					const minTotalMonthlyHours = availableEqTypes.reduce((accum, curr) => !accum || (accum && data.monthlyModulesData[year][month][curr].totalHours < accum) ? data.monthlyModulesData[year][month][curr].totalHours : accum, 0);
 
 					availableEqTypes.forEach(eqType => {
 						const monthlyModuleHours = data.monthlyModulesData[year][month][eqType];
@@ -668,8 +660,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 						//add to monthly overall hours
 						data.monthlyOverallData[year][month].optimizedHours += monthlyModuleHours.normalizedOptimizedHours;
 						data.monthlyOverallData[year][month].standardHours += monthlyModuleHours.normalizedStandardHours;
-						data.monthlyOverallData[year][month].percent += formatIntoPercentage(monthlyModuleHours.normalizedOptimizedHours / (monthlyModuleHours.normalizedOptimizedHours + monthlyModuleHours.normalizedStandardHours));
 					});
+					data.monthlyOverallData[year][month].percent = formatIntoPercentage(data.monthlyOverallData[year][month].optimizedHours / (data.monthlyOverallData[year][month].optimizedHours + data.monthlyOverallData[year][month].standardHours));
+
 
 				});
 			});
@@ -687,7 +680,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			if (!widget.yearSelected) widget.yearSelected = data.availableYears[0];
 			if (!widget.monthSelected) widget.monthSelected = 'All';
 
-			if (!widget.createArrayOfModuleDataForSelectedDate) widget.createArrayOfModuleDataForSelectedDate = function () {
+			const createArrayOfModuleDataForSelectedDate = function () {
 				const modulesDataArray = [];
 				if (widget.monthSelected === 'All') {
 					const availableModulesForYear = Object.keys(data.annualModulesData[widget.yearSelected]);
@@ -695,7 +688,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 						const moduleObj = Object.assign({}, data.annualModulesData[widget.yearSelected][eqType]);
 						moduleObj.type = eqType;
 						moduleObj.color = data['color_' + eqType];
-						modulesDataArray.push();
+						modulesDataArray.push(moduleObj);
 					});
 				} else {
 					const availableModulesForMonth = Object.keys(data.monthlyModulesData[widget.yearSelected][widget.monthSelected]);
@@ -703,25 +696,27 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 						const moduleObj = Object.assign({}, data.monthlyModulesData[widget.yearSelected][widget.monthSelected][eqType]);
 						moduleObj.type = eqType;
 						moduleObj.color = data['color_' + eqType];
-						modulesDataArray.push();
+						modulesDataArray.push(moduleObj);
 					});
 				}
 				return modulesDataArray;
 			}
-			if (!widget.createArrayOfOverallDataForSelectedDate) widget.createArrayOfModuleDataForSelectedDate = function () {
-				const overallDataArray = [{ category: 'standard', hours: 0 }, { category: 'optimized', hours: 0 }];
+			const createArrayOfOverallDataForSelectedDate = function () {
+				const overallDataArray = [{ category: 'standard', hours: 0 }, { category: 'optimized', hours: 0, percent: 0 }];
 				if (widget.monthSelected === 'All') {
 					overallDataArray[0].hours = data.annualOverallData[widget.yearSelected].standardHours;
 					overallDataArray[1].hours = data.annualOverallData[widget.yearSelected].optimizedHours;
+					overallDataArray[1].percent = data.annualOverallData[widget.yearSelected].percent;
 				} else {
 					overallDataArray[0].hours = data.monthlyOverallData[widget.yearSelected][widget.monthSelected].standardHours;
 					overallDataArray[1].hours = data.monthlyOverallData[widget.yearSelected][widget.monthSelected].optimizedHours;
+					overallDataArray[1].percent = data.monthlyOverallData[widget.yearSelected][widget.monthSelected].percent;
 				}
 				return overallDataArray;
 			}
 
-			if (!widget.selectedDateModuleData) widget.selectedDateModuleData = widget.createArrayOfModuleDataForSelectedDate();
-			if (!widget.selectedDateOverallData) widget.selectedDateOverallData = widget.createArrayOfOverallDataForSelectedDate();
+			widget.selectedDateModuleData = createArrayOfModuleDataForSelectedDate();
+			widget.selectedDateOverallData = createArrayOfOverallDataForSelectedDate();
 
 			if (!widget.updateDateWidgetRendering) widget.updateDateWidgetRendering = () => {
 				render(widget, true);
@@ -729,14 +724,14 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			if (!widget.dropdownYearChanged) widget.dropdownYearChanged = val => {
 				widget.yearSelected = val;
 				widget.monthSelected = data.availableDates[widget.yearSelected].includes(widget.monthSelected) ? widget.monthSelected : 'All';
-				widget.selectedDateModuleData = widget.createArrayOfModuleDataForSelectedDate();
-				widget.selectedDateOverallData = widget.createArrayOfOverallDataForSelectedDate();
+				widget.selectedDateModuleData = createArrayOfModuleDataForSelectedDate();
+				widget.selectedDateOverallData = createArrayOfOverallDataForSelectedDate();
 				widget.updateDateWidgetRendering();
 			};
 			if (!widget.dropdownMonthChanged) widget.dropdownMonthChanged = val => {
 				widget.monthSelected = val;
-				widget.selectedDateModuleData = widget.createArrayOfModuleDataForSelectedDate();
-				widget.selectedDateOverallData = widget.createArrayOfOverallDataForSelectedDate();
+				widget.selectedDateModuleData = createArrayOfModuleDataForSelectedDate();
+				widget.selectedDateOverallData = createArrayOfOverallDataForSelectedDate();
 				widget.updateDateWidgetRendering();
 			};
 
@@ -745,7 +740,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			return data;
 
 		})
-		.catch(err => console.error('Error (history info promise rejected): ' + err));
+		.catch(err => console.error('ERROR history calculations promise rejected: ' + err));
 	};
 
 
@@ -779,7 +774,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		const allDonutGroupsGroup = graphicGroup.append('g')
 			.attr('class', 'allDonutGroupsGroup')
-			.attr('transform', `translate(${(data.graphicWidth - (data.margin.left + data.margin.right)) / 2}, ${data.hoveredOuterRadius})`)
+			.attr('transform', `translate(${(data.jqWidth) / 2}, ${data.hoveredOuterRadius})`)
 
 
 		//overall arcs
@@ -924,7 +919,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.style('font', data.percentageFont)
 			.attr('fill', data.percentageColor)
 			.style('opacity', widget.hovered.current === 'neither' && widget.activeModule === 'none' ? 1 : 0)
-			.text(data.percent);
+			.text(widget.selectedDateOverallData[1].percent);
 
 		//percentage description
 		function renderPercentageDescription() {
@@ -1124,25 +1119,25 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		/*** LEGEND ***/
 
-		const legendGroup = widget.svg.append('g').attr('transform', `translate(${data.margin.left * 4}, ${data.margin.top + (data.hoveredOuterRadius * 2) + data.paddingAboveLegendBars + data.dropdownGroupHeight})`);
+		const legendGroup = widget.svg.append('g').attr('transform', `translate(${data.margin.left * 4}, ${data.margin.top + (data.hoveredOuterRadius * 2) + data.paddingAboveLegendText + getTextHeight(data.legendFont) + data.dropdownGroupHeight})`);
 
 		const legendModuleGroups = legendGroup.selectAll('.legendModuleGroup')
 			.data(widget.selectedDateModuleData)
 			.enter().append('g')
-			.attr('class', d => `legendModuleGroup .${d.type}LegendModuleGroup`)
-			.attr('transform', (d, i) => `translate(${i * data.legendColorRectsWidth}, 0)`)
-			.on('mouseenter', function (d) {
-				attemptLegendTooltipOpen(d, d3.select(this));
-			})
-			.on('mouseleave', function (d) {
-				attemptLegendTooltipClose(d);
-			})
-			.on('mousedown', function () {
-				d3.event.stopPropagation();
-			})
-			.on('click', function (d) {
-				toggleLegendTooltipPin(d, d3.select(this));
-			})
+				.attr('class', d => `legendModuleGroup .${d.type}LegendModuleGroup`)
+				.attr('transform', (d, i) => `translate(${i * data.legendColorRectsWidth}, 0)`)
+				.on('mouseenter', function (d) {
+					attemptLegendTooltipOpen(d, d3.select(this));
+				})
+				.on('mouseleave', function (d) {
+					attemptLegendTooltipClose(d);
+				})
+				.on('mousedown', function () {
+					d3.event.stopPropagation();
+				})
+				.on('click', function (d) {
+					toggleLegendTooltipPin(d, d3.select(this));
+				})
 
 		const legendRects = legendModuleGroups.append('rect')
 			.attr('height', data.moduleArcThickness)
@@ -1218,7 +1213,6 @@ makeDropdown(data.availableDates[widget.yearSelected], widget.dropdownMonthChang
 
 
 
-
 	/**** CLICK TO STICK FUNCTIONS ****/
 
 	//OVERALL FUNCS
@@ -1257,7 +1251,7 @@ makeDropdown(data.availableDates[widget.yearSelected], widget.dropdownMonthChang
 	}
 
 	function closeOverallTooltip(optimizedOrStandard) {
-		widget.hovered.optimized = false;
+		widget.hovered[optimizedOrStandard] = false;
 		widget.hovered.current = 'neither'
 		widget.svg.selectAll('.percentage').style('opacity', 1)
 		standardPaths.style('fill-opacity', normalArcOpacity)
@@ -1390,9 +1384,10 @@ makeDropdown(data.availableDates[widget.yearSelected], widget.dropdownMonthChang
 		var that = this;
 		element.addClass("CxOptimizationHoursLogOuter");
 		
-		const outerContainer = d3.select(element[0])
-			.style('overflow', 'hidden')
-		that.svg = outerContainer.append('svg')
+		const container = d3.select(element[0])
+			.style('overflow', 'hidden');
+
+		that.svg = container.append('svg')
 			.attr('class', 'CxOptimizationHoursLog')
 			.attr('width', "100%")
 			.attr('height', "100%")

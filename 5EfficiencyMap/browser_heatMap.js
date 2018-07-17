@@ -1334,6 +1334,7 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 						widget.modalSubmitHovered = true;
 						d3.select(this)
 							.style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
+							.style('width', getTextWidth('OK', data.modalInputFont) + 31.5 + 'px')
 							.style('left', (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) - 0.75) + 'px')
 							.style('top', (( (verticalModalPadding * 3) + (data.modalLabelsHeight * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px')
 						})
@@ -1342,6 +1343,7 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 						d3.select(this)
 							.style('border', 'none')
 							.style('left', ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
+							.style('width', getTextWidth('OK', data.modalInputFont) + 30 + 'px')
 							.style('top', ( (verticalModalPadding * 3) + (data.modalLabelsHeight * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
 						})
 

@@ -513,6 +513,10 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			{
 				name: 'modalInputWidth',
 				value: 50
+			},
+			{								//TODO: Remove
+				name: 'tester',
+				value: 'originalValue'
 			}
 		]);
 
@@ -703,7 +707,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 
 				// yAxis Bins
 				data.tempBins = [];
-				data.tempBins.push({min: Number.NEGATIVE_INFINITY, max: widget.minTempCategory - 0.00000000000000000000000000000001, display: '<' + data.formatTemp(widget.minTempCategory)})
+				data.tempBins.push({min: Number.NEGATIVE_INFINITY, max: widget.minTempCategory - 0.00000000000000000000000000000000000001, display: '<' + data.formatTemp(widget.minTempCategory)})
 				data.tempBinsInterval = (widget.maxTempCategory - widget.minTempCategory) / (widget.numOfTempBins - 2);	// 10 if 12 bins
 				for (let i = 0; i <= (widget.numOfTempBins - 3); i++) { // 9 if 12 bins
 					let bin = {};
@@ -919,8 +923,9 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('stroke', 'none')
 
 		// y axis title
-		chartGroup.append('text')
-			.text('Wetbulb ' + data.tempUnits)
+		const testing = chartGroup.append('text')		//TODO: Remove testing const
+			// .text('Wetbulb ' + data.tempUnits)
+			.text('The Current Value of Tester is ' + data.tester)	//TODO: Remove, replace above line
 			.attr('fill', data.yAxisTitleColor)
 			.style('font', data.yAxisTitleFont)
 			.attr('transform', 'rotate(-90)')
@@ -1116,6 +1121,14 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 						widget.tempNumOfBins = data.numOfTempBins;
 						widget.kwTrMinSelection = data.minKwTrCategory;
 						widget.kwTrMaxSelection = data.maxKwTrCategory;
+						
+						
+						//TODO: Remove
+						widget.properties().setValue('tester', 'newValue');
+						alert('tester changed');
+						testing.text('New Value of Tester is ' + data.tester);
+
+						
 						resetElements(svgForDropdown, '.dropdownGroup')
 						renderBinsDropbox();
 					})
@@ -1323,6 +1336,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 						widget.modalSubmitHovered = true;
 						d3.select(this)
 							.style('border', `1.5px solid ${data.hoveredInputStrokeColor}`)
+							.style('width', getTextWidth('OK', data.modalInputFont) + 31.5 + 'px')
 							.style('left', (((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) - 0.75) + 'px')
 							.style('top', (( (verticalModalPadding * 3) + (data.modalLabelsHeight * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) - 0.75) + 'px')
 						})
@@ -1331,6 +1345,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 						d3.select(this)
 							.style('border', 'none')
 							.style('left', ((data.modalWidth / 2) - ((getTextWidth('OK', data.modalLabelsFont) + 30) / 2)) + 'px')
+							.style('width', getTextWidth('OK', data.modalInputFont) + 30 + 'px')
 							.style('top', ( (verticalModalPadding * 3) + (data.modalLabelsHeight * 2) + 20 + (getTextHeight(data.modalInputFont) * 2) + (data.paddingAboveDropdown * 4) ) + 'px')
 					})
 
