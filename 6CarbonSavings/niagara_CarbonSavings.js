@@ -301,6 +301,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
         name: 'paddingBetweenDropdowns',
         value: 25
       },
+      {
+        name: 'paddingUnderDropdowns',
+        value: 20
+      },
       /* OTHER */
       {
         name: 'includeChillers',
@@ -350,7 +354,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
     // SIZING //
-    data.dropdownGroupHeight = data.margin + getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels + getTextHeight(data.dropdownFont) + data.margin;
+    data.dropdownGroupHeight = data.margin + getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels + getTextHeight(data.dropdownFont) + data.paddingUnderDropdowns;
     data.graphicHeight = data.jqHeight - (data.dropdownGroupHeight + data.margin);
     data.graphicWidth = data.jqWidth - (data.margin * 2);
     data.rowHeight = (data.graphicHeight - ((data.paddingBetweenRows * 3) + data.paddingWithinRows)) / 4;    data.imgSize = data.rowHeight - (getTextHeight(data.descriptionsFont));
@@ -372,7 +376,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       Sep: 0,
       Oct: 0,
       Nov: 0,
-      Dec: 0
+      Dec: 0,
+      All: 0
     };
     const savingsDataTemplate = {    // Template used in data collection. Added to each new month measured data available for in data.datedSavings
       measuredKwh: 0,
@@ -430,6 +435,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       if (data[`include${eq}`]) {
         baselinePromises.push(widget.resolve(`history:^${eq}_BlKwHm`))
         measuredPromises.push(widget.resolve(`history:^${eq}_MsKwHm`))
+        measuredPromises.push(widget.resolve(`history:^${eq}_MsKwCm`))
       }
     })
     return Promise.all(baselinePromises)
@@ -441,7 +447,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
             each: function (row, idx) {
               const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
               const rowMonthIndex = timestamp.getMonth();
-              data.monthlyBaselineKwh[months[rowMonthIndex]] += (+row.get('value'));
+              const rowValue = +row.get('value')
+              data.monthlyBaselineKwh[months[rowMonthIndex]] += rowValue;
+              data.monthlyBaselineKwh.All += rowValue;
             }
           })
         }
@@ -463,15 +471,18 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
               const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
               const rowMonthIndex = timestamp.getMonth();
               const rowYear = timestamp.getFullYear();
+              const rowValue = +row.get('value')
               if (!data.availableDates[rowYear]) {
                 data.availableDates[rowYear] = [];
-                data.datedSavings[rowYear] = {};
+                data.datedSavings[rowYear] = {All: Object.assign({}, savingsDataTemplate)};
               }
               if (!data.availableDates[rowYear].includes(months[rowMonthIndex])) {
                 data.availableDates[rowYear].push(months[rowMonthIndex]);
                 data.datedSavings[rowYear][months[rowMonthIndex]] = Object.assign({}, savingsDataTemplate);
               }
-              data.datedSavings[rowYear][months[rowMonthIndex]].measuredKwh += (+row.get('value'));
+              data.datedSavings[rowYear][months[rowMonthIndex]].measuredKwh += rowValue;
+              data.datedSavings[rowYear].All.measuredKwh += rowValue;
+
             }
           })
         }
@@ -487,6 +498,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
         data.availableYears = Object.keys(data.availableDates).sort((a, b) => b - a);
         data.noMeasuredData = data.availableYears.length ? false : true;
         data.availableYears.forEach(year => {
+          data.availableDates[year].unshift('All');
           data.availableDates[year].forEach(month => {
             const monthDataObject = data.datedSavings[year][month];
             if (data.monthlyBaselineKwh[month] < monthDataObject.measuredKwh) {
@@ -509,13 +521,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
         // GLOBAL DROPDOWN DATA //
         if (!widget.yearSelected) widget.yearSelected = data.availableYears[0];
-        if (!widget.monthSelected) widget.monthSelected = data.availableDates[widget.yearSelected][data.availableDates[widget.yearSelected].length - 1];
+        if (!widget.monthSelected) widget.monthSelected = 'All';
         if (!widget.updateDateWidgetRendering) widget.updateDateWidgetRendering = () => {
           render(widget, true);
         }
         if (!widget.dropdownYearChanged) widget.dropdownYearChanged = val => {
           widget.yearSelected = val;
-          widget.monthSelected = data.availableDates[widget.yearSelected].includes(widget.monthSelected) ? widget.monthSelected : data.availableDates[widget.yearSelected][data.availableDates[widget.yearSelected].length - 1];
+          widget.monthSelected = data.availableDates[widget.yearSelected].includes(widget.monthSelected) ? widget.monthSelected : 'All';
           widget.updateDateWidgetRendering();
         };
         if (!widget.dropdownMonthChanged) widget.dropdownMonthChanged = val => {

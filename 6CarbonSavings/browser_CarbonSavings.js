@@ -276,6 +276,10 @@ function defineFuncForTabSpacing () {
       name: 'paddingBetweenDropdowns',
       value: 25
     },
+    {
+      name: 'paddingUnderDropdowns',
+      value: 20
+    },
 	/* OTHER */
     {
       name: 'includeChillers',
@@ -314,7 +318,7 @@ function defineFuncForTabSpacing () {
 
 
     // SIZING //
-    data.dropdownGroupHeight = data.margin + getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels + getTextHeight(data.dropdownFont) + data.margin;
+    data.dropdownGroupHeight = data.margin + getTextHeight(data.dropdownLabelFont) + data.paddingUnderDropdownLabels + getTextHeight(data.dropdownFont) + data.paddingUnderDropdowns;
     data.graphicHeight = data.jqHeight - (data.dropdownGroupHeight + data.margin);
     data.graphicWidth = data.jqWidth - (data.margin * 2);
     data.rowHeight = (data.graphicHeight - ((data.paddingBetweenRows * 3) + data.paddingWithinRows)) / 4;
@@ -348,7 +352,8 @@ function defineFuncForTabSpacing () {
       Sep: 0,
       Oct: 0,
       Nov: 0,
-      Dec: 0
+      Dec: 0,
+      All: 0
     };
     const savingsDataTemplate = {    // Template used in data collection. Added to each new month measured data available for in data.datedSavings
       measuredKwh: 0,
@@ -412,6 +417,9 @@ function defineFuncForTabSpacing () {
 
       
       data.availableYears = Object.keys(data.availableDates).sort((a, b) => b - a);
+      data.availableYears.forEach(year => {
+        data.availableDates[year].unshift('All');
+      })
 		};
 
 
@@ -437,13 +445,13 @@ function defineFuncForTabSpacing () {
 
       // GLOBAL DROPDOWN DATA //
       if (!widget.yearSelected) widget.yearSelected = data.availableYears[0];
-      if (!widget.monthSelected) widget.monthSelected = data.availableDates[widget.yearSelected][data.availableDates[widget.yearSelected].length - 1];
+      if (!widget.monthSelected) widget.monthSelected = 'All';
       if (!widget.updateDateWidgetRendering) widget.updateDateWidgetRendering = () => {
         renderWidget(data);
       }
       if (!widget.dropdownYearChanged) widget.dropdownYearChanged = val => {
         widget.yearSelected = val;
-        widget.monthSelected = data.availableDates[widget.yearSelected].includes(widget.monthSelected) ? widget.monthSelected : data.availableDates[widget.yearSelected][data.availableDates[widget.yearSelected].length - 1];
+        widget.monthSelected = data.availableDates[widget.yearSelected].includes(widget.monthSelected) ? widget.monthSelected : 'All';
         widget.updateDateWidgetRendering();
       };
       if (!widget.dropdownMonthChanged) widget.dropdownMonthChanged = val => {
