@@ -1,4 +1,4 @@
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min'], function (Widget, subscriberMixIn, d3) {
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'moment', 'baja!'], function (Widget, subscriberMixIn, d3, moment, baja) {
   "use strict";
 
   ////////// Hard Coded Defs //////////
@@ -128,6 +128,15 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
   }
 	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
+  const today = new Date();
+  const currentMonth = months[today.getMonth()];
+  const currentYear = today.getFullYear();
+  const getTotalHoursInMonth = (year, month) => moment(year + '-' + month, 'YYYY-MMM').daysInMonth() * 24;
+  const getPredictedForMonth = (year, month, amountMeasured, hrsWithData) => {
+    const amountPerHr = amountMeasured / hrsWithData;
+    const predictedForMonth = amountPerHr * getTotalHoursInMonth(year, month);
+    return predictedForMonth;
+  }
   const formatNumber = d3.format(`,.${0}f`)
   const getTextWidth = (text, font) => {
     const canvas = document.createElement('canvas');
@@ -364,6 +373,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
     data.rightOfImg = data.centerOfRow + data.halfImgWidth + data.paddingWithinRows;
 
     // DATA TO POPULATE //
+    data.firstMonthOptHrs = 0;
+    data.firstMonthStdHrs = 0;
+    data.currentMonthOptHrs = 0;
+    data.currentMonthStdHrs = 0;
     data.monthlyBaselineKwh = {
       Jan: 0,
       Feb: 0,
@@ -376,8 +389,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       Sep: 0,
       Oct: 0,
       Nov: 0,
-      Dec: 0,
-      All: 0
+      Dec: 0    
     };
     const savingsDataTemplate = {    // Template used in data collection. Added to each new month measured data available for in data.datedSavings
       measuredKwh: 0,
@@ -438,7 +450,21 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
         measuredPromises.push(widget.resolve(`history:^${eq}_MsKwCm`))
       }
     })
-    return Promise.all(baselinePromises)
+
+    const sysHrsBatchResolve = new baja.BatchResolve(['history:^System_StdhHm', 'history:^System_OpthHm', 'history:^System_StdhCm', 'history:^System_OpthCm']);
+
+    return sysHrsBatchResolve.resolve()
+      .then(() => {
+        const [stdHrsHmTable, optHrsHmTable, stdHrsCmTable, optHrsCmTable] = sysHrsBatchResolve.getTargetObjects();
+        return Promise.all([
+          stdHrsHmTable.cursor({limit: 1, each: row => {data.firstMonthStdHrs = +row.get('value')}}),
+          optHrsHmTable.cursor({limit: 1, each: row => {data.firstMonthOptHrs = +row.get('value')}}),
+          stdHrsCmTable.cursor({limit: 1, each: row => {data.currentMonthStdHrs = +row.get('value')}}),
+          optHrsCmTable.cursor({limit: 1, each: row => {data.currentMonthOptHrs = +row.get('value')}})
+        ]);
+      })
+      .catch(err => console.error('CS ERROR sysHrs batchResolve failed: ' + err))
+      .then(() => Promise.all(baselinePromises))
       .then(baselineHistories => {
 
         const populateBaselineHistories = historyTable => {
@@ -449,7 +475,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
               const rowMonthIndex = timestamp.getMonth();
               const rowValue = +row.get('value')
               data.monthlyBaselineKwh[months[rowMonthIndex]] += rowValue;
-              data.monthlyBaselineKwh.All += rowValue;
             }
           })
         }
@@ -469,18 +494,23 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
             limit: 70000,  // default is 10
             each: function (row, idx) {
               const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-              const rowMonthIndex = timestamp.getMonth();
               const rowYear = timestamp.getFullYear();
-              const rowValue = +row.get('value')
+              const rowMonth = months[timestamp.getMonth()];
+              let rowValue = +row.get('value')
               if (!data.availableDates[rowYear]) {
                 data.availableDates[rowYear] = [];
                 data.datedSavings[rowYear] = {All: Object.assign({}, savingsDataTemplate)};
               }
-              if (!data.availableDates[rowYear].includes(months[rowMonthIndex])) {
-                data.availableDates[rowYear].push(months[rowMonthIndex]);
-                data.datedSavings[rowYear][months[rowMonthIndex]] = Object.assign({}, savingsDataTemplate);
+              if (!data.availableDates[rowYear].includes(rowMonth)) {
+                data.availableDates[rowYear].push(rowMonth);
+                data.datedSavings[rowYear][rowMonth] = Object.assign({}, savingsDataTemplate);
               }
-              data.datedSavings[rowYear][months[rowMonthIndex]].measuredKwh += rowValue;
+              const firstMonth = idx === 0;
+              if ( firstMonth || (rowYear === currentYear && rowMonth === currentMonth) ){
+                //TODO: GET STD + OPT hrs for month
+                rowValue = getPredictedForMonth(rowYear, rowMonth, rowValue, firstMonth ? data.firstMonthOptHrs + data.firstMonthStdHrs : data.currentMonthOptHrs + data.currentMonthStdHrs);
+              }
+              data.datedSavings[rowYear][rowMonth].measuredKwh += rowValue;
               data.datedSavings[rowYear].All.measuredKwh += rowValue;
 
             }
@@ -501,14 +531,17 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
           data.availableDates[year].unshift('All');
           data.availableDates[year].forEach(month => {
             const monthDataObject = data.datedSavings[year][month];
-            if (data.monthlyBaselineKwh[month] < monthDataObject.measuredKwh) {
+            const baselineKwhForMonth = month !== 'All' ? data.monthlyBaselineKwh[month] : data.availableDates[year].reduce((accum, curr) => curr !== 'All' ? accum + data.monthlyBaselineKwh[curr] : accum, 0);
+            console.log('year: ', year, 'month: ', month, 'baselineKwhForMonth: ', baselineKwhForMonth, 'monthDataObject.measuredKwh: ', monthDataObject.measuredKwh, 'data.monthlyBaselineKwh: ', data.monthlyBaselineKwh);
+
+            if (baselineKwhForMonth < monthDataObject.measuredKwh) {
               monthDataObject.kwhSaved = '-';
               monthDataObject.tonsCo2 = '-';
               monthDataObject.greenhouseGas = '-';
               monthDataObject.co2Emissions = '-';
               monthDataObject.carbonSequestered = '-';
             } else {
-              monthDataObject.kwhSaved = Math.round(data.monthlyBaselineKwh[month] - monthDataObject.measuredKwh);
+              monthDataObject.kwhSaved = Math.round(baselineKwhForMonth - monthDataObject.measuredKwh);
               monthDataObject.tonsCo2 = Math.round(0.00082035 * monthDataObject.kwhSaved);
               monthDataObject.greenhouseGas = formatNumber(monthDataObject.tonsCo2 / 5.153);
               monthDataObject.co2Emissions = formatNumber(monthDataObject.tonsCo2 / 10.207);
@@ -535,7 +568,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
           widget.updateDateWidgetRendering();
         };
 
-
+        console.log('data: ', data)
         return data;
       })
       .catch(err => console.error('Error (histories promise rejected): ' + err));

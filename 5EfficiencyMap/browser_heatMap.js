@@ -1489,6 +1489,7 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 				widget.pinnedRectIndex = i;
 				hoverRect(d, i, nodes, that);
 			}
+			console.log(data);
 	};
 	
 

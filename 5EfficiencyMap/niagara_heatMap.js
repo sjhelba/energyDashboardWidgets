@@ -513,10 +513,6 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			{
 				name: 'modalInputWidth',
 				value: 50
-			},
-			{								//TODO: Remove
-				name: 'tester',
-				value: 'originalValue'
 			}
 		]);
 
@@ -923,9 +919,8 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('stroke', 'none')
 
 		// y axis title
-		const testing = chartGroup.append('text')		//TODO: Remove testing const
-			// .text('Wetbulb ' + data.tempUnits)
-			.text('The Current Value of Tester is ' + data.tester)	//TODO: Remove, replace above line
+		chartGroup.append('text')		
+			.text('Wetbulb ' + data.tempUnits)
 			.attr('fill', data.yAxisTitleColor)
 			.style('font', data.yAxisTitleFont)
 			.attr('transform', 'rotate(-90)')
@@ -1121,14 +1116,6 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 						widget.tempNumOfBins = data.numOfTempBins;
 						widget.kwTrMinSelection = data.minKwTrCategory;
 						widget.kwTrMaxSelection = data.maxKwTrCategory;
-						
-						
-						//TODO: Remove
-						widget.properties().setValue('tester', 'newValue');
-						alert('tester changed');
-						testing.text('New Value of Tester is ' + data.tester);
-
-						
 						resetElements(svgForDropdown, '.dropdownGroup')
 						renderBinsDropbox();
 					})
