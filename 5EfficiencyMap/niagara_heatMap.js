@@ -1,5 +1,7 @@
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min'], function(Widget, subscriberMixIn, d3) {
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'baja!'], function(Widget, subscriberMixIn, d3, baja) {
 	"use strict";
+
+
 
 ////////// Hard Coded Defs //////////
 const areScalarArrsSame = (arr1, arr2) => arr1.length === arr2.length && arr1.every((el, idx) => el === arr2[idx]);
@@ -486,26 +488,26 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				name: 'overrideDefaultKwTrPrecisionWFacets',
 				value: false
 			},
-			{
-				name: 'minKwTrCategory',
-				value: 0.250
-			},
-			{
-				name: 'maxKwTrCategory',
-				value: 1.250
-			},
-			{
-				name: 'minTempCategory',
-				value: 30
-			},
-			{
-				name: 'maxTempCategory',
-				value: 80
-			},
-			{
-				name: 'numOfTempBins',
-				value: 12
-			},
+			// {
+			// 	name: 'minKwTrCategory',
+			// 	value: 0.250
+			// },
+			// {
+			// 	name: 'maxKwTrCategory',
+			// 	value: 1.250
+			// },
+			// {
+			// 	name: 'minTempCategory',
+			// 	value: 30
+			// },
+			// {
+			// 	name: 'maxTempCategory',
+			// 	value: 80
+			// },
+			// {
+			// 	name: 'numOfTempBins',
+			// 	value: 12
+			// },
 			{
 				name: 'yearDropdownWidth',
 				value: 100
@@ -560,31 +562,43 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		}
 		if (!widget.hoveredRectIndex) widget.hoveredRectIndex = 'none';
 		if (!widget.pinnedRectIndex) widget.pinnedRectIndex = 'none';
-		if (!widget.numOfTempBins) widget.numOfTempBins = data.numOfTempBins;
 		if (!widget.yearDropdownHovered) widget.yearDropdownHovered = false;
 		if (!widget.modalDropdownHovered) widget.modalDropdownHovered = false;
 		if (!widget.modalActive) widget.modalActive = false;
-		if (!widget.minTempCategory) widget.minTempCategory = data.minTempCategory;
-		if (!widget.maxTempCategory) widget.maxTempCategory = data.maxTempCategory;
-		if (!widget.tempMaxSelection) widget.tempMaxSelection = widget.maxTempCategory;
-		if (!widget.tempMinSelection) widget.tempMinSelection = widget.minTempCategory;
-		if (!widget.tempNumOfBins) widget.tempNumOfBins = widget.numOfTempBins;
 		if (!widget.minInputHovered) widget.minInputHovered = false;
 		if (!widget.maxInputHovered) widget.maxInputHovered = false;
 		if (!widget.modalSubmitHovered) widget.modalSubmitHovered = false;
 		if (!widget.settingsBtnHovered) widget.settingsBtnHovered = false;
-		if (!widget.minKwTrCategory) widget.minKwTrCategory = data.minKwTrCategory;
-		if (!widget.maxKwTrCategory) widget.maxKwTrCategory = data.maxKwTrCategory;
-		if (!widget.kwTrMaxSelection) widget.kwTrMaxSelection = widget.maxKwTrCategory;
-		if (!widget.kwTrMinSelection) widget.kwTrMinSelection = widget.minKwTrCategory;
+
 
 
 		// DATA TO POPULATE //
 		data.availableYears = [];
 		data.hourlyData = {};
 
-		// GET HISTORY DATA
-		return Promise.all([widget.resolve(`history:^System_WbtHh`), widget.resolve(`history:^System_MsEffHh`)])
+		const settingsPointsBatchResolve = new baja.BatchResolve([
+			'station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/EfficiencyMap/MinTemperature',
+			'station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/EfficiencyMap/MaxTemperature',
+			'station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/EfficiencyMap/TemperatureBins',
+			'station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/EfficiencyMap/MinKwPerTon',
+			'station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/EfficiencyMap/MaxKwPerTon'
+		]);
+		const sub = new baja.Subscriber();
+
+		// GET SETTINGS DATA
+    return settingsPointsBatchResolve.resolve({subscriber: sub})
+      .then(() => {
+				data.settingsPoints = settingsPointsBatchResolve.getTargetObjects();
+				const [minTemperaturePoint, maxTemperaturePoint, temperatureBinsPoint, minKwPerTonPoint, maxKwPerTonPoint] = data.settingsPoints;
+				data.minTempCategory = +(minTemperaturePoint.get('out').get('value')),
+				data.maxTempCategory = +(maxTemperaturePoint.get('out').get('value')),
+				data.numOfTempBins = +(temperatureBinsPoint.get('out').get('value')),
+				data.minKwTrCategory = +(minKwPerTonPoint.get('out').get('value')),
+				data.maxKwTrCategory = +(maxKwPerTonPoint.get('out').get('value'))
+			})
+			.catch(err => console.error('EM ERROR settingsBatchResolve failed: ' + err))
+			// GET HISTORY DATA
+			.then(() => Promise.all([widget.resolve(`history:^System_WbtHh`), widget.resolve(`history:^System_MsEffHh`)]))
 			.then(histories => {
 				const [tempHistoryTable, effHistoryTable] = histories;
 				data.tempPrecision = !data.overrideDefaultTempPrecisionWFacets ? 0 : tempHistoryTable.getCol('value').getFacets().get('precision') || 0;
@@ -636,6 +650,13 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			})
 			.catch(err => console.error('error finding or iterating through CxEfficiencyMap histories: ' + err))
 			.then(() => {
+				//add in widget data dependent on resolved ords
+				if (!widget.kwTrMaxSelection) widget.kwTrMaxSelection = data.maxKwTrCategory;
+				if (!widget.kwTrMinSelection) widget.kwTrMinSelection = data.minKwTrCategory;
+				if (!widget.tempMaxSelection) widget.tempMaxSelection = data.maxTempCategory;
+				if (!widget.tempMinSelection) widget.tempMinSelection = data.minTempCategory;
+				if (!widget.tempNumOfBins) widget.tempNumOfBins = data.numOfTempBins;
+
 				// format data for better d3 consumption
 				data.availableYears.forEach(yearKey => {
 					const monthKeys = Object.keys(data.hourlyData[yearKey]);
@@ -694,7 +715,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 				//heights
 				data.headerAreaHeight = data.dropdownGroupHeight + data.paddingBelowDropdown;
 				data.gridHeight = data.graphicHeight - (data.headerAreaHeight + getTextHeight(data.xAxisTicksTextFont) + data.paddingAboveXAxisTicks);
-				data.cellHeight = data.gridHeight / widget.numOfTempBins;
+				data.cellHeight = data.gridHeight / data.numOfTempBins;
 				data.hoveredCellHeight = data.cellHeight * 1.25;
 				data.tooltipHeight = getTextHeight(data.tooltipMonthFont) + 10 //5 padding top and bottom
 				data.paddingBetweenLegendTicks = (data.gridHeight - (getTextHeight(data.legendTicksTextFont) * 5)) / 4;
@@ -703,20 +724,20 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 
 				// yAxis Bins
 				data.tempBins = [];
-				data.tempBins.push({min: Number.NEGATIVE_INFINITY, max: widget.minTempCategory - 0.00000000000000000000000000000000000001, display: '<' + data.formatTemp(widget.minTempCategory)})
-				data.tempBinsInterval = (widget.maxTempCategory - widget.minTempCategory) / (widget.numOfTempBins - 2);	// 10 if 12 bins
-				for (let i = 0; i <= (widget.numOfTempBins - 3); i++) { // 9 if 12 bins
+				data.tempBins.push({min: Number.NEGATIVE_INFINITY, max: data.minTempCategory - 0.00000000000000000000000000000000000001, display: '<' + data.formatTemp(data.minTempCategory)})
+				data.tempBinsInterval = (data.maxTempCategory - data.minTempCategory) / (data.numOfTempBins - 2);	// 10 if 12 bins
+				for (let i = 0; i <= (data.numOfTempBins - 3); i++) { // 9 if 12 bins
 					let bin = {};
-					bin.min = widget.minTempCategory + (data.tempBinsInterval * i);
+					bin.min = data.minTempCategory + (data.tempBinsInterval * i);
 					bin.max = (bin.min + data.tempBinsInterval) - 0.00000000000000000000000000000000000001;
 					bin.display = data.formatTemp(bin.min) + '-' + data.formatTemp(((bin.min + data.tempBinsInterval)));
 					data.tempBins.push(bin);
 				}
-				data.tempBins.push({min: widget.maxTempCategory, max: Number.POSITIVE_INFINITY, display: '≥' + data.formatTemp(widget.maxTempCategory)})
+				data.tempBins.push({min: data.maxTempCategory, max: Number.POSITIVE_INFINITY, display: '≥' + data.formatTemp(data.maxTempCategory)})
 				// legend range and ticks
-				data.legendRange = [widget.minKwTrCategory, widget.maxKwTrCategory];
-				const legendInterval = (widget.maxKwTrCategory - widget.minKwTrCategory) / 4; // to get 5 ticks
-				data.legendTicks = [widget.maxKwTrCategory, widget.minKwTrCategory + (legendInterval * 3), widget.minKwTrCategory + (legendInterval * 2), widget.minKwTrCategory + (legendInterval), widget.minKwTrCategory]
+				data.legendRange = [data.minKwTrCategory, data.maxKwTrCategory];
+				const legendInterval = (data.maxKwTrCategory - data.minKwTrCategory) / 4; // to get 5 ticks
+				data.legendTicks = [data.maxKwTrCategory, data.minKwTrCategory + (legendInterval * 3), data.minKwTrCategory + (legendInterval * 2), data.minKwTrCategory + (legendInterval), data.minKwTrCategory]
 					.map((el, i) => {
 						el = data.formatKwTr(el);
 						if (i === 4) el = '<' + el;
@@ -841,7 +862,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.tickSize(0)
 
 		const colorScale = d3.scaleLinear()
-			.domain([widget.minKwTrCategory, widget.maxKwTrCategory])
+			.domain([data.minKwTrCategory, data.maxKwTrCategory])
 			.range([data.minKwTrColor, data.maxKwTrColor])
 
 		// ********************************************* CHART ******************************************************* //
@@ -1350,19 +1371,19 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.style('position', 'absolute')
 					.style('text-align', 'center')
 					.style('cursor', 'pointer')
-					.style('left', (data.margin.left + 0.75) + 'px')
-					.style('bottom', (data.margin.bottom) + 'px')
+					.style('left', ((data.margin.left * 2) + 0.75) + 'px')
+					.style('bottom', (data.margin.bottom * 2) + 'px')
 					.on('mouseover', function() {
 						d3.select(this)
 							.style('border', `1.5px solid ${data.tooltipFillColor}`)
-							.style('left', (data.margin.left) + 'px')
-							.style('bottom', (data.margin.bottom - 0.75) + 'px')	
+							.style('left', (data.margin.left * 2 ) + 'px')
+							.style('bottom', ((data.margin.bottom * 2) - 0.75) + 'px')	
 						})
 					.on('mouseout', function() {
 						d3.select(this)
 							.style('border', 'none')
-							.style('left', (data.margin.left + 0.75) + 'px')
-							.style('bottom', (data.margin.bottom) + 'px')
+							.style('left', ((data.margin.left * 2) + 0.75) + 'px')
+							.style('bottom', (data.margin.bottom * 2) + 'px')
 						})
 
 				widget.outerDiv.selectAll('.formElement')
@@ -1380,20 +1401,29 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		}
 
 		function handleSubmit() {
-			if (widget.minTempCategory === widget.tempMinSelection
-				&& widget.maxTempCategory === widget.tempMaxSelection
-				&& widget.numOfTempBins === widget.tempNumOfBins
-				&& widget.minKwTrCategory === widget.kwTrMinSelection
-				&& widget.maxKwTrCategory === widget.kwTrMaxSelection
+			if (data.minTempCategory === widget.tempMinSelection
+				&& data.maxTempCategory === widget.tempMaxSelection
+				&& data.numOfTempBins === widget.tempNumOfBins
+				&& data.minKwTrCategory === widget.kwTrMinSelection
+				&& data.maxKwTrCategory === widget.kwTrMaxSelection
 			){				
 				toggleModal();
 			} else {
-				widget.minTempCategory = widget.tempMinSelection;
-				widget.maxTempCategory = widget.tempMaxSelection;
-				widget.numOfTempBins = widget.tempNumOfBins;
-				widget.minKwTrCategory = widget.kwTrMinSelection;
-				widget.maxKwTrCategory = widget.kwTrMaxSelection;
-				toggleModal(true);
+				const [minTemperaturePoint, maxTemperaturePoint, temperatureBinsPoint, minKwPerTonPoint, maxKwPerTonPoint] = data.settingsPoints;
+				const updatePromises = [];
+				if (data.minTempCategory !== widget.tempMinSelection) updatePromises.push(minTemperaturePoint.invoke({slot: 'set', value: +widget.tempMinSelection}));
+				if (data.maxTempCategory !== widget.tempMaxSelection) updatePromises.push(maxTemperaturePoint.invoke({slot: 'set', value: +widget.tempMaxSelection}));
+				if (data.numOfTempBins !== widget.tempNumOfBins) updatePromises.push(temperatureBinsPoint.invoke({slot: 'set', value: +widget.tempNumOfBins}));
+				if (data.minKwTrCategory !== widget.kwTrMinSelection) updatePromises.push(minKwPerTonPoint.invoke({slot: 'set', value: +widget.kwTrMinSelection}));
+				if (data.maxKwTrCategory !== widget.kwTrMaxSelection) updatePromises.push(maxKwPerTonPoint.invoke({slot: 'set', value: +widget.kwTrMaxSelection}));
+				data.minTempCategory = widget.tempMinSelection;
+				data.maxTempCategory = widget.tempMaxSelection;
+				data.numOfTempBins = widget.tempNumOfBins;
+				data.minKwTrCategory = widget.kwTrMinSelection;
+				data.maxKwTrCategory = widget.kwTrMaxSelection;
+				return Promise.all(updatePromises)
+					.catch(err => console.error('EM Error upon attempted settingsPoints changes: ' + err))
+					.then(() => toggleModal(true));
 			}
 		}
 
