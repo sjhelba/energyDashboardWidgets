@@ -549,10 +549,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		data.modulesArray.forEach(eqGroup => {
 			const historyNameForEqType = moduleNamesForHistories[eqGroup];
-			optHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_OpthHm`);
-			optHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_OpthCm`);
-			stdHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_StdhHm`)
-			stdHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_StdhCm`)
+			optHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_OptHrHm`);
+			optHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_OptHrCm`);
+			stdHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_StdHrHm`)
+			stdHrsHistoriesToResolve.push(`history:^${historyNameForEqType}_StdHrCm`)
 		})
 
 		function iterateThrough(table, type, optimized) {
