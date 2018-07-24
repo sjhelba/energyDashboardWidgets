@@ -2,7 +2,7 @@
 ////ONLY FOR BROWSER /////
 /* global blendedRates, baselineData, projectedData, measuredData */
 const widget = {};
-
+// DASHED/DOTTED: .style('stroke-dasharray', ('3,3'))
 
 ////////// Hard Coded Defs //////////
 /*
@@ -574,6 +574,7 @@ const properties = [
 ////////////////////////////////////////////////////////////////
 const today = new Date();
 const thisYear = today.getFullYear();
+const thisMonth = 'Apr' || months[today.getMonth()];	//TODO: Fix for real data version
 
 // FROM USER //
 const data = {};
@@ -690,8 +691,8 @@ if (!widget.trhIsPinned) widget.trhIsPinned = false;	//alternative selection is 
 
 if (!widget.legendHovered) widget.legendHovered = 'none';	// alternative selections are category names
 
-if (!widget.monthDropDownSelected) widget.monthDropDownSelected = 'All';
-if (!widget.yearDropDownSelected) widget.yearDropDownSelected = thisYear;
+if (!widget.monthDropdownSelected) widget.monthDropdownSelected = 'All';
+if (!widget.yearDropdownSelected) widget.yearDropdownSelected = thisYear;
 if (!widget.activeChartType) widget.activeChartType = 'stacked';	//alternative selection 'grouped'
 if (!widget.modalActive) widget.modalActive = false; // alternative selection is true
 
@@ -714,7 +715,7 @@ data.arrowWidth = getTextWidth('W', data.changePercentFont);
 
 
 //get dataForDate
-widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates);
+widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates);
 
 // eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
 data.availableDates = {};
@@ -728,18 +729,18 @@ data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
 
 // Funcs utilizing widget
 widget.updateDateWidgetRendering = () => {
-	widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates);
+	widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates);
 	renderWidget();
 };
 
 widget.dropdownYearChanged = val => {
-	widget.yearDropDownSelected = val;
-	widget.monthDropDownSelected = 'All';
+	widget.yearDropdownSelected = val;
+	widget.monthDropdownSelected = 'All';
 	widget.updateDateWidgetRendering();
 };
 
 widget.dropdownMonthChanged = val => {
-	widget.monthDropDownSelected = val;
+	widget.monthDropdownSelected = val;
 	widget.updateDateWidgetRendering();
 };
 
@@ -983,10 +984,10 @@ const renderWidget = () => {
 			//transition axes
 			kwhChart.select('.kwhXAxisTitle')
 				.transition()
-				.delay(stackedOrGrouped === 'grouped' ? 0 : barsTransitionDuration / 2)
-				.duration(barsTransitionDuration / 2)
-				.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
-			// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
+					.delay(stackedOrGrouped === 'grouped' ? 0 : barsTransitionDuration / 2)
+					.duration(barsTransitionDuration / 2)
+					.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
+				// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
 
 			kwhChart.select('.xAxis')
 				.transition()
@@ -996,8 +997,8 @@ const renderWidget = () => {
 
 			kwhChart.select('.yAxis')
 				.transition()
-				.duration(barsTransitionDuration)
-				.call(kwhYAxisGenerator);
+					.duration(barsTransitionDuration)
+					.call(kwhYAxisGenerator);
 
 			kwhChart.select('.kwhYAxisTitle')
 				.style('opacity', (widget.activeChartType === 'grouped' && widget.equipmentHovered === 'none') || (widget.activeChartType === 'stacked' && !widget.systemIsHovered) ? 1 : 0)
@@ -1006,19 +1007,19 @@ const renderWidget = () => {
 			// transition bars
 			kwhChart.selectAll('.equipmentGroups')
 				.transition()
-				.duration(barsTransitionDuration)
-				.attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
+					.duration(barsTransitionDuration)
+					.attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
 
 			kwhChart.selectAll('.categoryRects')	// .data(d => d.kwh)
 				.transition()
-				.duration(barsTransitionDuration - 500)
-				.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
-				.attr("y", d => kwhYScale(stackedOrGrouped === 'grouped' ? d.value : d.accumulated))
-				.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-				.attr("height", d => barSectionHeight - kwhYScale(d.value))   // run this to use changed kwhYScale
-				.attr('stroke', d => data[`${d.category}Color`])
+					.duration(barsTransitionDuration - 500)
+					.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
+					.attr("y", d => kwhYScale(stackedOrGrouped === 'grouped' ? d.value : d.accumulated))
+					.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+					.attr("height", d => barSectionHeight - kwhYScale(d.value))   // run this to use changed kwhYScale
+					.attr('stroke', d => data[`${d.category}Color`])
 				.transition()
-				.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
+					.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 
 
 			if (stackedOrGrouped === 'grouped') {
@@ -1038,21 +1039,21 @@ const renderWidget = () => {
 			//transition axes
 			costChart.select('.costXAxisTitle')
 				.transition()
-				.delay(stackedOrGrouped === 'grouped' ? 0 : barsTransitionDuration / 2)
-				.duration(barsTransitionDuration / 2)
-				.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
-			// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
+					.delay(stackedOrGrouped === 'grouped' ? 0 : barsTransitionDuration / 2)
+					.duration(barsTransitionDuration / 2)
+					.attr('y', widget.activeChartType === 'grouped' ? barSectionHeight + 22 : barSectionHeight + 6)
+				// .style('opacity', widget.activeChartType === 'grouped' ? 0 : 1)
 
 			costChart.select('.xAxis')
 				.transition()
-				.delay(stackedOrGrouped === 'grouped' ? barsTransitionDuration / 2 : 0)
-				.duration(barsTransitionDuration / 2)
-				.call(xAxisGenerator);
+					.delay(stackedOrGrouped === 'grouped' ? barsTransitionDuration / 2 : 0)
+					.duration(barsTransitionDuration / 2)
+					.call(xAxisGenerator);
 
 			costChart.select('.yAxis')
 				.transition()
-				.duration(barsTransitionDuration)
-				.call(costYAxisGenerator);
+					.duration(barsTransitionDuration)
+					.call(costYAxisGenerator);
 
 			costChart.select('.costYAxisTitle')
 				.style('opacity', (widget.activeChartType === 'grouped' && widget.equipmentHovered === 'none') || (widget.activeChartType === 'stacked' && !widget.systemIsHovered) ? 1 : 0)
@@ -1061,19 +1062,19 @@ const renderWidget = () => {
 			// transition bars
 			costChart.selectAll('.equipmentGroups')
 				.transition()
-				.duration(barsTransitionDuration)
-				.attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
+					.duration(barsTransitionDuration)
+					.attr('transform', d => `translate(${stackedOrGrouped === 'grouped' ? x0Scale(d.type) : 0},0)`)
 
 			costChart.selectAll('.categoryRects')	// .data(d => d.utilityRate)
 				.transition()
-				.duration(barsTransitionDuration - 500)
-				.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
-				.attr("y", d => costYScale(stackedOrGrouped === 'grouped' ? d.cost : d.accumulatedCost))
-				.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-				.attr("height", d => barSectionHeight - costYScale(d.cost))   // run this to use changed kwhYScale
-				.attr('stroke', d => data[`${d.category}Color`])
+					.duration(barsTransitionDuration - 500)
+					.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
+					.attr("y", d => costYScale(stackedOrGrouped === 'grouped' ? d.cost : d.accumulatedCost))
+					.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+					.attr("height", d => barSectionHeight - costYScale(d.cost))   // run this to use changed kwhYScale
+					.attr('stroke', d => data[`${d.category}Color`])
 				.transition()
-				.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
+					.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 
 			if (stackedOrGrouped === 'grouped') {
 				appendHoverableCostRects()
@@ -1127,45 +1128,88 @@ const renderWidget = () => {
 	const equipmentGroups = kwhBarSection.selectAll('.equipmentGroups')
 		.data(widget.dataForDate.equipmentDataForDate)
 		.enter().append("g")
-		.attr('class', d => `equipmentGroups ${d.type}EquipmentGroup`)
-		.attr('transform', d => `translate(${widget.activeChartType === 'grouped' ? x0Scale(d.type) : 0},0)`)
+			.attr('class', d => `equipmentGroups ${d.type}EquipmentGroup`)
+			.attr('transform', d => `translate(${widget.activeChartType === 'grouped' ? x0Scale(d.type) : 0},0)`)
 
-	equipmentGroups.selectAll('.categoryRects')
-		.data(d => d.kwh)
-		.enter().append("rect")
-		.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
-		.attr('rx', 1)
-		.attr('ry', 1)
-		.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
-		.attr("y", d => widget.activeChartType === 'grouped' ? kwhYScale(d.value) : kwhYScale(d.accumulated))
-		.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-		.attr("height", d => barSectionHeight - kwhYScale(d.value))
-		.attr("fill", d => data[`${d.category}Color`])
-		.style('fill-opacity', (innerD, innerI, innerNodes) => {
-			const myCat = innerD.category
-			const myEq = innerNodes[innerI].parentNode.__data__.type
-			if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-				return 1;
-			} else {
-				return unhoveredOpacity;
-			}
-		})
-		.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-			const myCat = innerD.category
-			const myEq = innerNodes[innerI].parentNode.__data__.type
-			if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-				return 1;
-			} else {
-				return 0;
-			}
-		})
-		.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
-		.on('mouseover', tryBarHoverFunc)
-		.on('mousedown', function () {
-			d3.event.stopPropagation()
-		})
-		.on('click', barPinFunc)
-		.on('mouseout', tryUnhover)
+	function appendPredictedOutline() {
+		equipmentGroups.selectAll('.predictedRects')
+			.data(d => d.kwh)
+			.enter().append("rect")
+				.style('display', d => d.category !== 'measured' ? 'none' : 'inherit')
+				.attr('class', d => `predictedRects dynamicCategoryRects measuredCategoryRect measuredBar`)
+				.attr('rx', 1)
+				.attr('ry', 1)
+				.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale('measured') : x0Scale('measured'))
+				.attr("y", d => widget.activeChartType === 'grouped' ? kwhYScale(d.value + 10000) : kwhYScale(d.accumulated + 10000))
+				.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+				.attr("height", d => barSectionHeight - kwhYScale(d.value + 10000))
+				.style('stroke-dasharray', ('2,2'))
+				.attr("fill", data.backgroundColor)
+				.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+					const myCat = innerD.category
+					const myEq = innerNodes[innerI].parentNode.__data__.type
+					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+						return 1;
+					} else {
+						return 0;
+					}
+				})
+				.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
+				.on('mouseover', tryBarHoverFunc)
+				.on('mousedown', function () {
+					d3.event.stopPropagation()
+				})
+				.on('click', barPinFunc)
+				.on('mouseout', tryUnhover)
+		}
+
+		//if first month or current month (TODO: not yet accounting for first year or current year-- will need to address all of these elsewhere)
+		if ( (+widget.yearDropdownSelected === +data.availableYears[data.availableYears.length - 1] && widget.monthDropdownSelected === data.availableDates[data.availableYears[data.availableYears.length - 1]][1]) || (+widget.yearDropdownSelected === +thisYear && widget.monthDropdownSelected === thisMonth) ) {
+			appendPredictedOutline();
+		}
+
+
+			equipmentGroups.selectAll('.categoryRects')
+				.data(d => d.kwh)
+				.enter().append("rect")
+					.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+					.attr('rx', 1)
+					.attr('ry', 1)
+					.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
+					.attr("y", d => widget.activeChartType === 'grouped' ? kwhYScale(d.value) : kwhYScale(d.accumulated))
+					.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+					.attr("height", d => barSectionHeight - kwhYScale(d.value))
+					.attr("fill", d => data[`${d.category}Color`])
+					.style('fill-opacity', (innerD, innerI, innerNodes) => {
+						const myCat = innerD.category
+						const myEq = innerNodes[innerI].parentNode.__data__.type
+						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+							return 1;
+						} else {
+							return unhoveredOpacity;
+						}
+					})
+					.style('stroke-opacity', (innerD, innerI, innerNodes) => {
+						const myCat = innerD.category
+						const myEq = innerNodes[innerI].parentNode.__data__.type
+						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
+							return 1;
+						} else {
+							return 0;
+						}
+					})
+					.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
+					.on('mouseover', tryBarHoverFunc)
+					.on('mousedown', function () {
+						d3.event.stopPropagation()
+					})
+					.on('click', barPinFunc)
+					.on('mouseout', tryUnhover)
+	
+
+//TODO: Remove if removing appendPredictedOutline:
+				d3.selectAll('.predictedRects').classed('categoryRects', true);
+
 
 	function appendHoverableKwhRects() {
 		widget.resetElements('.hoverableKwhRects');
@@ -2543,7 +2587,7 @@ const renderWidget = () => {
 		.attr('fill', data.toolTitleColor)
 		.style('font', data.toolTitleFont);
 
-	makeDropdown(data.availableYears, widget.dropdownYearChanged, dropdownsGroup, 0, getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles, true, dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.yearDropDownSelected, () => {}, () => {}, [], dropdownBorderRadius)
+	makeDropdown(data.availableYears, widget.dropdownYearChanged, dropdownsGroup, 0, getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles, true, dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.yearDropdownSelected, () => {}, () => {}, [], dropdownBorderRadius)
 
 	//Month Dropdown
 	dropdownsGroup.append('text')
@@ -2553,7 +2597,7 @@ const renderWidget = () => {
 		.attr('fill', data.toolTitleColor)
 		.style('font', data.toolTitleFont);
 
-	makeDropdown(data.availableDates[widget.yearDropDownSelected], widget.dropdownMonthChanged, dropdownsGroup, dateDropdownWidth + paddingBetweenDropdowns, getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles, true, dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.monthDropDownSelected, () => {}, () => {}, [], dropdownBorderRadius)
+	makeDropdown(data.availableDates[widget.yearDropdownSelected], widget.dropdownMonthChanged, dropdownsGroup, dateDropdownWidth + paddingBetweenDropdowns, getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles, true, dateDropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.monthDropdownSelected, () => {}, () => {}, [], dropdownBorderRadius)
 
 
 

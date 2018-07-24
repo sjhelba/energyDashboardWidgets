@@ -1,8 +1,18 @@
 "use strict";
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min'], function(Widget, subscriberMixIn, d3) {
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'moment', 'baja!'], function(Widget, subscriberMixIn, d3, moment, baja) {
 
 
 ////////// Hard Coded Defs //////////
+const today = new Date();
+const thisYear = today.getFullYear();
+const thisMonthIndex = today.getMonth();
+const thisMonth = months[thisMonthIndex];
+const getTotalHoursInMonth = (year, month) => moment(year + '-' + month, 'YYYY-MMM').daysInMonth() * 24;
+const getPredictedForMonth = (year, month, amountMeasured, hrsWithData) => {
+	const amountPerHr = amountMeasured / hrsWithData;
+	const predictedForMonth = amountPerHr * getTotalHoursInMonth(year, month);
+	return predictedForMonth;
+}
 /*
 		* @param {array} arrOfOptions	DEFAULT: []
 		* @param {function} funcToRunOnSelection, first param is val selected, rest are els in arr.	DEFAULT: valOfSelection => console.log('selected ' + valOfSelection)
@@ -220,7 +230,7 @@ const needToRedrawWidget = (widget, newData) => {
 	const unhoveredOpacity = 0.25;
 	const barsTransitionDuration = 1500;
 
-	const categories = [{name: 'baseline', displayName: 'Baseline'}, {name: 'projected', displayName: 'Projected'}, {name: 'measured', displayName: 'Measured'}];
+	const categories = [{name: 'baseline', displayName: 'Baseline'}, {name: 'projected', displayName: 'Projected'}, {name: 'measured', displayName: 'Measured'}, {name: 'predicted', displayName: 'Predicted'}];
 	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 	const indexOfMonth = {Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11}
 	const base64Images = {
@@ -262,7 +272,42 @@ const needToRedrawWidget = (widget, newData) => {
 	};
 
 	const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rates, equipmentHistoryNames, availableDates) => {
-		let categoryDataForDate = [
+		const firstYear = +Object.keys(availableDates).sort()[0];
+		const dataIsForFirstMonth = month === availableDates[firstYear][1] && +year === firstYear ? true : false;;
+		const dataIsForFirstYear = month === 'All' && +year === firstYear ? true : false;;
+		const dataIsForCurrentMonth = month === thisMonth && +year === +thisYear ? true : false;
+		const dataIsForCurrentYear = month === 'All' && +year === +thisYear ? true : false;
+		const predictedShown = dataIsForFirstMonth || dataIsForFirstYear || dataIsForCurrentMonth || dataIsForCurrentYear ? true : false;
+
+		let categoryDataForDate = predictedShown ? [
+			{
+				category: 'baseline',
+				kwh: 0,
+				cost: 0.05,
+				trh: 0,
+				rate: 0 //weighted avg of multiple rates if for yr rather than month
+			},
+			{
+				category: 'projected',
+				kwh: 0,
+				cost: 0.05,
+				rate: 0 //weighted avg of multiple rates if for yr rather than month
+			},
+			{
+				category: 'measured',
+				kwh: 0,
+				cost: 0.05,
+				trh: 0,
+				rate: 0 //weighted avg of multiple rates if for yr rather than month
+			},
+			{
+				category: 'predicted',
+				kwh: 0,
+				cost: 0.05,
+				trh: 0,
+				rate: 0 //weighted avg of multiple rates if for yr rather than month
+			}
+		] : [
 			{
 				category: 'baseline',
 				kwh: 0,
@@ -284,13 +329,39 @@ const needToRedrawWidget = (widget, newData) => {
 				rate: 0 //weighted avg of multiple rates if for yr rather than month
 			}
 		];
+
 		let equipmentDataForDate = [];
 		let equipmentRatesAndWeights = [];
 		activeEquipmentGroups.forEach(equip => {
 			equipmentDataForDate.push(
 				{
 					type: equip,
-					utilityRate: [
+					utilityRate: predictedShown ? [
+						{
+							category: 'baseline',
+							rate: 0,
+							cost: 0,
+							accumulatedCost: 0
+						},
+						{
+							category: 'projected',
+							rate: 0,
+							cost: 0,
+							accumulatedCost: 0
+						},
+						{
+							category: 'measured',
+							rate: 0,
+							cost: 0,
+							accumulatedCost: 0
+						},
+						{
+							category: 'predicted',
+							rate: 0,
+							cost: 0,
+							accumulatedCost: 0
+						}
+					] : [
 						{
 							category: 'baseline',
 							rate: 0,
@@ -310,7 +381,28 @@ const needToRedrawWidget = (widget, newData) => {
 							accumulatedCost: 0
 						}
 					],
-					kwh: [
+					kwh: predictedShown ? [
+						{
+							category: 'baseline',
+							value: 0,
+							accumulated: 0
+						},
+						{
+							category: 'projected',
+							value: 0,
+							accumulated: 0
+						},
+						{
+							category: 'measured',
+							value: 0,
+							accumulated: 0
+						},
+						{
+							category: 'predicted',
+							value: 0,
+							accumulated: 0
+						}
+					] : [
 						{
 							category: 'baseline',
 							value: 0,
@@ -332,7 +424,28 @@ const needToRedrawWidget = (widget, newData) => {
 			equipmentRatesAndWeights.push(
 				{
 					type: equip,
-					utilityRate: [
+					utilityRate: predictedShown ? [
+						{
+							category: 'baseline',
+							ratesAndWeights: {},
+							weightedRate: 0
+						},
+						{
+							category: 'projected',
+							ratesAndWeights: {},
+							weightedRate: 0
+						},
+						{
+							category: 'measured',
+							ratesAndWeights: {},
+							weightedRate: 0
+						},
+						{
+							category: 'predicted',
+							ratesAndWeights: {},
+							weightedRate: 0
+						}
+					] : [
 						{
 							category: 'baseline',
 							ratesAndWeights: {},
@@ -352,10 +465,11 @@ const needToRedrawWidget = (widget, newData) => {
 				}
 			);
 		});
+		//categories data does not include predicted
 		categoriesData.forEach((categoryData, categoryIndex) => {
 			categoryData.forEach(monthlyDatum => {
 				// if (months set to all OR current month matches) && (category is baseline or projected OR year matches)
-				if (((month === 'All' && availableDates[year] && availableDates[year][monthlyDatum.month]) || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)) {
+				if (((month === 'All' && availableDates[year] && availableDates[year].includes(monthlyDatum.month)) || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)) {
 					equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
 						// set kwh vals
 						if (monthlyDatum.equipmentKwhs[equipmentHistoryNames[egIndex]]) equipmentGroup.kwh[categoryIndex].value += monthlyDatum.equipmentKwhs[equipmentHistoryNames[egIndex]];	//default to 0 if missing data for date
@@ -370,21 +484,22 @@ const needToRedrawWidget = (widget, newData) => {
 								equipmentGroup.utilityRate[categoryIndex].rate = monthlyDatumRate;
 							}
 						}
-					})
+					});
 					// set system level trh vals for baseline and measured
 					if (categoryIndex !== 1 && monthlyDatum.trh) categoryDataForDate[categoryIndex].trh += monthlyDatum.trh;	//default to 0 if missing data for date
 				}
-			})
-		})
+			});
+		});
+ 
 		equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
-			//set accum kwh vals
-			equipmentGroup.kwh.forEach((category, catIndex) => {
+			//set accum kwh vals for all categories except predicted
+			equipmentGroup.kwh.filter((theCat, idx) => idx < 3).forEach((category, catIndex) => {
 				category.accumulated += category.value;
 				if (egIndex > 0) {
 					category.accumulated += equipmentDataForDate[egIndex - 1].kwh[catIndex].accumulated;
 				}
 				categoryDataForDate[catIndex].kwh = category.accumulated;
-			})
+			});
 			//CALCULATE WEIGHTED AVERAGE RATES IF MULTIPLE MONTHS
 			if (month === 'All') {
 				equipmentRatesAndWeights[egIndex].utilityRate.forEach((category, catIndex) => {
@@ -409,14 +524,14 @@ const needToRedrawWidget = (widget, newData) => {
 			}
 			//set projected rates to be equal to the baseline rates
 			equipmentGroup.utilityRate[1].rate = equipmentGroup.utilityRate[0].rate;
-			//set costs, accum costs, and system level rates
-			equipmentGroup.utilityRate.forEach((category, catIndex) => {
+			//set costs, accum costs, and system level rates for non predicted categories
+			equipmentGroup.utilityRate.filter((theCat, idx) => idx < 3).forEach((category, catIndex) => {
 				category.cost = category.rate * equipmentGroup.kwh[catIndex].value;
 				category.accumulatedCost = category.rate * equipmentGroup.kwh[catIndex].accumulated;
 				categoryDataForDate[catIndex].cost = category.accumulatedCost;
 				categoryDataForDate[catIndex].rate = category.rate;
-			})
-		})
+			});
+		});
 		return {categoryDataForDate, equipmentDataForDate};
 	};
 
@@ -609,9 +724,7 @@ const needToRedrawWidget = (widget, newData) => {
 
 
 	const setupDefinitions = widget => {
-		const today = new Date();
-		const thisYear = today.getFullYear();
-		const thisMonth = today.getMonth();
+
 
 		// FROM USER // 
 		const data = widget.properties().toValueMap();	//obj with all exposed properties as key/value pairs
@@ -729,6 +842,11 @@ const needToRedrawWidget = (widget, newData) => {
 
 		// GET HISTORY DATA //
 			//data to populate
+		data.firstMonthOptHrs = 0;
+		data.firstMonthStdHrs = 0;
+		data.currentMonthOptHrs = 0;
+		data.currentMonthStdHrs = 0;
+
 		const blendedRateDates = {};
 		const baselineDates = {};
 		const projectedDates = {};
@@ -741,256 +859,266 @@ const needToRedrawWidget = (widget, newData) => {
 		data.currencySymbol = data.facetsCurrencySymbolOverride === 'null' ? '$' : data.facetsCurrencySymbolOverride;
 		data.currencyPrecision = data.facetsCurrencyPrecisionOverride === 'null' ? 2 : data.facetsCurrencyPrecisionOverride;
 		
-		//return blended utility rate history trend
-		return widget.resolve(`history:^System_Bur`)
-				.then(historyTable => {
-					if (data.facetsCurrencySymbolOverride === 'null') data.currencySymbol = historyTable.getCol('value').getFacets().get('units') || '$';
-					if (data.facetsCurrencyPrecisionOverride === 'null') data.currencyPrecision = historyTable.getCol('value').getFacets().get('precision') || 2;
-					return historyTable.cursor({
+		const sysHrsBatchResolve = new baja.BatchResolve(['history:^System_StdHrHm', 'history:^System_OptHrHm', 'history:^System_StdHrCm', 'history:^System_OptHrCm']);
+
+    return sysHrsBatchResolve.resolve()
+      .then(() => {
+        const [stdHrsHmTable, optHrsHmTable, stdHrsCmTable, optHrsCmTable] = sysHrsBatchResolve.getTargetObjects();
+        return Promise.all([
+          stdHrsHmTable.cursor({limit: 1, each: row => {data.firstMonthStdHrs = +row.get('value')}}),
+          optHrsHmTable.cursor({limit: 1, each: row => {data.firstMonthOptHrs = +row.get('value')}}),
+          stdHrsCmTable.cursor({limit: 1, each: row => {data.currentMonthStdHrs = +row.get('value')}}),
+          optHrsCmTable.cursor({limit: 1, each: row => {data.currentMonthOptHrs = +row.get('value')}})
+        ]);
+      })
+      .catch(err => console.error('UST ERROR sysHrs batchResolve failed: ' + err))
+			//return blended utility rate history trend
+			.then(() => widget.resolve(`history:^System_Bur`))
+			.then(historyTable => {
+				if (data.facetsCurrencySymbolOverride === 'null') data.currencySymbol = historyTable.getCol('value').getFacets().get('units') || '$';
+				if (data.facetsCurrencyPrecisionOverride === 'null') data.currencyPrecision = historyTable.getCol('value').getFacets().get('precision') || 2;
+				return historyTable.cursor({
+					limit: 5000000,
+					each: function(row, index) {
+						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+						const rowValue = +row.get('value');
+						const rowMonth = timestamp.getMonth();
+						const rowYear = timestamp.getFullYear();
+						if (rowValue > 0){
+							if (!blendedRateDates[rowYear]) blendedRateDates[rowYear] = {};
+							if (!blendedRateDates[rowYear][rowMonth]) blendedRateDates[rowYear][rowMonth] = {total: 0, count: 0};
+							blendedRateDates[rowYear][rowMonth].total += rowValue;
+							blendedRateDates[rowYear][rowMonth].count ++;
+						}
+					}
+				});
+			})
+			.catch(err => console.error('Could not iterate over blended utility rate history trend: ' + err))
+			.then(() => {
+				// push into ordered arr format with avg rates for months with more than one rate
+				const rateYears = Object.keys(blendedRateDates).sort((a, b) => a - b);
+				rateYears.forEach(year => {
+					const rateMonths = Object.keys(blendedRateDates[year]).sort((a, b) => a - b);
+					rateMonths.forEach(month => {
+						const thisMonthData = blendedRateDates[year][month]
+						data.blendedRates.push({
+							rate: thisMonthData.total / thisMonthData.count,
+							month: months[+month],
+							year: +year
+						});
+					});
+				});
+
+				//return trh history trends
+				return Promise.all([widget.resolve(`history:^System_BlTrHm`), widget.resolve(`history:^System_MsTrHm`), widget.resolve(`history:^System_MsTrCm`)])
+				
+			})
+			.then(historyTrendTables => {
+
+				const [baselineTable, measuredTable, measuredTableCurrentMonth] = historyTrendTables;
+				const iterativePromises = [
+					baselineTable.cursor({
 						limit: 5000000,
 						each: function(row, index) {
 							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 							const rowValue = +row.get('value');
 							const rowMonth = timestamp.getMonth();
 							const rowYear = timestamp.getFullYear();
-							if (rowValue > 0){
-								if (!blendedRateDates[rowYear]) blendedRateDates[rowYear] = {};
-								if (!blendedRateDates[rowYear][rowMonth]) blendedRateDates[rowYear][rowMonth] = {total: 0, count: 0};
-								blendedRateDates[rowYear][rowMonth].total += rowValue;
-								blendedRateDates[rowYear][rowMonth].count ++;
-							}
+
+							if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
+							if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+							baselineDates[rowYear][rowMonth].trh = rowValue;
 						}
-					});
-				})
-				.catch(err => console.error('Could not iterate over blended utility rate history trend: ' + err))
-				.then(() => {
-					// push into ordered arr format with avg rates for months with more than one rate
-					const rateYears = Object.keys(blendedRateDates).sort((a, b) => a - b);
-					rateYears.forEach(year => {
-						const rateMonths = Object.keys(blendedRateDates[year]).sort((a, b) => a - b);
-						rateMonths.forEach(month => {
-							const thisMonthData = blendedRateDates[year][month]
-							data.blendedRates.push({
-								rate: thisMonthData.total / thisMonthData.count,
-								month: months[+month],
-								year: +year
-							});
-						});
-					});
+					}),
+					measuredTable.cursor({
+						limit: 5000000,
+						each: function(row, index) {
+							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+							const rowValue = +row.get('value');
+							const rowMonth = timestamp.getMonth();
+							const rowYear = timestamp.getFullYear();
 
-					//return trh history trends
-					return Promise.all([widget.resolve(`history:^System_BlTrHm`), widget.resolve(`history:^System_MsTrHm`), widget.resolve(`history:^System_MsTrCm`)])
+							if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
+							if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+							measuredDates[rowYear][rowMonth].trh = rowValue;
+						}
+					}),
+					measuredTableCurrentMonth.cursor({
+						limit: 5000000,
+						each: function(row, index) {
+							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+							const rowValue = +row.get('value');
+							const rowMonth = timestamp.getMonth();
+							const rowYear = timestamp.getFullYear();
+							if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
+							if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+							measuredDates[rowYear][rowMonth].trh = rowValue;
+						}
+					})
+				];
 					
-				})
-				.then(historyTrendTables => {
-
-					const [baselineTable, measuredTable, measuredTableCurrentMonth] = historyTrendTables;
-					const iterativePromises = [
-						baselineTable.cursor({
-							limit: 5000000,
-							each: function(row, index) {
-								const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-								const rowValue = +row.get('value');
-								const rowMonth = timestamp.getMonth();
-								const rowYear = timestamp.getFullYear();
-
-								if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
-								if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-								baselineDates[rowYear][rowMonth].trh = rowValue;
-							}
-						}),
-						measuredTable.cursor({
-							limit: 5000000,
-							each: function(row, index) {
-								const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-								const rowValue = +row.get('value');
-								const rowMonth = timestamp.getMonth();
-								const rowYear = timestamp.getFullYear();
-
-								if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
-								if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-								measuredDates[rowYear][rowMonth].trh = rowValue;
-							}
-						}),
-						measuredTableCurrentMonth.cursor({
-							limit: 5000000,
-							each: function(row, index) {
-								const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-								const rowValue = +row.get('value');
-								const rowMonth = timestamp.getMonth();
-								const rowYear = timestamp.getFullYear();
-								if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
-								if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-								measuredDates[rowYear][rowMonth].trh = rowValue;
-							}
-						})
-					];
-						
-					return Promise.all(iterativePromises);
-					
-				})
-				.catch(err => 'error iterating through trh trends: ' + err)
-				.then(() => {
+				return Promise.all(iterativePromises);
 				
-					const populateEquipmentTrendData = (eqType, eqTypeIndex) => {
-						return Promise.all([widget.resolve(`history:^${eqType}_BlKwHm`), widget.resolve(`history:^${eqType}_PrKwHm`), widget.resolve(`history:^${eqType}_MsKwHm`), widget.resolve(`history:^${eqType}_MsKwCm`)])
-						.then(histories => {
-							const [baselineKwh, projectedKwh, measuredKwh, currentMonthMeasuredKwh] = histories;
-							const iterativeKwhPromises = [
-								baselineKwh.cursor({
-									limit: 5000000,
-									each: function(row, index) {
-										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-										const rowValue = +row.get('value');
-										const rowMonth = timestamp.getMonth();
-										const rowYear = timestamp.getFullYear();
-										if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
-										if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-										baselineDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
-									}
-								}),
-								projectedKwh.cursor({
-									limit: 5000000,
-									each: function(row, index) {
-										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-										const rowValue = +row.get('value');
-										const rowMonth = timestamp.getMonth();
-										const rowYear = timestamp.getFullYear();
-										if (!projectedDates[rowYear]) projectedDates[rowYear] = {};
-										if (!projectedDates[rowYear][rowMonth]) projectedDates[rowYear][rowMonth] = {kwh: {}};
-										projectedDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
-									}
-								}),
-								measuredKwh.cursor({
-									limit: 5000000,
-									each: function(row, index) {
-										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-										const rowValue = +row.get('value');
-										const rowMonth = timestamp.getMonth();
-										const rowYear = timestamp.getFullYear();
-										if (rowMonth !== thisMonth || rowYear !== thisYear) {
-											if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
-											if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
-											measuredDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
-										}
-									}
-								}),
-								currentMonthMeasuredKwh.cursor({
-									limit: 5000000,
-									each: function(row, index) {
-										const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
-										const rowValue = +row.get('value');
-										const rowMonth = timestamp.getMonth();
-										const rowYear = timestamp.getFullYear();
+			})
+			.catch(err => 'error iterating through trh trends: ' + err)
+			.then(() => {
+			
+				const populateEquipmentTrendData = (eqType, eqTypeIndex) => {
+					return Promise.all([widget.resolve(`history:^${eqType}_BlKwHm`), widget.resolve(`history:^${eqType}_PrKwHm`), widget.resolve(`history:^${eqType}_MsKwHm`), widget.resolve(`history:^${eqType}_MsKwCm`)])
+					.then(histories => {
+						const [baselineKwh, projectedKwh, measuredKwh, currentMonthMeasuredKwh] = histories;
+						const iterativeKwhPromises = [
+							baselineKwh.cursor({
+								limit: 5000000,
+								each: function(row, index) {
+									const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+									const rowValue = +row.get('value');
+									const rowMonth = timestamp.getMonth();
+									const rowYear = timestamp.getFullYear();
+									if (!baselineDates[rowYear]) baselineDates[rowYear] = {};
+									if (!baselineDates[rowYear][rowMonth]) baselineDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+									baselineDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
+								}
+							}),
+							projectedKwh.cursor({
+								limit: 5000000,
+								each: function(row, index) {
+									const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+									const rowValue = +row.get('value');
+									const rowMonth = timestamp.getMonth();
+									const rowYear = timestamp.getFullYear();
+									if (!projectedDates[rowYear]) projectedDates[rowYear] = {};
+									if (!projectedDates[rowYear][rowMonth]) projectedDates[rowYear][rowMonth] = {kwh: {}};
+									projectedDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
+								}
+							}),
+							measuredKwh.cursor({
+								limit: 5000000,
+								each: function(row, index) {
+									const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+									const rowValue = +row.get('value');
+									const rowMonth = timestamp.getMonth();
+									const rowYear = timestamp.getFullYear();
+									if (rowMonth !== thisMonthIndex || rowYear !== thisYear) {
 										if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
 										if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
 										measuredDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
 									}
-								})
-							]
+								}
+							}),
+							currentMonthMeasuredKwh.cursor({
+								limit: 5000000,
+								each: function(row, index) {
+									const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+									const rowValue = +row.get('value');
+									const rowMonth = timestamp.getMonth();
+									const rowYear = timestamp.getFullYear();
+									if (!measuredDates[rowYear]) measuredDates[rowYear] = {};
+									if (!measuredDates[rowYear][rowMonth]) measuredDates[rowYear][rowMonth] = {trh: 0, kwh: {}};
+									measuredDates[rowYear][rowMonth].kwh[data.equipmentHistoryNames[eqTypeIndex]] = rowValue;
+								}
+							})
+						]
 
-							return Promise.all(iterativeKwhPromises);
-							
-						})
-						.catch(err => console.error('error finding or iterating through ' + eqType + 'historyTrends: ' + err))
-					};
-					// return kwh trends for each eqType
-					return Promise.all(data.equipmentHistoryNames.map((eqType, eqIndex) => populateEquipmentTrendData(eqType, eqIndex)));
-					
-				})
-				.catch(err => {console.error('error promising all active eqs: ' + err)})
-				.then(() => {
-					// push kwhs and trhs into ordered arr formats
-					const baselineYears = Object.keys(baselineDates).sort((a, b) => a - b);
-					baselineYears.forEach(year => {
-						const baselineMonths = Object.keys(baselineDates[year]).sort((a, b) => a - b);
-						baselineMonths.forEach(month => {
-							const thisMonthData = baselineDates[year][month]
-							data.baselineData.push({
-								month: months[+month],
-								year: +year,
-								trh: thisMonthData.trh,
-								equipmentKwhs: thisMonthData.kwh
-							});
-						});
-					});
-					const projectedYears = Object.keys(projectedDates).sort((a, b) => a - b);
-					projectedYears.forEach(year => {
-						const projectedMonths = Object.keys(projectedDates[year]).sort((a, b) => a - b);
-						projectedMonths.forEach(month => {
-							const thisMonthData = projectedDates[year][month]
-							data.projectedData.push({
-								month: months[+month],
-								year: +year,
-								equipmentKwhs: thisMonthData.kwh
-							});
-						});
-					});
-					const measuredYears = Object.keys(measuredDates).sort((a, b) => a - b);
-					measuredYears.forEach(year => {
-						const measuredMonths = Object.keys(measuredDates[year]).sort((a, b) => a - b);
-						measuredMonths.forEach(month => {
-							const thisMonthData = measuredDates[year][month]
-							data.measuredData.push({
-								month: months[+month],
-								year: +year,
-								trh: thisMonthData.trh,
-								equipmentKwhs: thisMonthData.kwh
-							});
-						});
-					});
-					// CALCULATED DEFS //
-					data.utilityRate = data.blendedRates[data.blendedRates.length - 1].rate;
-					if (!widget.blendedUtilityRateSelection) widget.blendedUtilityRateSelection = +data.utilityRate;
-					if (!widget.blendedUtilityRate) widget.blendedUtilityRate = widget.blendedUtilityRateSelection;
-					data.formatCurrency = d3.format(`,.${data.currencyPrecision}f`);
-					data.formatAvgCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`);
-					data.arrowWidth = getTextWidth('W', data.changePercentFont);
-
-						//get dataForDate
-					data.availableDates = {};
-					data.availableDatesWithMonthObjs = {};
-					data.measuredData.forEach(date => {
-						if (!data.availableDates[date.year]) {
-							data.availableDates[date.year] = [];
-							data.availableDatesWithMonthObjs[date.year] = {};
-						}
-						data.availableDates[date.year].push(date.month);
-						data.availableDatesWithMonthObjs[date.year][date.month] = true; 
+						return Promise.all(iterativeKwhPromises);
+						
 					})
+					.catch(err => console.error('error finding or iterating through ' + eqType + 'historyTrends: ' + err))
+				};
+				// return kwh trends for each eqType
+				return Promise.all(data.equipmentHistoryNames.map((eqType, eqIndex) => populateEquipmentTrendData(eqType, eqIndex)));
+				
+			})
+			.catch(err => {console.error('error promising all active eqs: ' + err)})
+			.then(() => {
+				// push kwhs and trhs into ordered arr formats
+				const baselineYears = Object.keys(baselineDates).sort((a, b) => a - b);
+				baselineYears.forEach(year => {
+					const baselineMonths = Object.keys(baselineDates[year]).sort((a, b) => a - b);
+					baselineMonths.forEach(month => {
+						const thisMonthData = baselineDates[year][month]
+						data.baselineData.push({
+							month: months[+month],
+							year: +year,
+							trh: thisMonthData.trh,
+							equipmentKwhs: thisMonthData.kwh
+						});
+					});
+				});
+				const projectedYears = Object.keys(projectedDates).sort((a, b) => a - b);
+				projectedYears.forEach(year => {
+					const projectedMonths = Object.keys(projectedDates[year]).sort((a, b) => a - b);
+					projectedMonths.forEach(month => {
+						const thisMonthData = projectedDates[year][month]
+						data.projectedData.push({
+							month: months[+month],
+							year: +year,
+							equipmentKwhs: thisMonthData.kwh
+						});
+					});
+				});
+				const measuredYears = Object.keys(measuredDates).sort((a, b) => a - b);
+				measuredYears.forEach(year => {
+					const measuredMonths = Object.keys(measuredDates[year]).sort((a, b) => a - b);
+					measuredMonths.forEach(month => {
+						const thisMonthData = measuredDates[year][month]
+						data.measuredData.push({
+							month: months[+month],
+							year: +year,
+							trh: thisMonthData.trh,
+							equipmentKwhs: thisMonthData.kwh
+						});
+					});
+				});
+				// CALCULATED DEFS //
+				data.utilityRate = data.blendedRates[data.blendedRates.length - 1].rate;
+				if (!widget.blendedUtilityRateSelection) widget.blendedUtilityRateSelection = +data.utilityRate;
+				if (!widget.blendedUtilityRate) widget.blendedUtilityRate = widget.blendedUtilityRateSelection;
+				data.formatCurrency = d3.format(`,.${data.currencyPrecision}f`);
+				data.formatAvgCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`);
+				data.arrowWidth = getTextWidth('W', data.changePercentFont);
 
-					data.availableYears = Object.keys(data.availableDates).sort((a,b) => b - a);
-					data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
-					if (!data.availableDates[widget.yearDropDownSelected]) widget.yearDropDownSelected = data.availableYears[data.availableYears.length - 1];
-					
-					widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDatesWithMonthObjs)
-					// eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
-
-						// Funcs utilizing widget
-					widget.updateDateWidgetRendering = () => {
-						widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDatesWithMonthObjs)
-						render(widget, true);
+					//get dataForDate
+				data.availableDates = {};
+				data.measuredData.forEach(date => {
+					if (!data.availableDates[date.year]) {
+						data.availableDates[date.year] = [];
 					}
-					widget.dropdownYearChanged = val => {
-						widget.yearDropDownSelected = val;
-						widget.monthDropDownSelected = 'All';
-						widget.updateDateWidgetRendering()
-
-					};
-					widget.dropdownMonthChanged = val => {
-						widget.monthDropDownSelected = val;
-						widget.updateDateWidgetRendering()
-					};
-					widget.resetElements = elementsToReset => {
-						const selectionForCheck = widget.outerDiv.selectAll(elementsToReset)
-						if (!selectionForCheck.empty()) selectionForCheck.remove();
-					};
-
-
-
-					return data;
+					data.availableDates[date.year].push(date.month);
 				})
-				.catch(err => console.error('error resolving histories: ' + err));
+
+				data.availableYears = Object.keys(data.availableDates).sort((a,b) => b - a);
+				data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
+				if (!data.availableDates[widget.yearDropDownSelected]) widget.yearDropDownSelected = data.availableYears[data.availableYears.length - 1];
+				
+				widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates)
+				// eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
+
+					// Funcs utilizing widget
+				widget.updateDateWidgetRendering = () => {
+					widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates)
+					render(widget, true);
+				}
+				widget.dropdownYearChanged = val => {
+					widget.yearDropDownSelected = val;
+					widget.monthDropDownSelected = 'All';
+					widget.updateDateWidgetRendering()
+
+				};
+				widget.dropdownMonthChanged = val => {
+					widget.monthDropDownSelected = val;
+					widget.updateDateWidgetRendering()
+				};
+				widget.resetElements = elementsToReset => {
+					const selectionForCheck = widget.outerDiv.selectAll(elementsToReset)
+					if (!selectionForCheck.empty()) selectionForCheck.remove();
+				};
+
+
+
+				return data;
+			})
+			.catch(err => console.error('error resolving histories: ' + err));
 	};
 
 
@@ -2742,7 +2870,7 @@ const needToRedrawWidget = (widget, newData) => {
 				toggleModal();
 			} else {
 				widget.blendedUtilityRate = widget.blendedUtilityRateSelection;
-				widget.resolve('station:|slot:/Drivers/NiagaraNetwork/Max/System_BlendedUtilityRate')		//TODO: Change to name/location Larry & Drew want
+				widget.resolve('station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/UtilitySavingsTool/BlendedRate')
 				.then(point => {
 					return point.invoke({
 						slot: 'set',

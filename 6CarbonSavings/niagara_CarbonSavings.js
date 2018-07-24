@@ -451,7 +451,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       }
     })
 
-    const sysHrsBatchResolve = new baja.BatchResolve(['history:^System_StdhHm', 'history:^System_OpthHm', 'history:^System_StdhCm', 'history:^System_OpthCm']);
+    const sysHrsBatchResolve = new baja.BatchResolve(['history:^System_StdHrHm', 'history:^System_OptHrHm', 'history:^System_StdHrCm', 'history:^System_OptHrCm']);
 
     return sysHrsBatchResolve.resolve()
       .then(() => {
