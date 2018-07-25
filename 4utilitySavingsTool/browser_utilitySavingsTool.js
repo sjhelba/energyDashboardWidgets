@@ -5,6 +5,24 @@ const widget = {};
 // DASHED/DOTTED: .style('stroke-dasharray', ('3,3'))
 
 ////////// Hard Coded Defs //////////
+const getTotalHoursInMonth = (year, month) => 730;		// change 730 to getting actual hours in month
+const getPredictedForMonth = (year, month, amountMeasured, hrsWithData) => {
+	const amountPerHr = amountMeasured / hrsWithData;
+	const predictedForMonth = amountPerHr * getTotalHoursInMonth(year, month);
+	return predictedForMonth;
+}
+const getTotalHoursInYear = (year, availableDates) => {
+  let measuredHours = 0;
+  availableDates[year].filter(month => month !== 'All').forEach(month => {
+    measuredHours += getTotalHoursInMonth(year, month);
+	})
+	return measuredHours;
+};
+const getPredictedForYear = (year, amountMeasured, hrsWithData, availableDates) => {
+  const amountPerHr = amountMeasured / hrsWithData;
+  const predictedForYear = amountPerHr * getTotalHoursInYear(year, availableDates);
+  return predictedForYear;
+}
 /*
 		* @param {array} arrOfOptions	DEFAULT: []
 		* @param {function} funcToRunOnSelection, first param is val selected, rest are els in arr.	DEFAULT: valOfSelection => console.log('selected ' + valOfSelection)
@@ -254,8 +272,45 @@ const getRateForDate = (selectedMonth, selectedYear, rates) => {
 	return 0;
 };
 
-const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rates) => {
-	let categoryDataForDate = [
+const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rates, equipmentHistoryNames, availableDates, arrayOfMeasuredOperatingHours) => {
+	const [firstMonthMeasuredHrs, firstYearMeasuredHrs, currentMonthMeasuredHrs, currentYearMeasuredHrs] = arrayOfMeasuredOperatingHours;
+
+	const firstYear = +Object.keys(availableDates).sort()[0];
+	const dataIsForFirstMonth = month === availableDates[firstYear][1] && +year === firstYear ? true : false;
+	const dataIsForFirstYear = month === 'All' && +year === firstYear ? true : false;
+	const dataIsForCurrentMonth = month === thisMonth && +year === +thisYear ? true : false;
+	const dataIsForCurrentYear = month === 'All' && +year === +thisYear ? true : false;
+	const predictedShown = dataIsForFirstMonth || dataIsForFirstYear || dataIsForCurrentMonth || dataIsForCurrentYear ? true : false;
+
+	let categoryDataForDate = predictedShown ? [
+		{
+			category: 'baseline',
+			kwh: 0,
+			cost: 0.05,
+			trh: 0,
+			rate: 0 //weighted avg of multiple rates if for yr rather than month
+		},
+		{
+			category: 'projected',
+			kwh: 0,
+			cost: 0.05,
+			rate: 0 //weighted avg of multiple rates if for yr rather than month
+		},
+		{
+			category: 'measured',
+			kwh: 0,
+			cost: 0.05,
+			trh: 0,
+			rate: 0 //weighted avg of multiple rates if for yr rather than month
+		},
+		{
+			category: 'predicted',
+			kwh: 0,
+			cost: 0.05,
+			trh: 0,
+			rate: 0 //weighted avg of multiple rates if for yr rather than month
+		}
+	] : [
 		{
 			category: 'baseline',
 			kwh: 0,
@@ -277,13 +332,39 @@ const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rate
 			rate: 0 //weighted avg of multiple rates if for yr rather than month
 		}
 	];
+
 	let equipmentDataForDate = [];
 	let equipmentRatesAndWeights = [];
 	activeEquipmentGroups.forEach(equip => {
 		equipmentDataForDate.push(
 			{
 				type: equip,
-				utilityRate: [
+				utilityRate: predictedShown ? [
+					{
+						category: 'baseline',
+						rate: 0,
+						cost: 0,
+						accumulatedCost: 0
+					},
+					{
+						category: 'projected',
+						rate: 0,
+						cost: 0,
+						accumulatedCost: 0
+					},
+					{
+						category: 'measured',
+						rate: 0,
+						cost: 0,
+						accumulatedCost: 0
+					},
+					{
+						category: 'predicted',
+						rate: 0,
+						cost: 0,
+						accumulatedCost: 0
+					}
+				] : [
 					{
 						category: 'baseline',
 						rate: 0,
@@ -303,7 +384,28 @@ const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rate
 						accumulatedCost: 0
 					}
 				],
-				kwh: [
+				kwh: predictedShown ? [
+					{
+						category: 'baseline',
+						value: 0,
+						accumulated: 0
+					},
+					{
+						category: 'projected',
+						value: 0,
+						accumulated: 0
+					},
+					{
+						category: 'measured',
+						value: 0,
+						accumulated: 0
+					},
+					{
+						category: 'predicted',
+						value: 0,
+						accumulated: 0
+					}
+				] : [
 					{
 						category: 'baseline',
 						value: 0,
@@ -322,6 +424,7 @@ const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rate
 				]
 			}
 		);
+
 		equipmentRatesAndWeights.push(
 			{
 				type: equip,
@@ -346,43 +449,49 @@ const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rate
 		);
 	});
 
+
+	//categories data does not include predicted
 	categoriesData.forEach((categoryData, categoryIndex) => {
 		categoryData.forEach(monthlyDatum => {
 			// if (months set to all OR current month matches) && (category is baseline or projected OR year matches)
-			if ((month === 'All' || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)) {
+			if (((month === 'All' && availableDates[year] && availableDates[year].includes(monthlyDatum.month)) || monthlyDatum.month === month) && (categoryIndex !== 2 || monthlyDatum.year == year)) {
 				equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
 					// set kwh vals
-					equipmentGroup.kwh[categoryIndex].value = monthlyDatum.equipmentKwhs[equipmentGroup.type] || 0;	//default to 0 if missing data for date
+					if (monthlyDatum.equipmentKwhs[equipmentHistoryNames[egIndex]]) equipmentGroup.kwh[categoryIndex].value += monthlyDatum.equipmentKwhs[equipmentHistoryNames[egIndex]];	//default to 0 if missing data for date
 					// set utility rates for baseline and measured
 					if (categoryIndex !== 1) {
-						const monthlyDatumRate = getRateForDate(monthlyDatum.month, monthlyDatum.year, rates);
+						const monthlyDatumRate = getRateForDate(monthlyDatum.month, monthlyDatum.year, rates)
 						if (month === 'All') {
-							let currentObj = equipmentRatesAndWeights[egIndex].utilityRate[categoryIndex].ratesAndWeights;
+							let currentObj = equipmentRatesAndWeights[egIndex].utilityRate[categoryIndex].ratesAndWeights
 							if (!currentObj[monthlyDatum.rate]) currentObj[monthlyDatumRate] = 0;
-							currentObj[monthlyDatumRate]++;
+							currentObj[monthlyDatumRate]++
 						} else {
 							equipmentGroup.utilityRate[categoryIndex].rate = monthlyDatumRate;
 						}
 					}
 				});
 				// set system level trh vals for baseline and measured
-				if (categoryIndex !== 1) categoryDataForDate[categoryIndex].trh = monthlyDatum.trh || 0;	//default to 0 if missing data for date
+				if (categoryIndex !== 1 && monthlyDatum.trh) categoryDataForDate[categoryIndex].trh += monthlyDatum.trh;	//default to 0 if missing data for date
 			}
 		});
 	});
+
+
 	equipmentDataForDate.forEach((equipmentGroup, egIndex) => {
-		//set accum kwh vals
-		equipmentGroup.kwh.forEach((category, catIndex) => {
+		//set accum kwh vals for all categories except predicted
+		equipmentGroup.kwh.slice(0, 3).forEach((category, catIndex) => {
+
 			category.accumulated += category.value;
 			if (egIndex > 0) {
 				category.accumulated += equipmentDataForDate[egIndex - 1].kwh[catIndex].accumulated;
 			}
 			categoryDataForDate[catIndex].kwh = category.accumulated;
 		});
+		
 		//CALCULATE WEIGHTED AVERAGE RATES IF MULTIPLE MONTHS
 		if (month === 'All') {
 			equipmentRatesAndWeights[egIndex].utilityRate.forEach((category, catIndex) => {
-				if (catIndex !== 1) {
+				if (catIndex !== 1){
 					const rates = Object.keys(category.ratesAndWeights);
 					if (rates.length === 1) {
 						equipmentGroup.utilityRate[catIndex].rate = +rates[0];
@@ -403,15 +512,54 @@ const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rate
 		}
 		//set projected rates to be equal to the baseline rates
 		equipmentGroup.utilityRate[1].rate = equipmentGroup.utilityRate[0].rate;
-		//set costs, accum costs, and system level rates
-		equipmentGroup.utilityRate.forEach((category, catIndex) => {
+		//set costs, accum costs, and system level rates for non predicted categories
+		equipmentGroup.utilityRate.filter((theCat, idx) => idx < 3).forEach((category, catIndex) => {
 			category.cost = category.rate * equipmentGroup.kwh[catIndex].value;
 			category.accumulatedCost = category.rate * equipmentGroup.kwh[catIndex].accumulated;
 			categoryDataForDate[catIndex].cost = category.accumulatedCost;
 			categoryDataForDate[catIndex].rate = category.rate;
 		});
+
+
+		//if predictedShown for date, fill in predicted ***equipmentDataForDate*** kwh's value and accum & utility rate's rate, cost, and accum cost
+		if (predictedShown) {
+			equipmentGroup.utilityRate[3].rate = equipmentGroup.utilityRate[2].rate;
+			if (dataIsForCurrentMonth) {
+				equipmentGroup.kwh[3].value = getPredictedForMonth(year, month, equipmentGroup.kwh[2].value, currentMonthMeasuredHrs);
+			} else if (dataIsForCurrentYear) {
+				equipmentGroup.kwh[3].value = getPredictedForYear(year, equipmentGroup.kwh[2].value, currentYearMeasuredHrs, availableDates);
+			} else if (dataIsForFirstMonth) {
+				equipmentGroup.kwh[3].value = getPredictedForMonth(year, month, equipmentGroup.kwh[2].value, firstMonthMeasuredHrs);
+			} else {	//dataIsForFirstYear
+				equipmentGroup.kwh[3].value = getPredictedForYear(year, equipmentGroup.kwh[2].value, firstYearMeasuredHrs, availableDates);
+			}
+			equipmentGroup.kwh[3].accumulated += equipmentGroup.kwh[3].value;
+			if (egIndex > 0) equipmentGroup.kwh[3].accumulated += equipmentDataForDate[egIndex - 1].kwh[3].accumulated;
+			equipmentGroup.utilityRate[3].cost = equipmentGroup.utilityRate[3].rate * equipmentGroup.kwh[3].value;
+			equipmentGroup.utilityRate[3].accumulatedCost = equipmentGroup.utilityRate[3].rate * equipmentGroup.kwh[3].accumulated;
+		}
 	});
-	return { categoryDataForDate, equipmentDataForDate };
+
+	//if predicted shown for date, set ***categoryDataForDate*** predicted rate & trh for this date
+	if (predictedShown) {
+		categoryDataForDate[3].rate = categoryDataForDate[2].rate;
+		if (dataIsForCurrentMonth) {
+			categoryDataForDate[3].trh = getPredictedForMonth(year, month, categoryDataForDate[2].trh, currentMonthMeasuredHrs);
+			categoryDataForDate[3].kwh = getPredictedForMonth(year, month, categoryDataForDate[2].kwh, currentMonthMeasuredHrs);
+		} else if (dataIsForCurrentYear) {
+			categoryDataForDate[3].trh = getPredictedForYear(year, categoryDataForDate[2].trh, currentYearMeasuredHrs, availableDates);
+			categoryDataForDate[3].kwh = getPredictedForYear(year, categoryDataForDate[2].kwh, currentYearMeasuredHrs, availableDates);
+		} else if (dataIsForFirstMonth) {
+			categoryDataForDate[3].trh = getPredictedForMonth(year, month, categoryDataForDate[2].trh, firstMonthMeasuredHrs);
+			categoryDataForDate[3].kwh = getPredictedForMonth(year, month, categoryDataForDate[2].kwh, firstMonthMeasuredHrs);
+		} else {	//dataIsForFirstYear
+			categoryDataForDate[3].trh = getPredictedForYear(year, categoryDataForDate[2].trh, firstYearMeasuredHrs, availableDates);
+			categoryDataForDate[3].kwh = getPredictedForYear(year, categoryDataForDate[2].kwh, firstYearMeasuredHrs, availableDates);
+		}
+		categoryDataForDate[3].cost = categoryDataForDate[3].kwh * categoryDataForDate[3].rate;
+	}
+
+	return {categoryDataForDate, equipmentDataForDate};
 };
 
 
@@ -602,7 +750,13 @@ if (!data.includeCTFs) { data.activeEquipmentGroups.splice(4, 1) }
 if (!data.includeTWPs) { data.activeEquipmentGroups.splice(3, 1) }
 if (!data.includeSCPs) { data.activeEquipmentGroups.splice(2, 1) }
 if (!data.includePCPs) { data.activeEquipmentGroups.splice(1, 1) }
-
+data.equipmentHistoryNames = data.activeEquipmentGroups.map(type => {
+	if (type === 'CHs') return 'Chillers';
+	if (type === 'PCPs') return 'Pcwps';
+	if (type === 'SCPs') return 'Scwps';
+	if (type === 'TWPs') return 'Twps';
+	if (type === 'CTFs') return 'Towers';
+});
 
 
 
@@ -704,6 +858,10 @@ data.projectedData = projectedData;
 data.measuredData = measuredData;
 data.currencySymbol = '$';
 data.currencyPrecision = '2';
+data.firstMonthMeasuredHrs = 500;
+data.firstYearMeasuredHrs = 7800;
+data.currentMonthMeasuredHrs = 490;
+data.currentYearMeasuredHrs = 2680;
 
 // CALCULATED DEFS //
 data.utilityRate = data.blendedRates[data.blendedRates.length - 1].rate;
@@ -714,8 +872,7 @@ data.formatAvgCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`);
 data.arrowWidth = getTextWidth('W', data.changePercentFont);
 
 
-//get dataForDate
-widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates);
+const arrayOfMeasuredOperatingHours = [data.firstMonthMeasuredHrs, data.firstYearMeasuredHrs, data.currentMonthMeasuredHrs, data.currentYearMeasuredHrs];
 
 // eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
 data.availableDates = {};
@@ -727,9 +884,14 @@ data.availableYears = Object.keys(data.availableDates).sort((a, b) => b - a);
 data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
 
 
+//get dataForDate
+widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates, arrayOfMeasuredOperatingHours);
+
+
+
 // Funcs utilizing widget
 widget.updateDateWidgetRendering = () => {
-	widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates);
+	widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates, arrayOfMeasuredOperatingHours);
 	renderWidget();
 };
 
@@ -1131,84 +1293,38 @@ const renderWidget = () => {
 			.attr('class', d => `equipmentGroups ${d.type}EquipmentGroup`)
 			.attr('transform', d => `translate(${widget.activeChartType === 'grouped' ? x0Scale(d.type) : 0},0)`)
 
-	function appendPredictedOutline() {
-		equipmentGroups.selectAll('.predictedRects')
-			.data(d => d.kwh)
-			.enter().append("rect")
-				.style('display', d => d.category !== 'measured' ? 'none' : 'inherit')
-				.attr('class', d => `predictedRects dynamicCategoryRects measuredCategoryRect measuredBar`)
-				.attr('rx', 1)
-				.attr('ry', 1)
-				.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale('measured') : x0Scale('measured'))
-				.attr("y", d => widget.activeChartType === 'grouped' ? kwhYScale(d.value + 10000) : kwhYScale(d.accumulated + 10000))
-				.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-				.attr("height", d => barSectionHeight - kwhYScale(d.value + 10000))
-				.style('stroke-dasharray', ('2,2'))
-				.attr("fill", data.backgroundColor)
-				.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-					const myCat = innerD.category
-					const myEq = innerNodes[innerI].parentNode.__data__.type
-					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-						return 1;
-					} else {
-						return 0;
-					}
-				})
-				.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
-				.on('mouseover', tryBarHoverFunc)
-				.on('mousedown', function () {
-					d3.event.stopPropagation()
-				})
-				.on('click', barPinFunc)
-				.on('mouseout', tryUnhover)
-		}
 
-		//if first month or current month (TODO: not yet accounting for first year or current year-- will need to address all of these elsewhere)
-		if ( (+widget.yearDropdownSelected === +data.availableYears[data.availableYears.length - 1] && widget.monthDropdownSelected === data.availableDates[data.availableYears[data.availableYears.length - 1]][1]) || (+widget.yearDropdownSelected === +thisYear && widget.monthDropdownSelected === thisMonth) ) {
-			appendPredictedOutline();
-		}
-
-
-			equipmentGroups.selectAll('.categoryRects')
-				.data(d => d.kwh)
-				.enter().append("rect")
-					.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
-					.attr('rx', 1)
-					.attr('ry', 1)
-					.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
-					.attr("y", d => widget.activeChartType === 'grouped' ? kwhYScale(d.value) : kwhYScale(d.accumulated))
-					.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-					.attr("height", d => barSectionHeight - kwhYScale(d.value))
-					.attr("fill", d => data[`${d.category}Color`])
-					.style('fill-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category
-						const myEq = innerNodes[innerI].parentNode.__data__.type
-						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-							return 1;
-						} else {
-							return unhoveredOpacity;
-						}
-					})
-					.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-						const myCat = innerD.category
-						const myEq = innerNodes[innerI].parentNode.__data__.type
-						if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-							return 1;
-						} else {
-							return 0;
-						}
-					})
-					.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
-					.on('mouseover', tryBarHoverFunc)
-					.on('mousedown', function () {
-						d3.event.stopPropagation()
-					})
-					.on('click', barPinFunc)
-					.on('mouseout', tryUnhover)
+	equipmentGroups.selectAll('.categoryRects')
+		.data(d => d.kwh)
+		.enter().append('rect')
+			.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
+			.attr('rx', 1)
+			.attr('ry', 1)
+			.attr('x', d => widget.activeChartType === 'grouped' ? x1Scale(d.category === 'predicted' ? 'measured' : d.category) : x0Scale(d.category === 'predicted' ? 'measured' : d.category))
+			.attr('y', d => widget.activeChartType === 'grouped' ? kwhYScale(d.value) : kwhYScale(d.accumulated))
+			// .attr('y', (d, i, nodes) => widget.activeChartType === 'grouped' ? kwhYScale(d.category === 'predicted' ? nodes[i].previousSibling.__data__.value + d.value : d.value) : kwhYScale(d.category === 'predicted' ? nodes[i].previousSibling.__data__.accumulated + d.accumulated : d.accumulated)) //TODO: switch out with height if opposite
+			.attr('width', widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+			// .attr('height', (d, i, nodes) => ( barSectionHeight + ( d.category === 'predicted' ? kwhYScale(nodes[i].previousSibling.__data__.value) : 0) ) - (kwhYScale(d.value) ) )
+			.attr('height', d => barSectionHeight - kwhYScale(d.value) ) // TODO: switch out with y if opposite
+			.attr('fill', d => d.category === 'predicted' ? data.backgroundColor : data[`${d.category}Color`])
+			.style('stroke-dasharray', d => d.category === 'predicted' ? '2,2' : '0,0')
+			.style('fill-opacity', getBarFillOpacity)
+			.style('stroke-opacity', getBarStrokeOpacity)
+			.attr('stroke', d => {
+				if (d.category === 'predicted') return data.measuredColor;
+				// if (widget.activeChartType === 'grouped') return 'none';
+				return data[`${d.category}Color`];
+			})
+			.on('mouseover', tryBarHoverFunc)
+			.on('mousedown', function(){
+				d3.event.stopPropagation()
+			})
+			.on('click', barPinFunc)
+			.on('mouseout', tryUnhover)
 	
+	//raise measured over predicted
+	widget.svg.selectAll('.measuredCategoryRect').raise();
 
-//TODO: Remove if removing appendPredictedOutline:
-				d3.selectAll('.predictedRects').classed('categoryRects', true);
 
 
 	function appendHoverableKwhRects() {
@@ -1288,8 +1404,37 @@ const renderWidget = () => {
 	function appendKwhTooltip() {
 		widget.resetElements('.kwhTooltip')
 		const isStacked = widget.activeChartType === 'stacked'
-		const kwhDataForDate = widget.activeChartType === 'stacked' ? widget.dataForDate.categoryDataForDate : widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].kwh;
-		const maxWidthCat = kwhDataForDate.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0, 1).toUpperCase()}:${isStacked ? curr.kwh : curr.value}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0, 1).toUpperCase()}:${isStacked ? accum.kwh : accum.value}`, 'bold ' + data.tooltipFont) ?
+		const kwhDataForDate = isStacked ? widget.dataForDate.categoryDataForDate : widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].kwh;
+		//takes into account predicted if needed for date
+		const getKwhDataArrayForTooltip = () => {
+			let kwhDataArrayForTooltip = kwhDataForDate.map(obj => Object.assign({}, obj));	//deep copy array of objs
+			if (kwhDataArrayForTooltip[3]) {
+				if (isStacked) {
+					kwhDataArrayForTooltip[2].kwh = kwhDataArrayForTooltip[3].kwh;
+					kwhDataArrayForTooltip[2].cost = kwhDataArrayForTooltip[3].cost;
+					kwhDataArrayForTooltip[2].trh = kwhDataArrayForTooltip[3].trh;
+				} else {
+					kwhDataArrayForTooltip[2].value = kwhDataArrayForTooltip[3].value;
+					kwhDataArrayForTooltip[2].accumulated = kwhDataArrayForTooltip[3].accumulated;
+				}
+				kwhDataArrayForTooltip = kwhDataArrayForTooltip.slice(0,3);
+			}
+			if (isStacked) {
+				kwhDataArrayForTooltip.forEach(obj => {
+					obj.kwh = Math.round(obj.kwh);
+					obj.trh = Math.round(obj.trh)
+				})
+			} else {
+				kwhDataArrayForTooltip.forEach(obj => {
+					obj.value = Math.round(obj.value);
+					obj.accumulated = Math.round(obj.accumulated)
+				})
+			}
+			return kwhDataArrayForTooltip;
+		}
+		const kwhDataArrayForTooltip =  getKwhDataArrayForTooltip();
+
+		const maxWidthCat = kwhDataArrayForTooltip.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0, 1).toUpperCase()}:${isStacked ? curr.kwh : curr.value}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0, 1).toUpperCase()}:${isStacked ? accum.kwh : accum.value}`, 'bold ' + data.tooltipFont) ?
 			curr :
 			accum
 		);
@@ -1299,6 +1444,7 @@ const renderWidget = () => {
 		const tooltip = kwhBarSection.append('g')
 			.attr('class', 'kwhTooltip')
 			.attr('transform', `translate(${barSectionWidth - tooltipWidth},0)`)
+			.attr('pointer-events', 'none')
 
 		tooltip.append('rect')
 			.attr('class', 'tooltip')
@@ -1310,10 +1456,10 @@ const renderWidget = () => {
 			.attr('ry', 5)
 
 		const textGroups = tooltip.selectAll('.kwhTextGroup')
-			.data(kwhDataForDate)
+			.data(kwhDataArrayForTooltip)
 			.enter().append('g')
-			.attr('class', d => `kwhTextGroup ${d.category}KwhTextGroup tooltip`)
-			.attr('transform', (d, i) => `translate(${data.tooltipPadding},${(data.tooltipPadding * 1.5) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
+				.attr('class', d => `kwhTextGroup ${d.category}KwhTextGroup tooltip`)
+				.attr('transform', (d, i) => `translate(${data.tooltipPadding},${(data.tooltipPadding * 1.5) + (i * (getTextHeight(data.tooltipFont) + data.paddingBetweenTooltipText)) - (getTextHeight(data.tooltipFont) / 2)})`)
 
 		textGroups.append('text')
 			.text((d, i) => d.category.slice(0, 1).toUpperCase() + ': ')
@@ -1711,24 +1857,8 @@ const renderWidget = () => {
 			widget.svg.selectAll(`.${d.name}LegendCircle`)
 				.attr('r', hoveredCircleRadius)
 			widget.svg.selectAll(`.dynamicCategoryRects`)
-				.style('fill-opacity', (innerD, innerI, innerNodes) => {
-					const myCat = innerD.category;
-					const myEq = innerNodes[innerI].parentNode.__data__.type;
-					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-						return 1;
-					} else {
-						return unhoveredOpacity;
-					}
-				})
-				.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-					const myCat = innerD.category;
-					const myEq = innerNodes[innerI].parentNode.__data__.type;
-					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-						return 1;
-					} else {
-						return 0;
-					}
-				})
+				.style('fill-opacity', getBarFillOpacity)
+				.style('stroke-opacity', getBarStrokeOpacity)
 			widget.svg.selectAll('.trhCategoryRects')
 				.style('opacity', innerD => widget.legendHovered === 'none' || widget.legendHovered === innerD.category ? 1 : unhoveredOpacity)
 		})
@@ -1742,24 +1872,8 @@ const renderWidget = () => {
 				.attr('r', circleRadius);
 
 			widget.svg.selectAll(`.dynamicCategoryRects`)
-				.style('fill-opacity', (innerD, innerI, innerNodes) => {
-					const myCat = innerD.category;
-					const myEq = innerNodes[innerI].parentNode.__data__.type;
-					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-						return 1;
-					} else {
-						return unhoveredOpacity;
-					}
-				})
-				.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-					const myCat = innerD.category;
-					const myEq = innerNodes[innerI].parentNode.__data__.type;
-					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-						return 1;
-					} else {
-						return 0;
-					}
-				});
+				.style('fill-opacity', getBarFillOpacity)
+				.style('stroke-opacity', getBarStrokeOpacity);
 
 			widget.svg.selectAll('.trhCategoryRects')
 				.style('opacity', innerD => widget.legendHovered === 'none' || widget.legendHovered === innerD.category ? 1 : unhoveredOpacity)
@@ -2700,7 +2814,34 @@ const renderWidget = () => {
 		}
 		barHoverFunc(d, i, nodes);
 	}
+	/******************** LEGEND HOVERS/UNHOVERS ******************/
+	function getBarStrokeOpacity (innerD, innerI, innerNodes) {
+		const myCat = innerD.category;
+		const myEq = innerNodes[innerI].parentNode.__data__.type;
+		if ( (widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat || (myCat === 'predicted' && widget.legendHovered === 'measured') ) ) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	function getBarFillOpacity (innerD, innerI, innerNodes) {
+		const myCat = innerD.category
+		const myEq = innerNodes[innerI].parentNode.__data__.type
+		if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
+			return 1;
+		} else if (myCat === 'predicted') {
+			return 0;
+		} else {
+			return unhoveredOpacity;
+		}
+	}
+
+
+
+
 	console.log('data: ', data);
+	console.log('widget: ', widget);
 };
 
 renderWidget();
