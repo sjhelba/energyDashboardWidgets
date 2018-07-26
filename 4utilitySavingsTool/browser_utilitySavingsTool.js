@@ -58,7 +58,7 @@ const getPredictedForYear = (year, amountMeasured, hrsWithData, availableDates) 
     let clickedSelection = defaultSelection || defaultSelection === 0 ? defaultSelection : arrOfOptions[0];
     const dropdownHeight = rowHeight * (arrOfOptions.length + 1);
     let open = false;
-    function generatePath () {
+    function generatePath() {
       let x1, y1, x2, y2, x3, y3;
       x1 = dropdownWidth - (horizontalPadding + arrowWidth);
       x2 = x1 + arrowWidth;
@@ -83,7 +83,7 @@ const getPredictedForYear = (year, amountMeasured, hrsWithData, availableDates) 
       .attr('x', - 6)
       .attr('y', - 6)
       .attr('stroke-width', '0.5px')
-      .on('click', function () {
+      .on('click', function() {
         toggleDrop()
       })
     //rows
@@ -99,7 +99,7 @@ const getPredictedForYear = (year, amountMeasured, hrsWithData, availableDates) 
         .on('mouseleave', function() {
           d3.select(this).select('rect').attr('fill', backgroundFill);
         })
-        .on('click', function (d) {
+        .on('click', function(d) {
           changeClickedSelection(d);
           toggleDrop();
         });
@@ -126,7 +126,7 @@ const getPredictedForYear = (year, amountMeasured, hrsWithData, availableDates) 
       .on('mouseleave', function() {
         if (!open) selectedRect.attr('fill', backgroundFill);
       })
-      .on('click', function () {
+      .on('click', function() {
         toggleDrop()
       });
     const selectedRect = selectedGroup.append('rect')
@@ -148,13 +148,13 @@ const getPredictedForYear = (year, amountMeasured, hrsWithData, availableDates) 
       .attr('d', generatePath())
       .attr('fill', textColor)
       .attr('stroke', textColor)
-    function changeClickedSelection (newSelectionValue) {
+    function changeClickedSelection(newSelectionValue) {
       selectedRect.attr('fill', backgroundFill);
       clickedSelection = newSelectionValue;
       selectedText.text(clickedSelection);
       funcToRunOnSelection(newSelectionValue, ...arrOfArgsToPassInToFuncsAfterVal);
     }
-    function toggleDrop () {
+    function toggleDrop() {
       open = !open;
       if (open) {
         funcToRunOnOpen(...arrOfArgsToPassInToFuncsAfterVal)
@@ -491,7 +491,7 @@ const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rate
 		//CALCULATE WEIGHTED AVERAGE RATES IF MULTIPLE MONTHS
 		if (month === 'All') {
 			equipmentRatesAndWeights[egIndex].utilityRate.forEach((category, catIndex) => {
-				if (catIndex !== 1){
+				if (catIndex !== 1) {
 					const rates = Object.keys(category.ratesAndWeights);
 					if (rates.length === 1) {
 						equipmentGroup.utilityRate[catIndex].rate = +rates[0];
@@ -847,6 +847,7 @@ if (!widget.legendHovered) widget.legendHovered = 'none';	// alternative selecti
 
 if (!widget.monthDropdownSelected) widget.monthDropdownSelected = 'All';
 if (!widget.yearDropdownSelected) widget.yearDropdownSelected = thisYear;
+
 if (!widget.activeChartType) widget.activeChartType = 'stacked';	//alternative selection 'grouped'
 if (!widget.modalActive) widget.modalActive = false; // alternative selection is true
 
@@ -887,13 +888,17 @@ data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
 //get dataForDate
 widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates, arrayOfMeasuredOperatingHours);
 
+//is current date: first month, first year, current month, and/or current year of data, and therefore should widget show 'predicted' data?
+if (!widget.predictedIsShownForDate) widget.predictedIsShownForDate = widget.dataForDate.categoryDataForDate[3] ? true : false;
 
 
 // Funcs utilizing widget
 widget.updateDateWidgetRendering = () => {
 	widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates, arrayOfMeasuredOperatingHours);
+	widget.predictedIsShownForDate = widget.dataForDate.categoryDataForDate[3] ? true : false;
 	renderWidget();
 };
+
 
 widget.dropdownYearChanged = val => {
 	widget.yearDropdownSelected = val;
@@ -1316,7 +1321,7 @@ const renderWidget = () => {
 				return data[`${d.category}Color`];
 			})
 			.on('mouseover', tryBarHoverFunc)
-			.on('mousedown', function(){
+			.on('mousedown', function() {
 				d3.event.stopPropagation()
 			})
 			.on('click', barPinFunc)
@@ -1347,7 +1352,7 @@ const renderWidget = () => {
 				return barSectionHeight - kwhYScale(maxHeightForGroup.__data__.value)
 			})
 			.on('mouseover', tryBarHoverFunc)
-			.on('mousedown', function () {
+			.on('mousedown', function() {
 				d3.event.stopPropagation()
 			})
 			.on('click', barPinFunc)
@@ -1408,7 +1413,7 @@ const renderWidget = () => {
 		//takes into account predicted if needed for date
 		const getKwhDataArrayForTooltip = () => {
 			let kwhDataArrayForTooltip = kwhDataForDate.map(obj => Object.assign({}, obj));	//deep copy array of objs
-			if (kwhDataArrayForTooltip[3]) {
+			if (widget.predictedIsShownForDate) {
 				if (isStacked) {
 					kwhDataArrayForTooltip[2].kwh = kwhDataArrayForTooltip[3].kwh;
 					kwhDataArrayForTooltip[2].cost = kwhDataArrayForTooltip[3].cost;
@@ -1531,7 +1536,7 @@ const renderWidget = () => {
 		})
 		.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 		.on('mouseover', tryBarHoverFunc)
-		.on('mousedown', function () {
+		.on('mousedown', function() {
 			d3.event.stopPropagation()
 		})
 		.on('click', barPinFunc)
@@ -1556,7 +1561,7 @@ const renderWidget = () => {
 				return barSectionHeight - costYScale(maxHeightForGroup.__data__.cost)
 			})
 			.on('mouseover', tryBarHoverFunc)
-			.on('mousedown', function () {
+			.on('mousedown', function() {
 				d3.event.stopPropagation()
 			})
 			.on('click', barPinFunc)
@@ -1714,23 +1719,23 @@ const renderWidget = () => {
 		.attr("fill", d => data[`${d.category}Color`])
 		.style('opacity', d => widget.legendHovered === 'none' || widget.legendHovered === d.category ? 1 : unhoveredOpacity)
 		.attr('stroke', d => data[`${d.category}Color`])
-		.on('mouseover', function () {
+		.on('mouseover', function() {
 			widget.trhIsHovered = true;
 			appendTrhTooltip();
 			trhChart.selectAll('.trhYAxisTitle')
 				.style('opacity', 0)
 		})
-		.on('mousedown', function () {
+		.on('mousedown', function() {
 			d3.event.stopPropagation()
 		})
-		.on('click', function () {
+		.on('click', function() {
 			widget.trhIsHovered = true;
 			widget.trhIsPinned = true;
 			appendTrhTooltip();
 			trhChart.selectAll('.trhYAxisTitle')
 				.style('opacity', 0)
 		})
-		.on('mouseout', function () {
+		.on('mouseout', function() {
 			if (!widget.trhIsPinned) {
 				widget.trhIsHovered = false;
 				widget.svg.selectAll('.trhYAxisTitle')
@@ -1847,10 +1852,10 @@ const renderWidget = () => {
 		.enter().append('g')
 		.attr('class', d => `legend${d.displayName}Group legendCategories`)
 		.attr('transform', (d, i) => `translate(${circleRadius + (i * paddingBetweenLegendCategories) + getPrevLegendWidths(i)}, ${circleRadius})`)
-		.on('mousedown', function () {
+		.on('mousedown', function() {
 			d3.event.stopPropagation()
 		})
-		.on('mouseover', function (d) {
+		.on('mouseover', function(d) {
 			widget.legendHovered = d.name;
 			widget.svg.selectAll(`.${d.name}LegendText`)
 				.style('font-weight', 'bold')
@@ -1906,15 +1911,16 @@ const renderWidget = () => {
 		.attr('dominant-baseline', 'hanging')
 		.style('font', data.toolTitleFont);
 
-
-	const currencySymbol = utilityRateGroup.append('text')
+	//currencySymbol
+	utilityRateGroup.append('text')
 		.attr('y', getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol)
 		.attr('dominant-baseline', 'hanging')
 		.style('font', data.currencySymbolFont)
 		.attr('fill', data.currencySymbolColor)
 		.text(data.currencySymbol);
 
-	const utilityRate = utilityRateGroup.append('text')
+	//blended utility rate
+	utilityRateGroup.append('text')
 		.attr('dominant-baseline', 'hanging')
 		.attr('x', getTextWidth(data.currencySymbol, data.currencySymbolFont) + paddingRightOfCurrencySymbol)
 		.attr('y', getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol)
@@ -1931,7 +1937,7 @@ const renderWidget = () => {
 		const percentVal = change * 100;
 		const roundedPercentVal = Math.round(percentVal);
 		return roundedPercentVal === 0 && percentVal > 0 ? '<01' : roundedPercentVal;
-	}
+	};
 	const paddingBetweenPercentAndValue = data.widgetSize === 'large' ? 10 : 5;
 	const paddingBetweenArrowAndPercent = 0;
 	const getWidthOfPercentArrowAndText = text => getTextWidth(text + 'W%', data.changePercentFont) + paddingBetweenArrowAndPercent;
@@ -1948,7 +1954,30 @@ const renderWidget = () => {
 		let costPercent = { last: [], new: [] };
 		let trhPercent = { last: [], new: [] };
 		if (widget.equipmentHovered !== 'none') {
-			const hoveredEquipmentDataForDate = widget.dataForDate.equipmentDataForDate.filter(equip => equip.type === widget.equipmentHovered)[0];
+
+			const getHoveredEquipmentDataForDate = () => {
+				const equipmentDataObject = widget.dataForDate.equipmentDataForDate.filter(equip => equip.type === widget.equipmentHovered)[0]
+				
+				//change appropriate measured data to predicted if predicted shown for date
+				if (widget.dataForDate.categoryDataForDate[3]) {
+					//deep copy obj & its arrays of objs
+					let predictedInformedEquipmentDataObject = {type: widget.equipmentHovered, utilityRate: [], kwh: []};
+					predictedInformedEquipmentDataObject.utilityRate = equipmentDataObject.utilityRate.map(obj => Object.assign({}, obj));
+					predictedInformedEquipmentDataObject.kwh = equipmentDataObject.kwh.map(obj => Object.assign({}, obj));
+
+					predictedInformedEquipmentDataObject.utilityRate[2].cost = predictedInformedEquipmentDataObject.utilityRate[3].cost;
+					predictedInformedEquipmentDataObject.utilityRate[2].accumulatedCost = predictedInformedEquipmentDataObject.utilityRate[3].accumulatedCost;
+					predictedInformedEquipmentDataObject.kwh[2].value = predictedInformedEquipmentDataObject.kwh[3].value;
+					predictedInformedEquipmentDataObject.kwh[2].accumulated = predictedInformedEquipmentDataObject.kwh[3].accumulated;
+					
+					predictedInformedEquipmentDataObject.utilityRate = predictedInformedEquipmentDataObject.utilityRate.slice(0,3);
+					predictedInformedEquipmentDataObject.kwh = predictedInformedEquipmentDataObject.kwh.slice(0,3);
+					return predictedInformedEquipmentDataObject;
+				}
+				return equipmentDataObject;
+			}
+			const hoveredEquipmentDataForDate =  getHoveredEquipmentDataForDate();
+
 
 			// set percentage arrays
 			//kwh
@@ -1973,7 +2002,7 @@ const renderWidget = () => {
 			//create objects to iterate over
 			kwh = {
 				category: 'kwh',
-				value: Math.abs(hoveredEquipmentDataForDate.kwh[2].value - hoveredEquipmentDataForDate.kwh[0].value),
+				value: Math.round(Math.abs(hoveredEquipmentDataForDate.kwh[2].value - hoveredEquipmentDataForDate.kwh[0].value)),
 				percent: JSON.parse(JSON.stringify(kwhPercent)),
 				arrowPath: getArrowPath(hoveredEquipmentDataForDate.kwh[2].value <= hoveredEquipmentDataForDate.kwh[0].value),
 				imgPath: './images/Electricity Badge.svg',
@@ -1988,9 +2017,11 @@ const renderWidget = () => {
 				label: data.currencySymbol
 			};
 		} else {
+
+
 			// set percentage arrays
 			//kwh
-			let kwhNiceChangePercent = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[2].kwh)
+			let kwhNiceChangePercent = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].kwh, widget.dataForDate.categoryDataForDate[widget.predictedIsShownForDate ? 3 : 2].kwh)
 			kwhPercent.new = kwhNiceChangePercent.toString().split('').map(digit => digit !== '<' ? +digit : digit);
 			if (kwhPercent.new.length > 2) kwhPercent.new = kwhPercent.new[0] === '<' ? [2, 0, 1] : [1, 9, 9];
 			if (kwhPercent.new.length === 1) kwhPercent.new.unshift(0, 0);
@@ -1999,7 +2030,7 @@ const renderWidget = () => {
 			widget.lastKwhPercent = kwhPercent.new.slice();
 
 			//cost
-			let costNiceChangePercent = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].cost, widget.dataForDate.categoryDataForDate[2].cost)
+			let costNiceChangePercent = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].cost, widget.dataForDate.categoryDataForDate[widget.predictedIsShownForDate ? 3 : 2].cost)
 			costPercent.new = costNiceChangePercent.toString().split('').map(digit => digit !== '<' ? +digit : digit);
 			if (costPercent.new.length > 2) costPercent.new = costPercent.new[0] === '<' ? [2, 0, 1] : [1, 9, 9];
 			if (costPercent.new.length === 1) costPercent.new.unshift(0, 0);
@@ -2012,24 +2043,24 @@ const renderWidget = () => {
 			//create objects to iterate over
 			kwh = {
 				category: 'kwh',
-				value: Math.abs(widget.dataForDate.categoryDataForDate[2].kwh - widget.dataForDate.categoryDataForDate[0].kwh),
+				value: Math.round(Math.abs(widget.dataForDate.categoryDataForDate[widget.predictedIsShownForDate ? 3 : 2].kwh - widget.dataForDate.categoryDataForDate[0].kwh)),
 				percent: JSON.parse(JSON.stringify(kwhPercent)),
-				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].kwh <= widget.dataForDate.categoryDataForDate[0].kwh),
+				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[widget.predictedIsShownForDate ? 3 : 2].kwh <= widget.dataForDate.categoryDataForDate[0].kwh),
 				imgPath: './images/Electricity Badge.svg',
 				label: ' kWh'
 			};
 			cost = {
 				category: 'cost',
-				value: data.formatCurrency(Math.abs(widget.dataForDate.categoryDataForDate[2].cost - widget.dataForDate.categoryDataForDate[0].cost)),
+				value: data.formatCurrency(Math.abs(widget.dataForDate.categoryDataForDate[widget.predictedIsShownForDate ? 3 : 2].cost - widget.dataForDate.categoryDataForDate[0].cost)),
 				percent: JSON.parse(JSON.stringify(costPercent)),
-				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].cost <= widget.dataForDate.categoryDataForDate[0].cost),
+				arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[widget.predictedIsShownForDate ? 3 : 2].cost <= widget.dataForDate.categoryDataForDate[0].cost),
 				imgPath: './images/Monetary Badge.svg',
 				label: data.currencySymbol
 			};
 		}
 		// set percentage arrays
 		//trh
-		let trhNiceChangePercent = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].trh, widget.dataForDate.categoryDataForDate[2].trh);
+		let trhNiceChangePercent = getNiceChangePercent(widget.dataForDate.categoryDataForDate[0].trh, widget.dataForDate.categoryDataForDate[widget.predictedIsShownForDate ? 3 : 2].trh);
 		trhPercent.new = trhNiceChangePercent.toString().split('').map(digit => digit !== '<' ? +digit : digit);
 		if (trhPercent.new.length > 2) trhPercent.new = trhPercent.new[0] === '<' ? [2, 0, 1] : [1, 9, 9];
 		if (trhPercent.new.length === 1) trhPercent.new.unshift(0, 0);
@@ -2040,15 +2071,15 @@ const renderWidget = () => {
 		//create object to iterate over
 		trh = {
 			category: 'trh',
-			value: Math.abs(widget.dataForDate.categoryDataForDate[2].trh - widget.dataForDate.categoryDataForDate[0].trh),
+			value: Math.round(Math.abs(widget.dataForDate.categoryDataForDate[widget.predictedIsShownForDate ? 3 : 2].trh - widget.dataForDate.categoryDataForDate[0].trh)),
 			percent: JSON.parse(JSON.stringify(trhPercent)),
-			arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[2].trh <= widget.dataForDate.categoryDataForDate[0].trh),
+			arrowPath: getArrowPath(widget.dataForDate.categoryDataForDate[widget.predictedIsShownForDate ? 3 : 2].trh <= widget.dataForDate.categoryDataForDate[0].trh),
 			imgPath: './images/Production Badge.svg',
 			label: ' tRh'
 		};
 		return [kwh, cost, trh];
 	}
-
+			//TODO: WE'RE HEREEEEEEEEEEEEEEEE
 	function renderChangeTools() {
 		widget.resetElements('.changeTools');
 
@@ -2118,7 +2149,8 @@ const renderWidget = () => {
 			.attr('transform', `translate(5,${(getTextHeight(data.changePercentFont) - 5)})`)
 			.attr('class', (d, i) => `textGroupIndex${i}`)
 
-		const percentChangeText1 = percentChangeTextGroup.selectAll('.digitBox1')
+		// percentChangeText1
+		percentChangeTextGroup.selectAll('.digitBox1')
 			.data(d => d.percent.last)
 			.enter().append('text')
 			.attr('class', (d, i, nodes) => `digitBox1 g1DigitIndex${i}For${nodes[i].parentNode.__data__.category} digitIndex${i}For${nodes[i].parentNode.__data__.category}`)
@@ -2140,7 +2172,8 @@ const renderWidget = () => {
 
 		const paddingHidingText = data.widgetSize === 'small' ? 30 : 40;
 
-		const percentChangeText2 = percentChangeTextGroup.selectAll('.digitBox2')
+		// percentChangeText2
+		percentChangeTextGroup.selectAll('.digitBox2')
 			.data(d => d.percent.last)
 			.enter().append('text')
 			.attr('class', (d, i, nodes) => `digitBox2 g2DigitIndex${i}For${nodes[i].parentNode.__data__.category} digitIndex${i}For${nodes[i].parentNode.__data__.category}`)
@@ -2677,7 +2710,7 @@ const renderWidget = () => {
 	}
 
 	function handleSubmit() {
-		if (widget.blendedUtilityRate === widget.blendedUtilityRateSelection){				
+		if (widget.blendedUtilityRate === widget.blendedUtilityRateSelection) {				
 			toggleModal();
 		} else {
 			widget.blendedUtilityRate = widget.blendedUtilityRateSelection;
@@ -2778,24 +2811,8 @@ const renderWidget = () => {
 			widget.equipmentHovered = nodes[i].parentNode.__data__.type;
 			renderChangeTools();
 			widget.svg.selectAll('.dynamicCategoryRects')
-				.style('fill-opacity', (innerD, innerI, innerNodes) => {
-					const myCat = innerD.category;
-					const myEq = innerNodes[innerI].parentNode.__data__.type;
-					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-						return 1;
-					} else {
-						return unhoveredOpacity;
-					}
-				})
-				.style('stroke-opacity', (innerD, innerI, innerNodes) => {
-					const myCat = innerD.category;
-					const myEq = innerNodes[innerI].parentNode.__data__.type;
-					if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat)) {
-						return 1;
-					} else {
-						return 0;
-					}
-				})
+				.style('fill-opacity', getBarFillOpacity)
+				.style('stroke-opacity', getBarStrokeOpacity);
 		}
 		appendCostTooltip();
 		appendKwhTooltip();
@@ -2815,7 +2832,7 @@ const renderWidget = () => {
 		barHoverFunc(d, i, nodes);
 	}
 	/******************** LEGEND HOVERS/UNHOVERS ******************/
-	function getBarStrokeOpacity (innerD, innerI, innerNodes) {
+	function getBarStrokeOpacity(innerD, innerI, innerNodes) {
 		const myCat = innerD.category;
 		const myEq = innerNodes[innerI].parentNode.__data__.type;
 		if ( (widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat || (myCat === 'predicted' && widget.legendHovered === 'measured') ) ) {
@@ -2825,7 +2842,7 @@ const renderWidget = () => {
 		}
 	}
 
-	function getBarFillOpacity (innerD, innerI, innerNodes) {
+	function getBarFillOpacity(innerD, innerI, innerNodes) {
 		const myCat = innerD.category
 		const myEq = innerNodes[innerI].parentNode.__data__.type
 		if ((widget.equipmentHovered === 'none' || widget.equipmentHovered === myEq) && (widget.legendHovered === 'none' || widget.legendHovered === myCat) ) {
