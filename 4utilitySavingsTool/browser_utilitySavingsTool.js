@@ -176,10 +176,16 @@ const needToRedrawWidget = (widget, newData) => {
 	// check primitives for equivalence
 	if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
 	
-	// check relevant scalarArrs for equivalence
-	if (!areScalarArrsSame(lastData.blendedRates, newData.blendedRates))	return true;
-	
 	// check objs for equivalence
+		//blendedRates
+	if (lastData.blendedRates.length !== newData.blendedRates.length) return true;
+	const isDiscrepencyInBlendedRateObjs = lastData.blendedRates.some((monthObj, idx) => {
+		const newMonthObj = newData.blendedRates[idx];
+		if (!arePrimitiveValsInObjsSame(monthObj, newMonthObj)) return true;
+		return false; // for some func
+	});
+	if (isDiscrepencyInBlendedRateObjs) return true;
+	
 		//baselineData
 	if (lastData.baselineData.length !== newData.baselineData.length) return true;
 	const isDiscrepencyInBaselineObjs = lastData.baselineData.some((monthObj, idx) => {
@@ -266,10 +272,10 @@ const getNextNiceVal = uglyMaxNum => {
 
 const getRateForDate = (selectedMonth, selectedYear, rates) => {
 	for (let i = rates.length - 1; i >= 0; i--) {
-		let pointedRate = rates[i];
-		if (pointedRate.year < selectedYear || (pointedRate.year === selectedYear && indexOfMonth[pointedRate.month] <= indexOfMonth[selectedMonth])) return pointedRate.rate;
+		let pointedRate = rates[i]
+		if ( pointedRate.year < selectedYear || (pointedRate.year === selectedYear && indexOfMonth[pointedRate.month] <= indexOfMonth[selectedMonth]) ) return pointedRate.rate;
 	}
-	return 0;
+	return rates[0].rate || 0;
 };
 
 const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rates, equipmentHistoryNames, availableDates, arrayOfMeasuredOperatingHours) => {
@@ -569,7 +575,7 @@ const getDataForDate = (month, year, categoriesData, activeEquipmentGroups, rate
 const properties = [
 	{
 		name: 'backgroundColor',
-		value: 'white',
+		value: 'rgb(245,245,245)',
 		typeSpec: 'gx:Color'
 	},
 	{
@@ -579,6 +585,16 @@ const properties = [
 	{
 		name: 'currencyName',
 		value: 'USD'
+	},
+	// if this value is changed from the string null, this value will be used to populate currency symbol rather than that from facets or default of $
+	{
+		name: 'facetsCurrencySymbolOverride',
+		value: 'null'
+	},
+	// if this value is changed from the string null, this value will be used to populate currency precision rather than that from facets or default of 2
+	{
+		name: 'facetsCurrencyPrecisionOverride',
+		value: 'null'
 	},
 	{
 		name: 'includePCPs',
@@ -594,21 +610,21 @@ const properties = [
 	},
 	{
 		name: 'includeCTFs',
-		value: true
+		value: true	
 	},
 	{
 		name: 'measuredColor',
-		value: '#29ABE2',
+		value: 'rgb(105,202,210)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'baselineColor',
-		value: '#003366',
+		value: 'rgb(66,88,103)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'projectedColor',
-		value: '#FF6633',
+		value: 'rgb(252,181,80)',
 		typeSpec: 'gx:Color'
 	},
 	{
@@ -618,7 +634,7 @@ const properties = [
 	},
 	{
 		name: 'toolTitleColor',
-		value: '#333333',
+		value: 'rgb(51,51,51)',
 		typeSpec: 'gx:Color'
 	},
 	{
@@ -633,7 +649,7 @@ const properties = [
 	},
 	{
 		name: 'dropdownFillColor',
-		value: 'white',
+		value: 'rgb(255,255,255)',
 		typeSpec: 'gx:Color'
 	},
 	{
@@ -647,28 +663,33 @@ const properties = [
 		typeSpec: 'gx:Color'
 	},
 	{
+		name: 'axesColor',
+		value: 'black',
+		typeSpec: 'gx:Color'
+	},
+	{
 		name: 'legendTextColor',
 		value: 'black',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'currencySymbolColor',
-		value: 'black',
+		value: 'rgb(51,65,78)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'utilityRateColor',
-		value: 'black',
+		value: 'rgb(64,64,64)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'changePercentColor',
-		value: 'white',
+		value: 'rgb(255,255,255)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'changeValueColor',
-		value: 'white',
+		value: 'rgb(255,255,255)',
 		typeSpec: 'gx:Color'
 	},
 	{
@@ -678,41 +699,42 @@ const properties = [
 	},
 	{
 		name: 'tooltipBackgroundColor',
-		value: '#dedfe0',
+		value: 'rgb(255,255,255)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'changeToolRectColor',
-		value: '#333333',
+		value: 'rgb(51,65,78)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'sysBtnBackgroundColor',
-		value: '#7663F2',
+		value: 'rgb(68,108,179)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'eqBtnTextColor',
-		value: 'white',
+		value: 'rgb(255,255,255)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'eqBtnBackgroundColor',
-		value: '#8EF056',
+		value: 'rgb(34,181,115)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'sysBtnTextColor',
-		value: 'white',
+		value: 'rgb(255,255,255)',
 		typeSpec: 'gx:Color'
 	},
 	{
 		name: 'tooltipOpacity',
-		value: 0.9,
+		value: 0.8,
 	},
 	{
 		name: 'btnKnobColor',
-		value: 'white'
+		value: 'rgb(255,255,255)',
+		typeSpec: 'gx:Color'
 	}
 ];
 
@@ -778,9 +800,10 @@ data.widgetSize = chooseSize(jqHeight, jqWidth)[1];
 data.margin = { top: 5, left: 5, right: 0, bottom: 0 };
 data.graphicHeight = widgetDimensions.height - (data.margin.top + data.margin.bottom);
 data.graphicWidth = widgetDimensions.width - (data.margin.left + data.margin.right);
-//fonts
+
+// FONTS //
 if (data.widgetSize === 'small') {
-	data.unitsFont = '9pt Nirmala UI';
+	data.unitsFont = 'bold 9pt Nirmala UI';
 	data.buttonFont = 'bold 12pt Nirmala UI';
 	data.tooltipFont = '10pt Nirmala UI';
 	data.changeValueFont = '12pt Nirmala UI';
@@ -789,11 +812,11 @@ if (data.widgetSize === 'small') {
 	data.dropdownFont = '10.5pt Nirmala UI';
 	data.tickFont = '8.5pt Nirmala UI';
 	data.systemNameFont = '9.5pt Nirmala UI';
-	data.legendFont = '9pt Nirmala UI';
+	data.legendFont = '10pt Nirmala UI';
 	data.currencySymbolFont = 'bold 10.5pt Nirmala UI';
 	data.utilityRateFont = 'bold 15pt Nirmala UI';
 } else if (data.widgetSize === 'medium') {
-	data.unitsFont = '11pt Nirmala UI';
+	data.unitsFont = 'bold 11pt Nirmala UI';
 	data.buttonFont = 'bold 13.5pt Nirmala UI';
 	data.tooltipFont = '11pt Nirmala UI';
 	data.changeValueFont = '14.5pt Nirmala UI';
@@ -806,7 +829,7 @@ if (data.widgetSize === 'small') {
 	data.currencySymbolFont = 'bold 13pt Nirmala UI';
 	data.utilityRateFont = 'bold 20pt Nirmala UI';
 } else {
-	data.unitsFont = '13pt Nirmala UI';
+	data.unitsFont = 'bold 13pt Nirmala UI';
 	data.buttonFont = 'bold 15pt Nirmala UI';
 	data.tooltipFont = '12.5pt Nirmala UI';
 	data.changeValueFont = '17pt Nirmala UI';
@@ -1180,10 +1203,10 @@ const renderWidget = () => {
 			kwhChart.selectAll('.categoryRects')	// .data(d => d.kwh)
 				.transition()
 					.duration(barsTransitionDuration - 500)
-					.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
-					.attr("y", d => kwhYScale(stackedOrGrouped === 'grouped' ? d.value : d.accumulated))
-					.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-					.attr("height", d => barSectionHeight - kwhYScale(d.value))   // run this to use changed kwhYScale
+					.attr('x', d => stackedOrGrouped === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
+					.attr('y', d => kwhYScale(stackedOrGrouped === 'grouped' ? d.value : d.accumulated))
+					.attr('width', stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+					.attr('height', d => barSectionHeight - kwhYScale(d.value))   // run this to use changed kwhYScale
 					.attr('stroke', d => data[`${d.category}Color`])
 				.transition()
 					.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
@@ -1235,10 +1258,10 @@ const renderWidget = () => {
 			costChart.selectAll('.categoryRects')	// .data(d => d.utilityRate)
 				.transition()
 					.duration(barsTransitionDuration - 500)
-					.attr("x", d => stackedOrGrouped === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
-					.attr("y", d => costYScale(stackedOrGrouped === 'grouped' ? d.cost : d.accumulatedCost))
-					.attr("width", stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-					.attr("height", d => barSectionHeight - costYScale(d.cost))   // run this to use changed kwhYScale
+					.attr('x', d => stackedOrGrouped === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
+					.attr('y', d => costYScale(stackedOrGrouped === 'grouped' ? d.cost : d.accumulatedCost))
+					.attr('width', stackedOrGrouped === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+					.attr('height', d => barSectionHeight - costYScale(d.cost))   // run this to use changed kwhYScale
 					.attr('stroke', d => data[`${d.category}Color`])
 				.transition()
 					.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
@@ -1294,7 +1317,7 @@ const renderWidget = () => {
 	// bars
 	const equipmentGroups = kwhBarSection.selectAll('.equipmentGroups')
 		.data(widget.dataForDate.equipmentDataForDate)
-		.enter().append("g")
+		.enter().append('g')
 			.attr('class', d => `equipmentGroups ${d.type}EquipmentGroup`)
 			.attr('transform', d => `translate(${widget.activeChartType === 'grouped' ? x0Scale(d.type) : 0},0)`)
 
@@ -1336,18 +1359,18 @@ const renderWidget = () => {
 		widget.resetElements('.hoverableKwhRects');
 		equipmentGroups.selectAll('.hoverableKwhRects')
 			.data(d => d.kwh)
-			.enter().append("rect")
+			.enter().append('rect')
 			.attr('class', `hoverableKwhRects`)
 			.attr('rx', 1)
 			.attr('ry', 1)
-			.attr("x", d => x0Scale(d.category))
-			.attr("y", (d, i, nodes) => {
+			.attr('x', d => x0Scale(d.category))
+			.attr('y', (d, i, nodes) => {
 				const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.value > accum.__data__.value ? curr : accum);
 				return kwhYScale(maxHeightForGroup.__data__.value)
 			})
-			.attr("width", x0Scale.bandwidth())
+			.attr('width', x0Scale.bandwidth())
 			.attr('opacity', 0)
-			.attr("height", (d, i, nodes) => {
+			.attr('height', (d, i, nodes) => {
 				const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.value > accum.__data__.value ? curr : accum);
 				return barSectionHeight - kwhYScale(maxHeightForGroup.__data__.value)
 			})
@@ -1364,13 +1387,13 @@ const renderWidget = () => {
 
 	// x axis
 	kwhBarSection.append('g')
-		.attr("class", "axis xAxis")
-		.attr("transform", `translate(0, ${barSectionHeight})`)
+		.attr('class', 'axis xAxis')
+		.attr('transform', `translate(0, ${barSectionHeight})`)
 		.call(xAxisGenerator);
 
 	// y axis
-	kwhBarSection.append("g")
-		.attr("class", "axis yAxis")
+	kwhBarSection.append('g')
+		.attr('class', 'axis yAxis')
 		.call(kwhYAxisGenerator)
 
 
@@ -1386,7 +1409,7 @@ const renderWidget = () => {
 		.text('kWh')
 		.attr('transform', 'rotate(-90)')
 		.attr('y', 5)
-		.attr("text-anchor", "middle")
+		.attr('text-anchor', 'middle')
 		.attr('dominant-baseline', 'hanging')
 		.attr('fill', data.unitsColor)
 		.style('font', data.unitsFont)
@@ -1501,21 +1524,21 @@ const renderWidget = () => {
 	// bars
 	const costEquipmentGroups = costBarSection.selectAll('.equipmentGroups')
 		.data(widget.dataForDate.equipmentDataForDate)
-		.enter().append("g")
+		.enter().append('g')
 		.attr('class', d => `equipmentGroups ${d.type}EquipmentGroup`)
 		.attr('transform', d => `translate(${widget.activeChartType === 'grouped' ? x0Scale(d.type) : 0},0)`)
 
 	costEquipmentGroups.selectAll('.categoryRects')
 		.data(d => d.utilityRate)
-		.enter().append("rect")
+		.enter().append('rect')
 		.attr('class', d => `dynamicCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
 		.attr('rx', 1)
 		.attr('ry', 1)
-		.attr("x", d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
-		.attr("y", d => widget.activeChartType === 'grouped' ? costYScale(d.cost) : costYScale(d.accumulatedCost))
-		.attr("width", widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
-		.attr("height", d => barSectionHeight - costYScale(d.cost))
-		.attr("fill", d => data[`${d.category}Color`])
+		.attr('x', d => widget.activeChartType === 'grouped' ? x1Scale(d.category) : x0Scale(d.category))
+		.attr('y', d => widget.activeChartType === 'grouped' ? costYScale(d.cost) : costYScale(d.accumulatedCost))
+		.attr('width', widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
+		.attr('height', d => barSectionHeight - costYScale(d.cost))
+		.attr('fill', d => data[`${d.category}Color`])
 		.style('fill-opacity', (innerD, innerI, innerNodes) => {
 			const myCat = innerD.category
 			const myEq = innerNodes[innerI].parentNode.__data__.type
@@ -1547,16 +1570,16 @@ const renderWidget = () => {
 		widget.resetElements('.hoverableCostRects');
 		costEquipmentGroups.selectAll('.hoverableCostRects')
 			.data(d => d.utilityRate)
-			.enter().append("rect")
+			.enter().append('rect')
 			.attr('class', `hoverableCostRects`)
-			.attr("x", d => x0Scale(d.category))
-			.attr("y", (d, i, nodes) => {
+			.attr('x', d => x0Scale(d.category))
+			.attr('y', (d, i, nodes) => {
 				const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.cost > accum.__data__.cost ? curr : accum);
 				return costYScale(maxHeightForGroup.__data__.cost);
 			})
-			.attr("width", x0Scale.bandwidth())
+			.attr('width', x0Scale.bandwidth())
 			.attr('opacity', 0)
-			.attr("height", (d, i, nodes) => {
+			.attr('height', (d, i, nodes) => {
 				const maxHeightForGroup = nodes.reduce((accum, curr) => curr.__data__.cost > accum.__data__.cost ? curr : accum);
 				return barSectionHeight - costYScale(maxHeightForGroup.__data__.cost)
 			})
@@ -1580,13 +1603,13 @@ const renderWidget = () => {
 
 	// x axis
 	costBarSection.append('g')
-		.attr("class", "axis xAxis")
-		.attr("transform", `translate(0, ${barSectionHeight})`)
+		.attr('class', 'axis xAxis')
+		.attr('transform', `translate(0, ${barSectionHeight})`)
 		.call(xAxisGenerator);
 
 	// y axis
-	costBarSection.append("g")
-		.attr("class", "axis yAxis")
+	costBarSection.append('g')
+		.attr('class', 'axis yAxis')
 		.call(costYAxisGenerator)
 
 
@@ -1602,7 +1625,7 @@ const renderWidget = () => {
 		.text(data.currencyName)
 		.attr('transform', 'rotate(-90)')
 		.attr('y', 5)
-		.attr("text-anchor", "middle")
+		.attr('text-anchor', 'middle')
 		.attr('dominant-baseline', 'hanging')
 		.attr('fill', data.unitsColor)
 		.style('font', data.unitsFont)
@@ -1710,13 +1733,13 @@ const renderWidget = () => {
 
 	trhBarSection.selectAll('.categoryRects')
 		.data(trhCategoryDataForDate)
-		.enter().append("rect")
+		.enter().append('rect')
 		.attr('class', d => `trhCategoryRects categoryRects ${d.category}CategoryRect ${d.category}Bar`)
-		.attr("x", d => trhXScale(d.category))
-		.attr("y", d => trhYScale(d.trh))
-		.attr("width", trhXScale.bandwidth())
-		.attr("height", d => barSectionHeight - trhYScale(d.trh))
-		.attr("fill", d => data[`${d.category}Color`])
+		.attr('x', d => trhXScale(d.category))
+		.attr('y', d => trhYScale(d.trh))
+		.attr('width', trhXScale.bandwidth())
+		.attr('height', d => barSectionHeight - trhYScale(d.trh))
+		.attr('fill', d => data[`${d.category}Color`])
 		.style('opacity', d => widget.legendHovered === 'none' || widget.legendHovered === d.category ? 1 : unhoveredOpacity)
 		.attr('stroke', d => data[`${d.category}Color`])
 		.on('mouseover', function() {
@@ -1747,13 +1770,13 @@ const renderWidget = () => {
 
 	// x axis
 	trhBarSection.append('g')
-		.attr("class", "axis xAxis")
-		.attr("transform", `translate(0, ${barSectionHeight})`)
+		.attr('class', 'axis xAxis')
+		.attr('transform', `translate(0, ${barSectionHeight})`)
 		.call(trhXAxisGenerator);
 
 	// y axis
-	trhBarSection.append("g")
-		.attr("class", "axis yAxis")
+	trhBarSection.append('g')
+		.attr('class', 'axis yAxis')
 		.call(trhYAxisGenerator)
 
 
@@ -1769,7 +1792,7 @@ const renderWidget = () => {
 		.text('tRh')
 		.attr('transform', 'rotate(-90)')
 		.attr('y', 5)
-		.attr("text-anchor", "middle")
+		.attr('text-anchor', 'middle')
 		.attr('dominant-baseline', 'hanging')
 		.attr('fill', data.unitsColor)
 		.style('font', data.unitsFont)
@@ -1824,7 +1847,7 @@ const renderWidget = () => {
 			.style('font-weight', 'bold')
 
 		trhTextGroups.append('text')
-			.text(d => d.trh + ' tRh')
+			.text(d => Math.round(d.trh) + ' tRh')
 			.attr('x', getTextWidth('M:', 'bold ' + data.tooltipFont) + data.paddingAfterLegendCat)
 			.attr('dominant-baseline', 'hanging')
 			.style('font', data.tooltipFont)
@@ -2658,7 +2681,7 @@ const renderWidget = () => {
 					.style('top', ((verticalModalPadding * 4) + modalLabelsHeight) + 'px')
 				})
 				.on('change', function() {
-					widget.blendedUtilityRateSelection = +d3.select(this).property("value");
+					widget.blendedUtilityRateSelection = +d3.select(this).property('value');
 				});
 
 			// ROW THREE

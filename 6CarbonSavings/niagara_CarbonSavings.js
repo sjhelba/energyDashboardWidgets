@@ -333,7 +333,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
       },
       {
         name: 'includeTowers',
-        value: false
+        value: true
       }
     ]);
 

@@ -619,7 +619,7 @@ const needToRedrawWidget = (widget, newData) => {
 			},
 			{
 				name: 'includeCTFs',
-				value: false
+				value: true
 			},
 			{
 				name: 'measuredColor',
@@ -869,8 +869,8 @@ const needToRedrawWidget = (widget, newData) => {
 		
 		if (!widget.legendHovered) widget.legendHovered = 'none';	// alternative selections are category names
 		
-		if (!widget.monthDropDownSelected) widget.monthDropDownSelected = 'All';
-		if (!widget.yearDropDownSelected) widget.yearDropDownSelected = thisYear;
+		if (!widget.monthDropdownSelected) widget.monthDropdownSelected = 'All';
+		if (!widget.yearDropdownSelected) widget.yearDropdownSelected = thisYear;
 		if (!widget.activeChartType) widget.activeChartType = 'stacked';	//alternative selection 'grouped'
 		if (!widget.modalActive) widget.modalActive = false; // alternative selection is true
 
@@ -1256,11 +1256,11 @@ const needToRedrawWidget = (widget, newData) => {
 
 				data.availableYears = Object.keys(data.availableDates).sort((a,b) => b - a);
 				data.availableYears.forEach(yr => data.availableDates[yr].unshift('All'));
-				if (!data.availableDates[widget.yearDropDownSelected]) widget.yearDropDownSelected = data.availableYears[data.availableYears.length - 1];
+				if (!data.availableDates[widget.yearDropdownSelected]) widget.yearDropdownSelected = data.availableYears[data.availableYears.length - 1];
 				
 				const arrayOfMeasuredOperatingHours = [data.firstMonthMeasuredHrs, data.firstYearMeasuredHrs, data.currentMonthMeasuredHrs, data.currentYearMeasuredHrs];
 
-				widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates, arrayOfMeasuredOperatingHours)
+				widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates, arrayOfMeasuredOperatingHours)
 				// eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
 
 				//is current date: first month, first year, current month, and/or current year of data, and therefore should widget show 'predicted' data?
@@ -1268,18 +1268,18 @@ const needToRedrawWidget = (widget, newData) => {
 
 					// Funcs utilizing widget
 				widget.updateDateWidgetRendering = () => {
-					widget.dataForDate = getDataForDate(widget.monthDropDownSelected, widget.yearDropDownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates, arrayOfMeasuredOperatingHours)
+					widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates, arrayOfMeasuredOperatingHours)
 					widget.predictedIsShownForDate = widget.dataForDate.categoryDataForDate[3] ? true : false;
 					render(widget, true);
 				}
 				widget.dropdownYearChanged = val => {
-					widget.yearDropDownSelected = val;
-					widget.monthDropDownSelected = 'All';
+					widget.yearDropdownSelected = val;
+					widget.monthDropdownSelected = 'All';
 					widget.updateDateWidgetRendering()
 
 				};
 				widget.dropdownMonthChanged = val => {
-					widget.monthDropDownSelected = val;
+					widget.monthDropdownSelected = val;
 					widget.updateDateWidgetRendering()
 				};
 				widget.resetElements = elementsToReset => {
@@ -1556,7 +1556,7 @@ const needToRedrawWidget = (widget, newData) => {
 
 
 				if (stackedOrGrouped === 'grouped') {
-					appendHoverableKwhRects ()
+					appendHoverableKwhRects()
 				} else {
 					widget.resetElements('.hoverableKwhRects')
 				}
@@ -1609,7 +1609,7 @@ const needToRedrawWidget = (widget, newData) => {
 							.attr('stroke', d => widget.activeChartType === 'grouped' ? 'none' : data[`${d.category}Color`])
 
 					if (stackedOrGrouped === 'grouped') {
-						appendHoverableCostRects ()
+						appendHoverableCostRects()
 					} else {
 						widget.resetElements('.hoverableCostRects')
 					}
@@ -1764,7 +1764,7 @@ const needToRedrawWidget = (widget, newData) => {
 		function appendKwhTooltip() {
 			widget.resetElements('.kwhTooltip')
 			const isStacked = widget.activeChartType === 'stacked'
-			const kwhDataForDate = widget.activeChartType === 'stacked' ? widget.dataForDate.categoryDataForDate : widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].kwh;
+			const kwhDataForDate = isStacked ? widget.dataForDate.categoryDataForDate : widget.dataForDate.equipmentDataForDate.filter(datum => datum.type === widget.equipmentHovered)[0].kwh;
 			//takes into account predicted if needed for date
 			const getKwhDataArrayForTooltip = () => {
 				let kwhDataArrayForTooltip = kwhDataForDate.map(obj => Object.assign({}, obj));	//deep copy array of objs
@@ -3089,7 +3089,7 @@ const needToRedrawWidget = (widget, newData) => {
 			.attr('fill', data.toolTitleColor)
 			.style('font', data.toolTitleFont);
 
-		makeDropdown(data.availableYears, widget.dropdownYearChanged, dropdownsGroup, 0, getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles, true, dateDropdownWidth, 5, 3, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.yearDropDownSelected, () => {}, () => {}, [])
+		makeDropdown(data.availableYears, widget.dropdownYearChanged, dropdownsGroup, 0, getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles, true, dateDropdownWidth, 5, 3, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.yearDropdownSelected, () => {}, () => {}, [])
 
 		//Month Dropdown
 		dropdownsGroup.append('text')
@@ -3099,7 +3099,7 @@ const needToRedrawWidget = (widget, newData) => {
 			.attr('fill', data.toolTitleColor)
 			.style('font', data.toolTitleFont);
 
-		makeDropdown(data.availableDates[widget.yearDropDownSelected], widget.dropdownMonthChanged, dropdownsGroup, dateDropdownWidth + paddingBetweenDropdowns, getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles, true, dateDropdownWidth, 5, 3, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.monthDropDownSelected, () => {}, () => {}, [])
+		makeDropdown(data.availableDates[widget.yearDropdownSelected], widget.dropdownMonthChanged, dropdownsGroup, dateDropdownWidth + paddingBetweenDropdowns, getTextHeight(data.toolTitleFont) + paddingUnderDropdownTitles, true, dateDropdownWidth, 5, 3, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredFillColor, data.dropdownFont, data.dropdownTextColor, widget.monthDropdownSelected, () => {}, () => {}, [])
 
 
 
