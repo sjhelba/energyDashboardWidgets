@@ -4,21 +4,21 @@ const minForKwhBaseline = 7000;
 const maxForKwhBaseline = 10000;
 
 const minForKwhProjected = 4000;
-const maxForKwhProjected = 8000;
+const maxForKwhProjected = 7500;
 
 const minForKwhMeasured = 800;
-const maxForKwhMeasured = 5000;
+const maxForKwhMeasured = 4500;
 
 
 const minForTrhBaseline = 2500;
 const maxForTrhBaseline = 4500;
 
 const minForTrhMeasured = 1500;
-const maxForTrhMeasured = 4000;
+const maxForTrhMeasured = 2500;
 
 blendedRates = [
   {
-    rate: 0.02,
+    rate: 0.03,
     month: 'Feb',
     year: 2012
   },
@@ -33,7 +33,7 @@ blendedRates = [
     year: 2015
   },
   {
-    rate: 0.05,
+    rate: 0.04,
     month: 'Jan',
     year: 2017
   }
