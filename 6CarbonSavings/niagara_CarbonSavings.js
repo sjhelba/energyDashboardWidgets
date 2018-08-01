@@ -507,7 +507,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
               }
               const firstMonth = idx === 0;
               if ( firstMonth || (rowYear === currentYear && rowMonth === currentMonth) ){
-                //TODO: GET STD + OPT hrs for month
                 rowValue = getPredictedForMonth(rowYear, rowMonth, rowValue, firstMonth ? data.firstMonthOptHrs + data.firstMonthStdHrs : data.currentMonthOptHrs + data.currentMonthStdHrs);
               }
               data.datedSavings[rowYear][rowMonth].measuredKwh += rowValue;
@@ -532,7 +531,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
           data.availableDates[year].forEach(month => {
             const monthDataObject = data.datedSavings[year][month];
             const baselineKwhForMonth = month !== 'All' ? data.monthlyBaselineKwh[month] : data.availableDates[year].reduce((accum, curr) => curr !== 'All' ? accum + data.monthlyBaselineKwh[curr] : accum, 0);
-            console.log('year: ', year, 'month: ', month, 'baselineKwhForMonth: ', baselineKwhForMonth, 'monthDataObject.measuredKwh: ', monthDataObject.measuredKwh, 'data.monthlyBaselineKwh: ', data.monthlyBaselineKwh);
 
             if (baselineKwhForMonth < monthDataObject.measuredKwh) {
               monthDataObject.kwhSaved = '-';
@@ -568,7 +566,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
           widget.updateDateWidgetRendering();
         };
 
-        console.log('data: ', data)
         return data;
       })
       .catch(err => console.error('Error (histories promise rejected): ' + err));

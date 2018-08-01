@@ -147,7 +147,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		// dropdownGroup
 		const dropdownGroup = elementToAppendTo.append('g')
 			.attr('class', 'dropdownGroup')
-			.attr('transform', `translate(${x + 3},${y + 3})`)
+			.attr('transform', `translate(${x + 3.5},${y + 3.5})`)
 		//outer container
 		const outerContainer = dropdownGroup.append('rect')
 			.attr('class', 'outerContainerRect')
@@ -156,9 +156,9 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			.attr('fill', backgroundFill)
 			.attr('rx', 5)
 			.attr('stroke', strokeColor)
-			.attr('x', - 3)
-			.attr('y', - 3)
-			.attr('stroke-width', '0.5px')
+			.attr('x', -3)
+			.attr('y', -3)
+			.attr('stroke-width', '1px')
 			.on('click', function () {
 				toggleDrop()
 			})
@@ -213,7 +213,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		const selectedText = selectedGroup.append('text')
 			.attr('class', 'selectedText')
 			.text(clickedSelection)
-			.attr('dominant-baseline', 'middle')
+			.attr('dominant-baseline', 'central')
 			.attr('x', leftAligned ? horizontalPadding : ((dropdownWidth - (arrowWidth * 2)) / 2) - ((getTextWidth(clickedSelection, font)) / 2))
 			.attr('y', textY)
 			.style('font', font)
@@ -427,7 +427,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			},
 			{
 				name: 'modalInputFont',
-				value: '10.0pt Nirmala UI',
+				value: '10.5pt Nirmala UI',
 				typeSpec: 'gx:Font'
 			},
 		/* PADDING */
@@ -577,11 +577,11 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		data.hourlyData = {};
 
 		const settingsPointsBatchResolve = new baja.BatchResolve([
-			'station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/EfficiencyMap/MinTemperature',
-			'station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/EfficiencyMap/MaxTemperature',
-			'station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/EfficiencyMap/TemperatureBins',
-			'station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/EfficiencyMap/MinKwPerTon',
-			'station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/EfficiencyMap/MaxKwPerTon'
+			'station:|slot:/tekWorx/Dashboards/EnergyDashboard/Configuration/EfficiencyMap/MinTemperature',	// space: $20
+			'station:|slot:/tekWorx/Dashboards/EnergyDashboard/Configuration/EfficiencyMap/MaxTemperature',
+			'station:|slot:/tekWorx/Dashboards/EnergyDashboard/Configuration/EfficiencyMap/TemperatureBins',
+			'station:|slot:/tekWorx/Dashboards/EnergyDashboard/Configuration/EfficiencyMap/MinKwPerTon',
+			'station:|slot:/tekWorx/Dashboards/EnergyDashboard/Configuration/EfficiencyMap/MaxKwPerTon'
 		]);
 		const sub = new baja.Subscriber();
 
@@ -1178,7 +1178,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.attr('name', 'minTempBinInput')
 					.attr('value', widget.tempMinSelection)
 					.style('width', data.modalInputWidth + 'px')
-					.style('border-radius', ((data.dropdownWidth / 2) * 0.1) + 'px')
+					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('color', data.dropdownTextColor)
 					.style('border', widget.minInputHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : `1.5px solid ${data.dropdownStrokeColor}`)
@@ -1206,7 +1206,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					.attr('name', 'maxTempBinInput')
 					.attr('value', widget.tempMaxSelection)
 					.style('width', data.modalInputWidth + 'px')
-					.style('border-radius', ((data.dropdownWidth / 2) * 0.1) + 'px')
+					.style('border-radius', '5px')
 					.style('font', data.modalInputFont)
 					.style('color', data.dropdownTextColor)
 					.style('border', widget.maxInputHovered ? `1.5px solid ${data.hoveredInputStrokeColor}` : `1.5px solid ${data.dropdownStrokeColor}`)
@@ -1244,7 +1244,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					svgForDropdown.transition().attr('height', getTextHeight(data.dropdownTextFont) + 20)
 				}
 				function renderBinsDropbox (){
-					makeDropdown([12, 11, 10, 9, 8, 7, 6, 5, 4], val => {widget.tempNumOfBins = +val}, svgForDropdown, 2.5, 2.5, false, data.modalInputWidth, 2, 2, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.tempNumOfBins, funcOnOpen, funcOnClose, []);
+					makeDropdown([12, 11, 10, 9, 8, 7, 6, 5, 4], val => {widget.tempNumOfBins = +val}, svgForDropdown, 0, 0, false, data.modalInputWidth, 2, 2, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.tempNumOfBins, funcOnOpen, funcOnClose, []);
 				}
 				renderBinsDropbox();
 
