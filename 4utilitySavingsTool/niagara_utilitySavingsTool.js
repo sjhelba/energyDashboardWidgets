@@ -873,7 +873,7 @@ const needToRedrawWidget = (widget, newData) => {
 		if (!widget.yearDropdownSelected) widget.yearDropdownSelected = thisYear;
 		if (!widget.activeChartType) widget.activeChartType = 'stacked';	//alternative selection 'grouped'
 		if (!widget.modalActive) widget.modalActive = false; // alternative selection is true
-
+		if (widget.showPredicted !== false) widget.showPredicted = true; // will be overwritten by point if successfully pulled
 		
 
 
@@ -894,7 +894,7 @@ const needToRedrawWidget = (widget, newData) => {
 		data.projectedData = [];
 		data.measuredData = [];
 		data.currencySymbol = data.facetsCurrencySymbolOverride === 'null' ? '$' : data.facetsCurrencySymbolOverride;
-		data.currencyPrecision = data.facetsCurrencyPrecisionOverride === 'null' ? 2 : data.facetsCurrencyPrecisionOverride;
+		data.currencyPrecision = data.facetsCurrencyPrecisionOverride === 'null' ? 3 : data.facetsCurrencyPrecisionOverride;
 		
 		const sysHrsBatchResolve = new baja.BatchResolve(['history:^System_StdHrHm', 'history:^System_OptHrHm', 'history:^System_StdHrCm', 'history:^System_OptHrCm']);
 
@@ -952,8 +952,15 @@ const needToRedrawWidget = (widget, newData) => {
 		// let cm.opt.firstMonth.measuredHrs = 0;
 		// let cm.std.firstYear.measuredHrs = 0;
 		// let cm.std.firstMonth.measuredHrs = 0;
-	
-    return sysHrsBatchResolve.resolve()
+
+
+
+		// GET showPredicted SETTINGS DATA
+    return widget.resolve('station:|slot:/tekWorx/Dashboards/EnergyDashboard/Configuration/UtilitySavingsTool/showPredicted')
+      .then(showPredictedPoint => widget.showPredicted = showPredictedPoint.get('out').get('value'))
+			.catch(err => console.error('UST ERROR showPredictedPoint Resolve failed: ' + err))
+			// GET HISTORY DATA
+			.then(() => sysHrsBatchResolve.resolve())
       .then(() => {
         const [stdHrsHmTable, optHrsHmTable, stdHrsCmTable, optHrsCmTable] = sysHrsBatchResolve.getTargetObjects();
         return Promise.all([
@@ -1241,16 +1248,16 @@ const needToRedrawWidget = (widget, newData) => {
 				data.utilityRate = data.blendedRates[data.blendedRates.length - 1].rate;
 				if (!widget.blendedUtilityRateSelection) widget.blendedUtilityRateSelection = +data.utilityRate;
 				if (!widget.blendedUtilityRate) widget.blendedUtilityRate = widget.blendedUtilityRateSelection;
+				if (widget.showPredictedInputSelection !== true && widget.showPredictedInputSelection !== false) widget.showPredictedInputSelection = widget.showPredicted;
 				data.formatCurrency = d3.format(`,.${data.currencyPrecision}f`);
-				data.formatAvgCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`);
+				data.formatRateCurrency = d3.format(`,.${+data.currencyPrecision + 1}f`);
 				data.arrowWidth = getTextWidth('W', data.changePercentFont);
+				
 
 					//get dataForDate
 				data.availableDates = {};
 				data.measuredData.forEach(date => {
-					if (!data.availableDates[date.year]) {
-						data.availableDates[date.year] = [];
-					}
+					if (!data.availableDates[date.year]) data.availableDates[date.year] = [];
 					data.availableDates[date.year].push(date.month);
 				})
 
@@ -1263,13 +1270,13 @@ const needToRedrawWidget = (widget, newData) => {
 				widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates, arrayOfMeasuredOperatingHours)
 				// eg format: {2017: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 2018: ['Jan', 'Feb', 'Mar']}
 
-				//is current date: first month, first year, current month, and/or current year of data, and therefore should widget show 'predicted' data?
-				if (!widget.predictedIsShownForDate) widget.predictedIsShownForDate = widget.dataForDate.categoryDataForDate[3] ? true : false;
+				//is current date: first month, first year, current month, and/or current year of data, and therefore should widget show 'predicted' data? AND MUST HAVE SHOWPREDICTED TRUE
+				if (!widget.predictedIsShownForDate) widget.predictedIsShownForDate = widget.dataForDate.categoryDataForDate[3] && widget.showPredicted ? true : false;
 
 					// Funcs utilizing widget
 				widget.updateDateWidgetRendering = () => {
 					widget.dataForDate = getDataForDate(widget.monthDropdownSelected, widget.yearDropdownSelected, [data.baselineData, data.projectedData, data.measuredData], data.activeEquipmentGroups, data.blendedRates, data.equipmentHistoryNames, data.availableDates, arrayOfMeasuredOperatingHours)
-					widget.predictedIsShownForDate = widget.dataForDate.categoryDataForDate[3] ? true : false;
+					widget.predictedIsShownForDate = widget.dataForDate.categoryDataForDate[3] && widget.showPredicted ? true : false;
 					render(widget, true);
 				}
 				widget.dropdownYearChanged = val => {
@@ -1351,7 +1358,7 @@ const needToRedrawWidget = (widget, newData) => {
 		const yAxisWidth = getTextWidth('8,888,888,888', data.tickFont);
 		const xAxisHeight = 25;
 		const chartWidth = (data.graphicWidth - ((paddingBetweenCharts * 2) + yAxisWidth)) / 2.5;
-		const modalWidth = chartWidth / 2;
+		const modalWidth = chartWidth * 0.8;
 
 		const circleRadius = data.widgetSize === 'small' ? 5.5 : (data.widgetSize === 'medium' ? 6.5 : 7.5);
 		const hoveredCircleRadius = circleRadius * 1.1
@@ -1730,6 +1737,7 @@ const needToRedrawWidget = (widget, newData) => {
 				.attr('width', widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
 				.attr('height', d => barSectionHeight - kwhYScale(d.value) )
 				.attr('fill', d => d.category === 'predicted' ? data.backgroundColor : data[`${d.category}Color`])
+				.style('display', d => d.category === 'predicted' && !widget.predictedIsShownForDate ? 'none' : 'block')
 				.style('stroke-dasharray', d => d.category === 'predicted' ? '2,2' : '0,0')
 				.style('fill-opacity', getBarFillOpacity)
 				.style('stroke-opacity', getBarStrokeOpacity)
@@ -1867,8 +1875,8 @@ const needToRedrawWidget = (widget, newData) => {
 						kwhDataArrayForTooltip[2].value = kwhDataArrayForTooltip[3].value;
 						kwhDataArrayForTooltip[2].accumulated = kwhDataArrayForTooltip[3].accumulated;
 					}
-					kwhDataArrayForTooltip = kwhDataArrayForTooltip.slice(0,3);
 				}
+				kwhDataArrayForTooltip = kwhDataArrayForTooltip.slice(0,3);
 				if (isStacked) {
 					kwhDataArrayForTooltip.forEach(obj => {
 						obj.kwh = Math.round(obj.kwh);
@@ -1959,6 +1967,7 @@ const needToRedrawWidget = (widget, newData) => {
 		.attr('width', widget.activeChartType === 'grouped' ? x1Scale.bandwidth() : x0Scale.bandwidth())
 		.attr('height', d => barSectionHeight - costYScale(d.cost))
 		.attr('fill', d => d.category === 'predicted' ? data.backgroundColor : data[`${d.category}Color`])
+		.style('display', d => d.category === 'predicted' && !widget.predictedIsShownForDate ? 'none' : 'block')
 		.style('fill-opacity', getBarFillOpacity)
 		.style('stroke-opacity', getBarStrokeOpacity)
 		.attr('stroke', d => {
@@ -2094,19 +2103,19 @@ const needToRedrawWidget = (widget, newData) => {
 			//takes into account predicted if needed for date
 			const getCostDataArrayForTooltip = () => {
 				let costDataArrayForTooltip = costDataForDate.map(obj => Object.assign({}, obj));	//deep copy array of objs
-				costDataArrayForTooltip[2].cost = costDataArrayForTooltip[3].cost;
+				if (widget.predictedIsShownForDate) costDataArrayForTooltip[2].cost = costDataArrayForTooltip[3].cost;
 				costDataArrayForTooltip = costDataArrayForTooltip.slice(0,3);
 				return costDataArrayForTooltip;
 			}
-			const costDataArrayForTooltip =  widget.predictedIsShownForDate ? getCostDataArrayForTooltip() : costDataForDate;
+			const costDataArrayForTooltip = getCostDataArrayForTooltip();
 
 
-			const maxWidthCat = costDataArrayForTooltip.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}${data.formatCurrency(curr.cost)}${data.formatAvgCurrency(curr.rate)}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}${data.formatCurrency(accum.cost)}${data.formatAvgCurrency(accum.rate)}`, data.tooltipFont) ?
+			const maxWidthCat = costDataArrayForTooltip.reduce((accum, curr) => getTextWidth(`${curr.category.slice(0,1).toUpperCase()}${data.formatCurrency(curr.cost)}${data.formatRateCurrency(curr.rate)}`, 'bold ' + data.tooltipFont) > getTextWidth(`${accum.category.slice(0,1).toUpperCase()}${data.formatCurrency(accum.cost)}${data.formatRateCurrency(accum.rate)}`, data.tooltipFont) ?
 				curr :
 				accum
 			);
 
-			const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}:${data.currencySymbol}${data.formatCurrency(maxWidthCat.cost)}@ ${data.currencySymbol}${data.formatAvgCurrency(maxWidthCat.rate)}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2.5) + (data.paddingAfterLegendCat * 2)
+			const tooltipWidth = getTextWidth(`${maxWidthCat.category.slice(0,1).toUpperCase()}:${data.currencySymbol}${data.formatCurrency(maxWidthCat.cost)}@ ${data.currencySymbol}${data.formatRateCurrency(maxWidthCat.rate)}`, 'bold ' + data.tooltipFont) + (data.tooltipPadding * 2.5) + (data.paddingAfterLegendCat * 2)
 			const tooltipHeight = (data.tooltipPadding * 2) + (costDataArrayForTooltip.length * getTextHeight(data.tooltipFont)) + ((costDataArrayForTooltip.length - 1) * data.paddingBetweenTooltipText);
 
 			const maxWidthCostCat = costDataArrayForTooltip.reduce((accum, curr) => getTextWidth(data.formatCurrency(curr.cost), 'bold ' + data.tooltipFont) > getTextWidth(data.formatCurrency(accum.cost), 'bold ' + data.tooltipFont) ?
@@ -2152,7 +2161,7 @@ const needToRedrawWidget = (widget, newData) => {
 				.attr('x', getTextWidth('M:', 'bold ' + data.tooltipFont) + maxWidthOfCost + data.paddingAfterLegendCat)
 
 			textGroups.append('text')
-				.text(d => '@ ' + data.currencySymbol + data.formatAvgCurrency(d.rate))
+				.text(d => '@ ' + data.currencySymbol + data.formatRateCurrency(d.rate))
 				.attr('dominant-baseline', 'hanging')
 				.style('font', data.tooltipFont)
 				.attr('fill', data.tooltipFontColor)
@@ -2187,6 +2196,7 @@ const needToRedrawWidget = (widget, newData) => {
 			.attr('y', d => trhYScale(d.trh))
 			.attr('width', trhXScale.bandwidth())
 			.attr('height', d => barSectionHeight - trhYScale(d.trh))
+			.style('display', d => d.category === 'predicted' && !widget.predictedIsShownForDate ? 'none' : 'block')
 			.attr('fill', d => d.category === 'predicted' ? data.backgroundColor : data[`${d.category}Color`])
 			.style('opacity', d => widget.legendHovered === 'none' || widget.legendHovered === d.category || (d.category === 'predicted' && widget.legendHovered === 'measured') ? 1 : unhoveredOpacity)
 			.attr('stroke', d => data[`${d.category === 'predicted' ? 'measured' : d.category}Color`])
@@ -2270,8 +2280,8 @@ const needToRedrawWidget = (widget, newData) => {
 				let trhDataArrayForTooltip = trhCategoryDataForDate.map(obj => Object.assign({}, obj));	//deep copy array of objs
 				if (widget.predictedIsShownForDate) {
 					trhDataArrayForTooltip[1].trh = trhDataArrayForTooltip[2].trh;
-					trhDataArrayForTooltip = trhDataArrayForTooltip.slice(0,2);
 				}
+				trhDataArrayForTooltip = trhDataArrayForTooltip.slice(0,2);
 				trhDataArrayForTooltip.forEach(obj => obj.trh = Math.round(obj.trh));
 				return trhDataArrayForTooltip;
 			}
@@ -2421,7 +2431,7 @@ const needToRedrawWidget = (widget, newData) => {
 			.attr('y', getTextHeight(data.toolTitleFont) + paddingAboveCurrencySymbol)
 			.style('font', data.utilityRateFont)
 			.attr('fill', data.utilityRateColor)
-			.text(data.formatCurrency(widget.blendedUtilityRate))
+			.text(data.formatRateCurrency(widget.blendedUtilityRate))
 
 
 			// CHANGE TOOLS
@@ -2453,7 +2463,7 @@ const needToRedrawWidget = (widget, newData) => {
 					const equipmentDataObject = widget.dataForDate.equipmentDataForDate.filter(equip => equip.type === widget.equipmentHovered)[0]
 	
 					//change appropriate measured data to predicted if predicted shown for date
-					if (widget.dataForDate.categoryDataForDate[3]) {
+					if (widget.predictedIsShownForDate) {
 						//deep copy obj & its arrays of objs
 						let predictedInformedEquipmentDataObject = {type: widget.equipmentHovered, utilityRate: [], kwh: []};
 						predictedInformedEquipmentDataObject.utilityRate = equipmentDataObject.utilityRate.map(obj => Object.assign({}, obj));
@@ -2989,7 +2999,7 @@ const needToRedrawWidget = (widget, newData) => {
 
 		// ********************************************* MODAL ******************************************************* //
 		const settingsBtnSize = data.arrowWidth / 1.75
-		const modalHeight = chartHeight * 0.6;
+		const modalHeight = chartHeight * 0.8;
 		const modalLabelsHeight = getTextHeight(data.dropdownFont);
 		const modalInputWidth = dateDropdownWidth / 2;
 		const halfOfDifferenceInSizeForPosGrowth = (((settingsBtnSize * 1.2) - (settingsBtnSize)) / 2)
@@ -3101,23 +3111,54 @@ const needToRedrawWidget = (widget, newData) => {
 							handleSubmit()
 						}
 					})
-				
 				// ROW ONE
+				const paddingRightOfCheckbox = 5;
+				const checkboxSize = 17;
+				const rowOneLength = getTextWidth('Show Predicted Data', data.dropdownFont) + checkboxSize + paddingRightOfCheckbox; 
+				form.append('input')
+					.attr('class', 'formElement showPredictedInput')
+					.attr('type', 'checkbox')
+					.attr('name', 'showPredictedInput')
+					.property('checked', widget.showPredictedInputSelection)
+					.style('left', ( (modalWidth / 2) - (rowOneLength / 2) ) + 'px')
+					.style('top', ((verticalModalPadding * 2) + (getTextHeight(data.dropdownFont) / 3) ) + 'px')
+					.style('position', 'absolute')
+					.on('change', function() {widget.showPredictedInputSelection = d3.select(this).property('checked')});
+				form.append('h4')
+					.attr('class', 'formElement')
+					.text('Show Predicted Data')
+					.style('color', data.dropdownTextColor)
+					.style('font', data.dropdownFont)
+					.style('left', ( ((modalWidth / 2) - (rowOneLength / 2)) + checkboxSize + paddingRightOfCheckbox) + 'px')	
+					.style('top', (verticalModalPadding * 2) + 'px')
+					.style('position', 'absolute');
+				
+
+
+				// ROW TWO
 				form.append('h4')
 					.attr('class', 'formElement')
 					.text('Blended Utility Rate')
 					.style('color', data.dropdownTextColor)
 					.style('font', data.dropdownFont)
 					.style('left', ( (modalWidth / 2) - ( getTextWidth('Blended Utility Rate', data.dropdownFont) / 2 ) ) + 'px')
-					.style('top', (verticalModalPadding * 3) + 'px')
-					.style('position', 'absolute')
+					.style('top', (verticalModalPadding * 4.5) + 'px')
+					.style('position', 'absolute');
 	
-				// ROW TWO
+				// ROW THREE
+				form.append('h4')
+					.text(data.currencySymbol)
+					.style('font', data.dropdownFont)
+					.style('color', data.dropdownTextColor)
+					.style('left', (((modalWidth / 2) - ((modalInputWidth / 2) + 1.5) )  - 15) + 'px')
+					.style('top', (verticalModalPadding * 5.25) + 'px')
+					.style('position', 'absolute')
+					.style('text-align', 'center');
 				form.append('input')
 					.attr('class', 'formElement blendedUtilityRateInput')
 					.attr('type', 'text')
 					.attr('name', 'blendedUtilityRateInput')
-					.attr('value', widget.blendedUtilityRateSelection)
+					.property('value', widget.blendedUtilityRateSelection)
 					.style('width', modalInputWidth + 'px')
 					.style('border-radius', ((modalInputWidth / 2) * 0.3) + 'px')
 					.style('font', data.dropdownFont)
@@ -3126,18 +3167,18 @@ const needToRedrawWidget = (widget, newData) => {
 					.style('padding', '2px')
 					.style('background-color', data.dropdownFillColor)
 					.style('left', ((modalWidth / 2) - ((modalInputWidth / 2) + 1.5) ) + 'px')
-					.style('top', ((verticalModalPadding * 4) + modalLabelsHeight) + 'px')
+					.style('top', ((verticalModalPadding * 5.25) + modalLabelsHeight) + 'px')
 					.style('position', 'absolute')
 					.style('text-align', 'center')
 					.on('mouseover', function() {
 						d3.select(this).style('border', `2.5px solid ${data.dropdownStrokeColor}`)
 						.style('left', ((modalWidth / 2) - ((modalInputWidth / 2) + 2.5) ) + 'px')
-						.style('top', (((verticalModalPadding * 4) + modalLabelsHeight) - 1) + 'px')
+						.style('top', (((verticalModalPadding * 5.25) + modalLabelsHeight) - 1) + 'px')
 					})
 					.on('mouseout', function() {
 						d3.select(this).style('border', `1.5px solid ${data.dropdownStrokeColor}`)
 						.style('left', ((modalWidth / 2) - ((modalInputWidth / 2) + 1.5) ) + 'px')
-						.style('top', ((verticalModalPadding * 4) + modalLabelsHeight) + 'px')
+						.style('top', ((verticalModalPadding * 5.25) + modalLabelsHeight) + 'px')
 					})
 					.on('change', function() {
 						widget.blendedUtilityRateSelection = +d3.select(this).property('value');
@@ -3160,25 +3201,24 @@ const needToRedrawWidget = (widget, newData) => {
 					.style('text-align', 'center')
 					.style('cursor', 'pointer')
 					.style('left', ((modalWidth / 2) - ((getTextWidth('OK', data.dropdownFont) + 30) / 2)) + 'px')
-					.style('top', ((verticalModalPadding * 5) + modalLabelsHeight + getTextHeight(data.dropdownFont) + 30) + 'px')
+					.style('top', ((verticalModalPadding * 6) + modalLabelsHeight + getTextHeight(data.dropdownFont) + 30) + 'px')
 					.on('mouseover', function() {
 						d3.select(this)
 							.style('border', `1.5px solid ${data.hoveredFillColor}`)
 							.style('width', getTextWidth('OK', data.dropdownFont) + 31.5 + 'px')
 							.style('left', (((modalWidth / 2) - ((getTextWidth('OK', data.dropdownFont) + 30) / 2)) - 0.75) + 'px')
-							.style('top', (((verticalModalPadding * 5) + modalLabelsHeight + getTextHeight(data.dropdownFont) + 30) - 0.75) + 'px')
-						})
+							.style('top', (((verticalModalPadding * 6) + modalLabelsHeight + getTextHeight(data.dropdownFont) + 30) - 0.75) + 'px');
+					})
 					.on('mouseout', function() {
 						d3.select(this)
 							.style('border', 'none')
 							.style('width', getTextWidth('OK', data.dropdownFont) + 30 + 'px')
 							.style('left', ((modalWidth / 2) - ((getTextWidth('OK', data.dropdownFont) + 30) / 2)) + 'px')
-							.style('top', ((verticalModalPadding * 5) + modalLabelsHeight + getTextHeight(data.dropdownFont) + 30) + 'px')
-					})
+							.style('top', ((verticalModalPadding * 6) + modalLabelsHeight + getTextHeight(data.dropdownFont) + 30) + 'px');
+					});
 	
 	
-				widget.outerDiv.selectAll('.formElement')
-					.style('margin', '0px')
+				widget.outerDiv.selectAll('.formElement').style('margin', '0px');
 			}
 		}
 	
@@ -3192,18 +3232,21 @@ const needToRedrawWidget = (widget, newData) => {
 		}
 	
 		function handleSubmit() {
-			if (widget.blendedUtilityRate === widget.blendedUtilityRateSelection) {				
+			if (widget.blendedUtilityRate === widget.blendedUtilityRateSelection && widget.showPredicted === widget.showPredictedInputSelection) {				
 				toggleModal();
 			} else {
 				widget.blendedUtilityRate = widget.blendedUtilityRateSelection;
-				widget.resolve('station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/UtilitySavingsTool/BlendedRate')
-				.then(point => {
-					return point.invoke({
-						slot: 'set',
-						value: +widget.blendedUtilityRate
+				widget.showPredicted = widget.showPredictedInputSelection;
+				widget.predictedIsShownForDate = widget.dataForDate.categoryDataForDate[3] && widget.showPredicted ? true : false;	
+				Promise.all(widget.resolve('station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/UtilitySavingsTool/BlendedRate'), widget.resolve('station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/UtilitySavingsTool/showPredicted'))
+					.then(points => {
+						const [blendedRatePoint, showPredictedPoint] = points;
+						return Promise.all(
+							blendedRatePoint.invoke({slot: 'set', value: +widget.blendedUtilityRate}),
+							showPredictedPoint.invoke({slot: 'set', value: widget.showPredicted})
+						);
 					})
-					.catch(err => console.error('Error upon attempted blended utility rate change: ' + err))
-				})
+					.catch(err => console.error('UST Error upon attempted blended utility rate and/or showPredicted change: ' + err));
 				toggleModal(true);
 			}
 		}
