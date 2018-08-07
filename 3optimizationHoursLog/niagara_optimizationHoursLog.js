@@ -258,12 +258,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			},
 			{
 				name: 'percentageFont',
-				value: '38.0pt Nirmala UI',
+				value: 'bold 38.0pt Nirmala UI',
 				typeSpec: 'gx:Font'
 			},
 			{
 				name: 'percentageColor',
-				value: 'black',
+				value: '#333333',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -342,7 +342,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			},
 			{
 				name: 'extraPaddingAboveModulePercent',
-				value: 30
+				value: 18
 			},
 			{
 				name: 'percentDescriptionRectHeight',

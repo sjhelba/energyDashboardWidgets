@@ -175,7 +175,8 @@ const data = {
 
 	overallArcThickness: 40,
 
-	percentageFont: '38.0pt Nirmala UI',
+	percentageFont: 'bold 38.0pt Nirmala UI',
+	percentageColor: '#333333',
 	legendFont: '12.0pt Nirmala UI',
 	tooltipHeaderFont: '16pt Nirmala UI',
 	tooltipFont: '10pt Nirmala UI',
@@ -197,7 +198,7 @@ const data = {
 	paddingAboveLegendBars: 25,
 	paddingUnderLegendText: 5,
 	modulePercentFont: '26.0pt Nirmala UI',
-	extraPaddingAboveModulePercent: 30,
+	extraPaddingAboveModulePercent: 18,
 	percentDescriptionRectHeight: 35
 };
 
@@ -769,6 +770,7 @@ allDonutGroupsGroup.append('text')
 	.attr('dominant-baseline', 'middle')
 	.attr('y', -data.paddingBetweenPercentAndMiddle)
 	.style('font', data.percentageFont)
+	.attr('fill', data.percentageColor)
 	.style('opacity', data.hovered.current === 'neither' && data.activeModule === 'none' ? 1 : 0)
 	.text(data.percent);
 
