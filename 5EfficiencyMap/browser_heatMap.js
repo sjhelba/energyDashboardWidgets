@@ -773,7 +773,15 @@ function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection =
 		
 
 		// ********************************************* YEAR DROPDOWN ******************************************************* //
-		makeDropdown(data.availableYears.map(yr => +yr), dropdownYearChanged, widget.svg, data.margin.left, data.margin.top, true, data.dropdownWidth, 5, 5, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.dropdownYearSelected, () => {}, () => {}, [widget]);
+		const yearDropdownSection = widget.svg.append('g')
+			.attr('class', 'yearDropdownSection')
+			.attr('transform', `translate(${data.margin.left}, 0)`)
+		yearDropdownSection.append('text')
+			.text('Year')
+			.style('font', data.dropdownTitleFont)
+			.attr('fill', data.dropdownTitleColor)
+			.attr('dominant-baseline', 'hanging')
+		makeDropdown(data.availableYears.map(yr => +yr), dropdownYearChanged, yearDropdownSection, 0, 6.5 + getTextHeight(data.dropdownTitleFont), true, data.dropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.dropdownYearSelected, () => {}, () => {}, [widget]);
 	
 		
 		// ********************************************* TOOLTIP ******************************************************* //

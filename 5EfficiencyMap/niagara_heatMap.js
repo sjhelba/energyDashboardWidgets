@@ -269,12 +269,12 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			},
 			{
 				name: 'minKwTrColor',
-				value: 'rgb(105,202,210)',
+				value: '#5fdaef',
 				typeSpec: 'gx:Color'
 			},
 			{
 				name: 'maxKwTrColor',
-				value: 'rgb(54,64,78)',
+				value: '#425867',
 				typeSpec: 'gx:Color'
 			},
 			{
@@ -785,9 +785,17 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 
 
 		// ********************************************* YEAR DROPDOWN ******************************************************* //
-		makeDropdown(data.availableYears.map(yr => +yr), dropdownYearChanged, widget.svg, data.margin.left, data.margin.top, true, data.dropdownWidth, 5, 3, data.dropdownStrokeColor, data.dropdownFillColor, data.hoveredDropdownFill, data.dropdownTextFont, data.dropdownTextColor, +widget.dropdownYearSelected, () => {}, () => {}, [widget]);
-
-
+		const yearDropdownSection = widget.svg.append('g')
+			.attr('class', 'yearDropdownSection')
+			.attr('transform', `translate(${data.margin.left}, 0)`)
+		yearDropdownSection.append('text')
+			.text('Year')
+			.style('font', data.dropdownTitleFont)
+			.attr('fill', data.dropdownTitleColor)
+			.attr('dominant-baseline', 'hanging')
+		makeDropdown(data.availableYears.map(yr => +yr), dropdownYearChanged, yearDropdownSection, 0, 6.5 + getTextHeight(data.dropdownTitleFont), true, data.dropdownWidth, 5, 0, data.dropdownStrokeColor, data.dropdownFillColor, '#d5d6d4', data.dropdownTextFont, data.dropdownTextColor, +widget.dropdownYearSelected, () => {}, () => {}, [widget]);
+	
+		
 		// ********************************************* TOOLTIP ******************************************************* //
 		const tooltipGroup = chartGroup.append('g')
 			.attr('class', 'tooltipGroup')
