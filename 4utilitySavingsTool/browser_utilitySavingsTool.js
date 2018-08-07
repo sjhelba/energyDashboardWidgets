@@ -2786,13 +2786,14 @@ const renderWidget = () => {
 			// ROW ONE
 			const paddingRightOfCheckbox = 5;
 			const checkboxSize = 17;
+			widget.showPredictedInputSelection = widget.showPredicted;
 			const rowOneLength = getTextWidth('Show Predicted Data', data.dropdownFont) + checkboxSize + paddingRightOfCheckbox; 
 			form.append('input')
 				.attr('class', 'formElement showPredictedInput')
 				.attr('type', 'checkbox')
 				.attr('name', 'showPredictedInput')
 				.attr('id', 'showPredictedInput')
-				.property('checked', () => widget.showPredictedInputSelection)
+				.property('checked', () => widget.showPredicted)
 				.style('left', ( (modalWidth / 2) - (rowOneLength / 2) ) + 'px')
 				.style('top', ((verticalModalPadding * 2) + (getTextHeight(data.dropdownFont) / 3) ) + 'px')
 				.style('position', 'absolute')
@@ -2832,7 +2833,7 @@ const renderWidget = () => {
 				.attr('class', 'formElement blendedUtilityRateInput')
 				.attr('type', 'text')
 				.attr('name', 'blendedUtilityRateInput')
-				.property('value', widget.blendedUtilityRateSelection)
+				.property('value', data.formatRateCurrency(widget.blendedUtilityRateSelection))
 				.style('width', modalInputWidth + 'px')
 				.style('border-radius', ((modalInputWidth / 2) * 0.3) + 'px')
 				.style('font', data.dropdownFont)

@@ -2479,7 +2479,7 @@ const needToRedrawWidget = (widget, newData) => {
 						return predictedInformedEquipmentDataObject;
 					}
 					return equipmentDataObject;
-				}
+				};
 				const hoveredEquipmentDataForDate =  getHoveredEquipmentDataForDate();
 
 
@@ -3114,18 +3114,21 @@ const needToRedrawWidget = (widget, newData) => {
 				// ROW ONE
 				const paddingRightOfCheckbox = 5;
 				const checkboxSize = 17;
+				widget.showPredictedInputSelection = widget.showPredicted;
 				const rowOneLength = getTextWidth('Show Predicted Data', data.dropdownFont) + checkboxSize + paddingRightOfCheckbox; 
 				form.append('input')
 					.attr('class', 'formElement showPredictedInput')
 					.attr('type', 'checkbox')
 					.attr('name', 'showPredictedInput')
-					.property('checked', widget.showPredictedInputSelection)
+					.attr('id', 'showPredictedInput')
+					.property('checked', widget.showPredicted)
 					.style('left', ( (modalWidth / 2) - (rowOneLength / 2) ) + 'px')
 					.style('top', ((verticalModalPadding * 2) + (getTextHeight(data.dropdownFont) / 3) ) + 'px')
 					.style('position', 'absolute')
 					.on('change', function() {widget.showPredictedInputSelection = d3.select(this).property('checked')});
-				form.append('h4')
+				form.append('label')
 					.attr('class', 'formElement')
+					.attr('for', 'showPredictedInput')
 					.text('Show Predicted Data')
 					.style('color', data.dropdownTextColor)
 					.style('font', data.dropdownFont)
@@ -3158,7 +3161,7 @@ const needToRedrawWidget = (widget, newData) => {
 					.attr('class', 'formElement blendedUtilityRateInput')
 					.attr('type', 'text')
 					.attr('name', 'blendedUtilityRateInput')
-					.property('value', widget.blendedUtilityRateSelection)
+					.property('value', data.formatRateCurrency(widget.blendedUtilityRateSelection))
 					.style('width', modalInputWidth + 'px')
 					.style('border-radius', ((modalInputWidth / 2) * 0.3) + 'px')
 					.style('font', data.dropdownFont)
@@ -3238,16 +3241,19 @@ const needToRedrawWidget = (widget, newData) => {
 				widget.blendedUtilityRate = widget.blendedUtilityRateSelection;
 				widget.showPredicted = widget.showPredictedInputSelection;
 				widget.predictedIsShownForDate = widget.dataForDate.categoryDataForDate[3] && widget.showPredicted ? true : false;	
-				Promise.all(widget.resolve('station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/UtilitySavingsTool/BlendedRate'), widget.resolve('station:|slot:/tekWorx/Dashboards/Energy$20Dashboard/Configuration/UtilitySavingsTool/showPredicted'))
+				return Promise.all([widget.resolve('station:|slot:/tekWorx/Dashboards/EnergyDashboard/Configuration/UtilitySavingsTool/BlendedRate'), widget.resolve('station:|slot:/tekWorx/Dashboards/EnergyDashboard/Configuration/UtilitySavingsTool/showPredicted')])
 					.then(points => {
 						const [blendedRatePoint, showPredictedPoint] = points;
-						return Promise.all(
+						return Promise.all([
 							blendedRatePoint.invoke({slot: 'set', value: +widget.blendedUtilityRate}),
 							showPredictedPoint.invoke({slot: 'set', value: widget.showPredicted})
-						);
+						]);
 					})
-					.catch(err => console.error('UST Error upon attempted blended utility rate and/or showPredicted change: ' + err));
-				toggleModal(true);
+					.catch(err => {
+						console.error('UST Error upon attempted blended utility rate and/or showPredicted change: ' + err);
+						alert('Blended utility rate point was not able to be updated');
+					})
+					.then(() => toggleModal(true));
 			}
 		}
 	
