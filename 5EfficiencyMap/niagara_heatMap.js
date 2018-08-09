@@ -890,7 +890,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 		const monthlyGroups = gridGroup.selectAll('.monthlyGroup')
 			.data(data.dataForYear)
 			.enter().append('g')
-				.attr('class', 'monthlyGroup')
+				.attr('class', d => `monthlyGroup ${d.thisMonth}MonthlyGroup`)
 				.attr('transform', d => `translate(${xScale(d.thisMonth)}, 0)`)
 
 		const rects = monthlyGroups.selectAll('.cell')
@@ -1456,7 +1456,10 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 			function hoverRect(d, i, nodes, that) {
 				unhoverRects();
 				widget.hoveredRectIndex = i;
-				d3.select(that)
+				d3.select('.' + nodes[i].parentNode.__data__.thisMonth + 'MonthlyGroup').raise();
+				const hoveredRect = d3.select(that);
+				hoveredRect.raise();
+				hoveredRect
 					.attr('stroke-width', '2pt')
 					.transition()
 						.duration(100)

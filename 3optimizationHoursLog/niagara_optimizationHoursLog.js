@@ -1415,6 +1415,7 @@ makeDropdown(data.availableDates[widget.yearSelected], widget.dropdownMonthChang
 		return setupDefinitions(widget)
 			.then(data => {
 				if (force || !widget.data || needToRedrawWidget(widget, data)){
+					
 					renderWidget(widget, data);	
 				}
 				widget.data = data;
