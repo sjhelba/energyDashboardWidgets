@@ -147,8 +147,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	};
 	const normalArcOpacity = 0.9;
 	const theUnhoveredArcOpacity = 0.5;
-	const formatIntoPercentageWithPercentSign = d3.format('.0%');
-	const formatIntoPercentage = num => formatIntoPercentageWithPercentSign(num).slice(0, -1);
+	const formatIntoPercentage = d3.format('.0%');
 	const percentageDescription = '% of System Run Hours Logged in Optimization Mode';
 	const percentDescriptionRectOpacity = 0.8
 	const moduleNamesForHistories = {CHs: 'Chillers', PCPs: 'Pcwps', SCPs: 'Scwps', TWPs: 'Twps', CTFs: 'Towers'};
@@ -263,11 +262,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				typeSpec: 'gx:Font'
 			},
 			{
-				name: 'percentageSignFont',
-				value: 'bold 19.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
 				name: 'percentageColor',
 				value: '#333333',
 				typeSpec: 'gx:Color'
@@ -347,22 +341,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				typeSpec: 'gx:Font'
 			},
 			{
-				name: 'modulePercentSignFont',
-				value: '16.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			},
-			{
 				name: 'extraPaddingAboveModulePercent',
 				value: 18
 			},
 			{
 				name: 'percentDescriptionRectHeight',
 				value: 35
-			},
-			{
-				name: 'tooltipOverallFont',
-				value: '14pt Nirmala UI',
-				typeSpec: 'gx:Font'
 			},
 			//for dropdowns
 			{
@@ -649,17 +633,15 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				const annualEqTypes = Object.keys(data.annualModulesData[year]);
 				const minTotalAnnualHours = annualEqTypes.reduce((accum, curr) => !accum || (accum && data.annualModulesData[year][curr].totalHours < accum) ? data.annualModulesData[year][curr].totalHours : accum, 0);
 
-
 				annualEqTypes.forEach(eqType => {
 					const annualModuleHours = data.annualModulesData[year][eqType];
 					//set normalized hours for annual module data
 					const normalizedTotal = annualModuleHours.totalHours / minTotalAnnualHours;
 					annualModuleHours.normalizedOptimizedHours = annualModuleHours.optimizedHours / normalizedTotal;
 					annualModuleHours.normalizedStandardHours = annualModuleHours.standardHours / normalizedTotal;
-
 					//add to annual overall hours
-					data.annualOverallData[year].optimizedHours += annualModuleHours.optimizedHours;
-					data.annualOverallData[year].standardHours += annualModuleHours.standardHours;
+					data.annualOverallData[year].optimizedHours += annualModuleHours.normalizedOptimizedHours;
+					data.annualOverallData[year].standardHours += annualModuleHours.normalizedStandardHours;
 				});
 				data.annualOverallData[year].percent = formatIntoPercentage(data.annualOverallData[year].optimizedHours / (data.annualOverallData[year].optimizedHours + data.annualOverallData[year].standardHours));
 
@@ -675,10 +657,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 						const normalizedTotal = monthlyModuleHours.totalHours / minTotalMonthlyHours;
 						monthlyModuleHours.normalizedOptimizedHours = monthlyModuleHours.optimizedHours / normalizedTotal;
 						monthlyModuleHours.normalizedStandardHours = monthlyModuleHours.standardHours / normalizedTotal;
-
 						//add to monthly overall hours
-						data.monthlyOverallData[year][month].optimizedHours += monthlyModuleHours.optimizedHours;
-						data.monthlyOverallData[year][month].standardHours += monthlyModuleHours.standardHours;
+						data.monthlyOverallData[year][month].optimizedHours += monthlyModuleHours.normalizedOptimizedHours;
+						data.monthlyOverallData[year][month].standardHours += monthlyModuleHours.normalizedStandardHours;
 					});
 					data.monthlyOverallData[year][month].percent = formatIntoPercentage(data.monthlyOverallData[year][month].optimizedHours / (data.monthlyOverallData[year][month].optimizedHours + data.monthlyOverallData[year][month].standardHours));
 
@@ -721,17 +702,15 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				return modulesDataArray;
 			}
 			const createArrayOfOverallDataForSelectedDate = function () {
-				const overallDataArray = [{ category: 'standard', hours: 0, percent: 0 }, { category: 'optimized', hours: 0, percent: 0 }];
+				const overallDataArray = [{ category: 'standard', hours: 0 }, { category: 'optimized', hours: 0, percent: 0 }];
 				if (widget.monthSelected === 'All') {
 					overallDataArray[0].hours = data.annualOverallData[widget.yearSelected].standardHours;
 					overallDataArray[1].hours = data.annualOverallData[widget.yearSelected].optimizedHours;
-					overallDataArray[0].percent = formatIntoPercentage(overallDataArray[0].hours / (overallDataArray[0].hours + overallDataArray[1].hours));
-					overallDataArray[1].percent = formatIntoPercentage(overallDataArray[1].hours / (overallDataArray[0].hours + overallDataArray[1].hours));
+					overallDataArray[1].percent = data.annualOverallData[widget.yearSelected].percent;
 				} else {
 					overallDataArray[0].hours = data.monthlyOverallData[widget.yearSelected][widget.monthSelected].standardHours;
 					overallDataArray[1].hours = data.monthlyOverallData[widget.yearSelected][widget.monthSelected].optimizedHours;
-					overallDataArray[0].percent = formatIntoPercentage(overallDataArray[0].hours / (overallDataArray[0].hours + overallDataArray[1].hours));
-					overallDataArray[1].percent = formatIntoPercentage(overallDataArray[1].hours / (overallDataArray[0].hours + overallDataArray[1].hours));
+					overallDataArray[1].percent = data.monthlyOverallData[widget.yearSelected][widget.monthSelected].percent;
 				}
 				return overallDataArray;
 			}
@@ -930,31 +909,17 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
 		/*** PERCENT ***/
-		const lengthOfPercentage = getTextWidth(widget.selectedDateOverallData[1].percent, data.percentageFont);
-		const lengthOfPercentageSign = getTextWidth('%', data.percentageSignFont);
-		const lengthOfPercentageRowText = lengthOfPercentage + lengthOfPercentageSign;
+
 		//percentage
 		allDonutGroupsGroup.append('text')
 			.attr('class', 'percentage')
-			.attr('dominant-baseline', 'middle')
 			.attr('text-anchor', 'middle')
-			.attr('x', (lengthOfPercentage / 2) - (lengthOfPercentageRowText / 2))
+			.attr('dominant-baseline', 'middle')
 			.attr('y', -data.paddingBetweenPercentAndMiddle)
 			.style('font', data.percentageFont)
 			.attr('fill', data.percentageColor)
 			.style('opacity', widget.hovered.current === 'neither' && widget.activeModule === 'none' ? 1 : 0)
 			.text(widget.selectedDateOverallData[1].percent);
-		//percent sign
-		allDonutGroupsGroup.append('text')
-			.attr('class', 'percentage')
-			.attr('dominant-baseline', 'middle')
-			.attr('text-anchor', 'middle')
-			.attr('x', (-lengthOfPercentageRowText / 2)  + lengthOfPercentage + (lengthOfPercentageSign / 2))
-			.attr('y', 5 - data.paddingBetweenPercentAndMiddle)
-			.style('font', data.percentageSignFont)
-			.attr('fill', data.percentageColor)
-			.style('opacity', widget.hovered.current === 'neither' && widget.activeModule === 'none' ? 1 : 0)
-			.text('%');
 
 		//percentage description
 		function renderPercentageDescription() {
@@ -1003,8 +968,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 			const selectionForCheck = widget.svg.select('.tooltipGroup')
 			if (!selectionForCheck.empty()) selectionForCheck.remove();
-			const middleXOfTooltip = data.tooltipDiameter / 2;
-
 
 			const tooltipGroup = allDonutGroupsGroup.append('g')
 				.attr('class', 'tooltipGroup')
@@ -1014,11 +977,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			tooltipGroup.append('circle')
 				.attr('cx', 0)
 				.attr('cy', 0)
-				.attr('r', middleXOfTooltip)
+				.attr('r', data.tooltipDiameter / 2)
 				.attr('fill', data.tooltipFillColor)
 
 
 			const tooltipTextGroup = tooltipGroup.append('g')
+				.attr('text-anchor', 'middle')
+				.attr('dominant-baseline', 'middle')
 				.attr('x', 0)
 				.attr('y', 0)
 				.style('font', data.tooltipFont)
@@ -1028,89 +993,75 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			//text
 			//header
 			tooltipTextGroup.append('text')
-				.attr('text-anchor', 'middle')
 				.attr('class', 'category')
 				.text(moduleObj ? `${moduleObj.type}:` : `${widget.hovered.current.toUpperCase()}:`)
 				.attr('fill', () => {
 					if (moduleObj) return moduleObj.color;
 					return widget.hovered.optimized ? data.optimizedColor : data.standardColor;
 				})
-				.style('font', moduleObj ? data.tooltipHeaderFont : data.tooltipOverallFont)
+				.style('font', data.tooltipHeaderFont)
 				.style('font-weight', 'bold')
-				.style('text-decoration', 'underline')
-				.attr('y', moduleObj ? 0 : 10);
+				.style('text-decoration', 'underline');
 
 
 
-				if (!moduleObj) {
-					//Total Hours
-					tooltipTextGroup.append('text')
-						.attr('class', '.data .hours')
-						.text(`${widget.selectedDateOverallData[widget.hovered.current === 'standard' ? 0 : 1].hours} HRS`)
-						.attr('x', 0)
-						.attr('text-anchor', 'middle')
-						.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 1.75))
-						.style('font', data.tooltipOverallFont)
+			if (!moduleObj) {
+				const tooltipModuleGroups = tooltipTextGroup.selectAll('g')
+					.data(widget.selectedDateModuleData)
+					.enter().append('g')
+					.attr('text-anchor', 'start')
+					.attr('class', d => `${d.type}TooltipTextGroup`)
+					.attr('transform', `translate(-${data.totalTooltipTextWidth / 2}, 0)`);
 
-					//Total Percent
-					const lengthOfPercent = getTextWidth(widget.selectedDateOverallData[widget.hovered.current === 'standard' ? 0 : 1].percent, data.modulePercentFont);
-					const lengthOfPercentSign = getTextWidth('%', data.modulePercentSignFont);
-					const lengthOfPercentRowText = lengthOfPercent + lengthOfPercentSign;
-					tooltipTextGroup.append('text')
-						.attr('class', '.data .percent')
-						.text(widget.selectedDateOverallData[widget.hovered.current === 'standard' ? 0 : 1].percent)
-						.attr('x', -(lengthOfPercentRowText / 2))
-						.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 3.75))
-						.style('font', data.modulePercentFont)
+				//typeTexts
+				tooltipModuleGroups.append('text')
+					.attr('class', '.data .type')
+					.text(d => `${d.type}:`)
+					.attr('y', (d, i) => data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * (i + 1)))
+					.style('font-weight', 'bold')
 
-					//Percent Sign
-					tooltipTextGroup.append('text')
-						.attr('class', '.data .percent')
-						.text('%')
-						.attr('x', (-lengthOfPercentRowText / 2) + lengthOfPercent)
-						.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 3.75))
-						.style('font', data.modulePercentSignFont)
+				//hoursTexts
+				tooltipModuleGroups.append('text')
+					.attr('class', '.data .hours')
+					.text(d => `${d3.format(`,.1f`)(d[`${widget.hovered.current}Hours`])} HRS`)
+					.attr('x', data.tooltipHorizontalTextPadding + data.maxTooltipTextWidths.type)
+					.attr('y', (d, i) => data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * (i + 1)))
 
-			
+
+				//percentageTexts
+				tooltipModuleGroups.append('text')
+					.attr('class', '.data .percents')
+					.text(d => formatIntoPercentage(d[`${widget.hovered.current}Hours`] / (d.standardHours + d.optimizedHours)))
+					.attr('x', (data.tooltipHorizontalTextPadding * 2) + data.maxTooltipTextWidths.type + data.maxTooltipTextWidths.hours)
+					.attr('y', (d, i) => data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * (i + 1)))
 			} else {
 				//for individual modules' tooltips
-				const modulePercent = formatIntoPercentage(moduleObj.optimizedHours / (moduleObj.standardHours + moduleObj.optimizedHours));
-				const lengthOfPercent = getTextWidth(modulePercent, data.modulePercentFont);
-				const lengthOfPercentSign = getTextWidth('%', data.modulePercentSignFont);
-				const lengthOfPercentRowText = lengthOfPercent + lengthOfPercentSign;
-				//Equipment Hours
+				//
 				tooltipTextGroup.append('text')
 					.attr('text-anchor', 'middle')
 					.attr('x', 0)
-					.text(`${moduleObj.optimizedHours} OPTIMIZED HRS`)
+					.text(`${d3.format(`,.1f`)(moduleObj.optimizedHours)} OPTIMIZED HRS`)
 					.attr('y', data.extraPaddingUnderTooltipHeader + data.tooltipVerticalTextPadding)
 
 				tooltipTextGroup.append('text')
 					.attr('text-anchor', 'middle')
 					.attr('x', 0)
-					.text(`${moduleObj.standardHours} STANDARD HRS`)
+					.text(`${d3.format(`,.1f`)(moduleObj.standardHours)} STANDARD HRS`)
 					.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 2))
 
-				//Equipment Percent
 				tooltipTextGroup.append('text')
-					.text(modulePercent)
-					.attr('x', -(lengthOfPercentRowText / 2))
+					.text(formatIntoPercentage(moduleObj.optimizedHours / (moduleObj.standardHours + moduleObj.optimizedHours)))
+					.attr('x', 0)
+					.attr('text-anchor', 'middle')
 					.style('font', data.modulePercentFont)
 					.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 3) + data.extraPaddingAboveModulePercent)
 
-				//Percent Sign
-				tooltipTextGroup.append('text')
-					.attr('class', '.data .percent')
-					.text('%')
-					.attr('x', (-lengthOfPercentRowText / 2) + lengthOfPercent)
-					.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 3) + data.extraPaddingAboveModulePercent)
-					.style('font', data.modulePercentSignFont)
 			}
 			//overarching circle for percent description tooltip event listening 
 			tooltipGroup.append('circle')
 				.attr('cx', 0)
 				.attr('cy', 0)
-				.attr('r', middleXOfTooltip)
+				.attr('r', data.tooltipDiameter / 2)
 				.attr('opacity', 0)
 				.on('mouseenter', function () {
 					if (widget.legendPinned === 'none' && widget.overallPinned === 'none'){
@@ -1193,8 +1144,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.attr('width', data.legendColorRectsWidth)
 			.attr('y', data.paddingUnderLegendText)
 			.attr('fill', d => d.color)
-			.attr('stroke', d => d.color)
-			.attr('stroke-width', 2.5)
+			.attr('stroke', 'black')
 			.style('stroke-opacity', d => widget.activeModule === d.type ? '1' : '0')
 
 		const legendTexts = legendModuleGroups.append('text')
@@ -1342,9 +1292,8 @@ makeDropdown(data.availableDates[widget.yearSelected], widget.dropdownMonthChang
 
 	// LEGEND FUNCS
 	function openLegendTooltip(d, that) {
-		that.raise();
-		that.select('rect').style('stroke-opacity', '1')
-		that.select('text').style('font-weight', 'bold')
+		that.selectAll('rect').style('stroke-opacity', '1')
+		that.selectAll('text').style('font-weight', 'bold')
 
 		widget.activeModule = d.type;
 		widget.svg.selectAll('.percentage').style('opacity', 0)

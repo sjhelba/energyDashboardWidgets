@@ -150,7 +150,8 @@ const getTextHeight = font => {
 const margin = { top: 5, left: 5, right: 5, bottom: (height * 0.02) + 5 };
 const normalArcOpacity = 0.9;
 const theUnhoveredArcOpacity = 0.5;
-const formatIntoPercentage = d3.format('.0%');
+const formatIntoPercentageWithPercentSign = d3.format('.0%');
+const formatIntoPercentage = num => formatIntoPercentageWithPercentSign(num).slice(0, -1);
 const percentageDescription = '% of System Run Hours Logged in Optimization Mode';
 const percentDescriptionRectOpacity = 0.8
 
@@ -176,6 +177,7 @@ const data = {
 	overallArcThickness: 40,
 
 	percentageFont: 'bold 38.0pt Nirmala UI',
+	percentageSignFont: 'bold 19.0pt Nirmala UI',
 	percentageColor: '#333333',
 	legendFont: '12.0pt Nirmala UI',
 	tooltipHeaderFont: '16pt Nirmala UI',
@@ -198,6 +200,7 @@ const data = {
 	paddingAboveLegendBars: 25,
 	paddingUnderLegendText: 5,
 	modulePercentFont: '26.0pt Nirmala UI',
+	modulePercentSignFont: '16.0pt Nirmala UI',
 	extraPaddingAboveModulePercent: 18,
 	percentDescriptionRectHeight: 35
 };
@@ -262,6 +265,11 @@ const properties = [
 	{
 		name: 'paddingUnderDropdowns',
 		value: 15
+	},
+	{
+		name: 'tooltipOverallFont',
+		value: '14pt Nirmala UI',
+		typeSpec: 'gx:Font'
 	}
 ];
 
@@ -337,11 +345,16 @@ data.modulesData.forEach(mod => {
 })
 
 
-const standardHours = data.modulesData.reduce((accum, curr) => accum + curr.normalizedStandardHours, 0);
-const optimizedHours = data.modulesData.reduce((accum, curr) => accum + curr.normalizedOptimizedHours, 0);
+const standardHours = data.modulesData.reduce((accum, curr) => accum + curr.standardHours, 0);
+const optimizedHours = data.modulesData.reduce((accum, curr) => accum + curr.optimizedHours, 0);
 
-data.overallData = [{ category: 'standard', hours: standardHours }, { category: 'optimized', hours: optimizedHours }];
-data.percent = formatIntoPercentage(data.overallData[1].hours / (data.overallData[0].hours + data.overallData[1].hours));
+data.overallData = [
+	{ category: 'standard', hours: standardHours},
+	{ category: 'optimized', hours: optimizedHours}
+];
+data.overallData[0].percent = formatIntoPercentage(data.overallData[0].hours / (data.overallData[0].hours + data.overallData[1].hours));
+data.overallData[1].percent = formatIntoPercentage(data.overallData[1].hours / (data.overallData[0].hours + data.overallData[1].hours));
+data.percent = data.overallData[1].percent;
 
 
 data.legendWidth = width - ((margin.left * 4) + (margin.right * 4));
@@ -562,6 +575,7 @@ function renderTooltip(moduleObj) {    // moduleObj passed in if an individual m
 
 	const selectionForCheck = widget.svg.select('.tooltipGroup')
 	if (!selectionForCheck.empty()) selectionForCheck.remove();
+	const middleXOfTooltip = data.tooltipDiameter / 2;
 
 	const tooltipGroup = allDonutGroupsGroup.append('g')
 		.attr('class', 'tooltipGroup')
@@ -571,14 +585,11 @@ function renderTooltip(moduleObj) {    // moduleObj passed in if an individual m
 	tooltipGroup.append('circle')
 		.attr('cx', 0)
 		.attr('cy', 0)
-		.attr('r', data.tooltipDiameter / 2)
+		.attr('r', middleXOfTooltip)
 		.attr('fill', data.tooltipFillColor)
 
 
-
 	const tooltipTextGroup = tooltipGroup.append('g')
-		.attr('text-anchor', 'middle')
-		.attr('dominant-baseline', 'middle')
 		.attr('x', 0)
 		.attr('y', 0)
 		.style('font', data.tooltipFont)
@@ -590,48 +601,54 @@ function renderTooltip(moduleObj) {    // moduleObj passed in if an individual m
 	tooltipTextGroup.append('text')
 		.attr('class', 'category')
 		.text(moduleObj ? `${moduleObj.type}:` : `${data.hovered.current.toUpperCase()}:`)
+		.attr('text-anchor', 'middle')
 		.attr('fill', () => {
 			if (moduleObj) return moduleObj.color;
 			return data.hovered.optimized ? data.optimizedColor : data.standardColor;
 		})
-		.style('font', data.tooltipHeaderFont)
+		.style('font', moduleObj ? data.tooltipHeaderFont : data.tooltipOverallFont)
 		.style('font-weight', 'bold')
-		.style('text-decoration', 'underline');
-
+		.style('text-decoration', 'underline')
+		.attr('y', moduleObj ? 0 : 10);
 
 
 	if (!moduleObj) {
-		const tooltipModuleGroups = tooltipTextGroup.selectAll('g')
-			.data(data.modulesData)
-			.enter().append('g')
-			.attr('text-anchor', 'start')
-			.attr('class', d => `${d.type}TooltipTextGroup`)
-			.attr('transform', `translate(-${data.totalTooltipTextWidth / 2}, 0)`);
 
-		//typeTexts
-		tooltipModuleGroups.append('text')
-			.attr('class', '.data .type')
-			.text(d => `${d.type}:`)
-			.attr('y', (d, i) => data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * (i + 1)))
-			.style('font-weight', 'bold')
-
-		//hoursTexts
-		tooltipModuleGroups.append('text')
+		//Total Hours
+		tooltipTextGroup.append('text')
 			.attr('class', '.data .hours')
-			.text(d => `${d[`${data.hovered.current}Hours`]} HRS`)
-			.attr('x', data.tooltipHorizontalTextPadding + data.maxTooltipTextWidths.type)
-			.attr('y', (d, i) => data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * (i + 1)))
+			.text(`${data.overallData[data.hovered.current === 'standard' ? 0 : 1].hours} HRS`)
+			.attr('x', 0)
+			.attr('text-anchor', 'middle')
+			.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 1.75))
+			.style('font', data.tooltipOverallFont)
 
+		//Total Percent
+		const lengthOfPercent = getTextWidth(data.overallData[data.hovered.current === 'standard' ? 0 : 1].percent, data.modulePercentFont);
+		const lengthOfPercentSign = getTextWidth('%', data.modulePercentSignFont);
+		const lengthOfPercentRowText = lengthOfPercent + lengthOfPercentSign;
+		tooltipTextGroup.append('text')
+			.attr('class', '.data .percent')
+			.text(data.overallData[data.hovered.current === 'standard' ? 0 : 1].percent)
+			.attr('x', -(lengthOfPercentRowText / 2))
+			.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 3.75))
+			.style('font', data.modulePercentFont)
 
-		//percentageTexts
-		tooltipModuleGroups.append('text')
-			.attr('class', '.data .percents')
-			.text(d => formatIntoPercentage(d[`${data.hovered.current}Hours`] / (d.standardHours + d.optimizedHours)))
-			.attr('x', (data.tooltipHorizontalTextPadding * 2) + data.maxTooltipTextWidths.type + data.maxTooltipTextWidths.hours)
-			.attr('y', (d, i) => data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * (i + 1)))
-	} else {
+		//Percent Sign
+		tooltipTextGroup.append('text')
+			.attr('class', '.data .percent')
+			.text('%')
+			.attr('x', (-lengthOfPercentRowText / 2) + lengthOfPercent)
+			.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 3.75))
+			.style('font', data.modulePercentSignFont)
+
+		} else {
 		//for individual modules' tooltips
-		//
+		const modulePercent = formatIntoPercentage(moduleObj.optimizedHours / (moduleObj.standardHours + moduleObj.optimizedHours));
+		const lengthOfPercent = getTextWidth(modulePercent, data.modulePercentFont);
+		const lengthOfPercentSign = getTextWidth('%', data.modulePercentSignFont);
+		const lengthOfPercentRowText = lengthOfPercent + lengthOfPercentSign;
+		//Equipment Hours
 		tooltipTextGroup.append('text')
 			.attr('text-anchor', 'middle')
 			.attr('x', 0)
@@ -644,20 +661,27 @@ function renderTooltip(moduleObj) {    // moduleObj passed in if an individual m
 			.text(`${moduleObj.standardHours} STANDARD HRS`)
 			.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 2))
 
+		//Equipment Percent
 		tooltipTextGroup.append('text')
-			.text(formatIntoPercentage(moduleObj.optimizedHours / (moduleObj.standardHours + moduleObj.optimizedHours)))
-			.attr('x', 0)
-			.attr('text-anchor', 'middle')
+			.text(modulePercent)
+			.attr('x', -(lengthOfPercentRowText / 2))
 			.style('font', data.modulePercentFont)
 			.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 3) + data.extraPaddingAboveModulePercent)
 
+		//Percent Sign
+		tooltipTextGroup.append('text')
+			.attr('class', '.data .percent')
+			.text('%')
+			.attr('x', (-lengthOfPercentRowText / 2) + lengthOfPercent)
+			.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 3) + data.extraPaddingAboveModulePercent)
+			.style('font', data.modulePercentSignFont)
 	}
 
 	//overarching circle for percent description tooltip event listening 
 	tooltipGroup.append('circle')
 		.attr('cx', 0)
 		.attr('cy', 0)
-		.attr('r', data.tooltipDiameter / 2)
+		.attr('r', middleXOfTooltip)
 		.attr('opacity', 0)
 		.on('mouseenter', function () {
 			if (widget.legendPinned === 'none' && widget.overallPinned === 'none'){
@@ -739,7 +763,8 @@ const legendRects = legendModuleGroups.append('rect')
 	.attr('width', data.legendColorRectsWidth)
 	.attr('y', data.paddingUnderLegendText)
 	.attr('fill', d => d.color)
-	.attr('stroke', 'black')
+	.attr('stroke', d => d.color)
+	.attr('stroke-width', 2.5)
 	.style('stroke-opacity', d => data.activeModule === d.type ? '1' : '0')
 
 const legendTexts = legendModuleGroups.append('text')
@@ -752,7 +777,25 @@ const legendTexts = legendModuleGroups.append('text')
 
 
 
+/*
+const lengthOfPercent = getTextWidth(data.overallData[data.hovered.current === 'standard' ? 0 : 1].percent, data.modulePercentFont);
+		const lengthOfPercentSign = getTextWidth('%', data.modulePercentSignFont);
+		const lengthOfPercentRowText = lengthOfPercent + lengthOfPercentSign;
+		tooltipTextGroup.append('text')
+			.attr('class', '.data .percent')
+			.text(data.overallData[data.hovered.current === 'standard' ? 0 : 1].percent)
+			.attr('x', -(lengthOfPercentRowText / 2))
+			.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 3.75))
+			.style('font', data.modulePercentFont)
 
+		//Percent Sign
+		tooltipTextGroup.append('text')
+			.attr('class', '.data .percent')
+			.text('%')
+			.attr('x', (-lengthOfPercentRowText / 2) + lengthOfPercent)
+			.attr('y', data.extraPaddingUnderTooltipHeader + (data.tooltipVerticalTextPadding * 3.75))
+			.style('font', data.modulePercentSignFont)
+*/
 
 
 
@@ -762,17 +805,30 @@ const legendTexts = legendModuleGroups.append('text')
 
 
 /*** PERCENT ***/
-
+const lengthOfPercentage = getTextWidth(data.percent, data.percentageFont);
+const lengthOfPercentageSign = getTextWidth('%', data.percentageSignFont);
+const lengthOfPercentageRowText = lengthOfPercentage + lengthOfPercentageSign;
 //percentage
 allDonutGroupsGroup.append('text')
 	.attr('class', 'percentage')
-	.attr('text-anchor', 'middle')
 	.attr('dominant-baseline', 'middle')
+	.attr('x', -(lengthOfPercentageRowText / 2))
 	.attr('y', -data.paddingBetweenPercentAndMiddle)
 	.style('font', data.percentageFont)
 	.attr('fill', data.percentageColor)
 	.style('opacity', data.hovered.current === 'neither' && data.activeModule === 'none' ? 1 : 0)
 	.text(data.percent);
+
+//percent sign
+allDonutGroupsGroup.append('text')
+	.attr('class', 'percentage')
+	.attr('dominant-baseline', 'middle')
+	.attr('x', (-lengthOfPercentageRowText / 2) + lengthOfPercentage)
+	.attr('y', 5 - data.paddingBetweenPercentAndMiddle)
+	.style('font', data.percentageSignFont)
+	.attr('fill', data.percentageColor)
+	.style('opacity', data.hovered.current === 'neither' && data.activeModule === 'none' ? 1 : 0)
+	.text('%');
 
 
 //percentage description
@@ -932,8 +988,9 @@ function toggleOverallTooltipPin(optimizedOrStandard) {
 
 // LEGEND FUNCS
 function openLegendTooltip(d, that) {
-	that.selectAll('rect').style('stroke-opacity', '1')
-	that.selectAll('text').style('font-weight', 'bold')
+	that.raise();
+	that.select('rect').style('stroke-opacity', '1');
+	that.select('text').style('font-weight', 'bold')
 
 	data.activeModule = d.type;
 	widget.svg.selectAll('.percentage').style('opacity', 0)
