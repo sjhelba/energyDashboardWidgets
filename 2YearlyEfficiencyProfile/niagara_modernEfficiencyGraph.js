@@ -324,12 +324,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 						const rowMonthIndex = timestamp.getMonth();
 						const rowValue = row.get('value');
 
-						data.last12DatesSeperated.slice(0, 11).forEach((date, index) => {
-							if (rowYear === date.year && rowMonthIndex === date.monthIndex) {
-								data.measuredData[index].count++;
-								data.measuredData[index].total += rowValue;
-							}
-						});
+							data.last12DatesSeperated.slice(0, 11).forEach((date, index) => {
+								if (rowYear === date.year && rowMonthIndex === date.monthIndex) {
+									data.measuredData[index].count++;
+									data.measuredData[index].total += rowValue;
+								}
+							});
+
 					}
 				});
 			})
@@ -343,8 +344,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 						lastRowValue = row.get('value');
 					},
 					after: function () {
-						data.measuredData[11].count++;
-						data.measuredData[11].total += lastRowValue;
+							data.measuredData[11].count++;
+							data.measuredData[11].total += lastRowValue;
 					}
 				});
 			})
@@ -356,13 +357,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 						const rowMonthIndex = timestamp.getMonth();
 						const rowValue = row.get('value');
-
-						data.last12DatesSeperated.forEach((date, index) => {
-							if (rowMonthIndex === date.monthIndex) {
-								data.baselineData[index].count++;
-								data.baselineData[index].total += rowValue;
-							}
-						});
+							data.last12DatesSeperated.forEach((date, index) => {
+								if (rowMonthIndex === date.monthIndex) {
+									data.baselineData[index].count++;
+									data.baselineData[index].total += rowValue;
+								}
+							});
 					}
 				});
 			})
@@ -374,13 +374,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
 						const rowMonthIndex = timestamp.getMonth();
 						const rowValue = row.get('value');
-
-						data.last12DatesSeperated.forEach((date, index) => {
-							if (rowMonthIndex === date.monthIndex) {
-								data.projectedData[index].count++;
-								data.projectedData[index].total += rowValue;
-							}
-						});
+							data.last12DatesSeperated.forEach((date, index) => {
+								if (rowMonthIndex === date.monthIndex) {
+									data.projectedData[index].count++;
+									data.projectedData[index].total += rowValue;
+								}
+							});
 					}
 				});
 			})

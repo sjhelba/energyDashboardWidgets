@@ -523,7 +523,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
         return Promise.all(measuredCursors);
       })
       .catch(err => console.error('measured history cursors failed: ' + err))
-      .then(folders => {
+      .then(() => {
         data.availableYears = Object.keys(data.availableDates).sort((a, b) => b - a);
         data.noMeasuredData = data.availableYears.length ? false : true;
         data.availableYears.forEach(year => {
