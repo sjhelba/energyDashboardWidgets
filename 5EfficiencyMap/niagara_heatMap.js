@@ -28,7 +28,6 @@ const needToRedrawWidget = (widget, newData) => {
 	return false;
 }
 let widgetCount = 0;	// for generating unique ids
-const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 const getTextWidth = (text, font) => {
 	const canvas = document.createElement('canvas');
 	const context = canvas.getContext('2d');
@@ -609,7 +608,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					effHistoryTable.cursor({
 						limit: 5000000,
 						each: function(row, index) {
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+							const timestamp = row.get('timestamp').getJsDate();
 							const rowValue = +row.get('value');
 							const rowYear = timestamp.getFullYear();
 							const rowMonth = months[timestamp.getMonth()];
@@ -631,7 +630,7 @@ const getMonthlyDataForYear = (hourlyData, year, tempRanges, effRange, formatKwT
 					tempHistoryTable.cursor({
 						limit: 5000000,
 						each: function(row, index) {
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+							const timestamp = row.get('timestamp').getJsDate();
 							const rowValue = +row.get('value');
 							const rowYear = timestamp.getFullYear();
 							const rowMonth = months[timestamp.getMonth()];

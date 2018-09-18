@@ -235,7 +235,6 @@ const needToRedrawWidget = (widget, newData) => {
 	const small = {width: 880, height: 440};
 	const medium = {width: 1200, height: 700};
 	const large = {width: 1600, height: 850};	
-	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 	const getTextWidth = (text, font) => {
 		const canvas = document.createElement('canvas');
 		const context = canvas.getContext('2d');
@@ -968,7 +967,7 @@ const needToRedrawWidget = (widget, newData) => {
         const [stdHrsHmTable, optHrsHmTable, stdHrsCmTable, optHrsCmTable] = sysHrsBatchResolve.getTargetObjects();
         return Promise.all([
           stdHrsHmTable.cursor({limit: 1200, each: (row, index) => {
-						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+						const timestamp = row.get('timestamp').getJsDate()
 						const rowValue = +row.get('value');
 						const rowYear = timestamp.getFullYear();
 						const rowMonth = timestamp.getMonth();
@@ -982,7 +981,7 @@ const needToRedrawWidget = (widget, newData) => {
 
 					}}),
           optHrsHmTable.cursor({limit: 1200, each: (row, index) => {
-						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+						const timestamp = row.get('timestamp').getJsDate()
 						const rowValue = +row.get('value');
 						const rowYear = timestamp.getFullYear();
 						const rowMonth = timestamp.getMonth();
@@ -995,7 +994,7 @@ const needToRedrawWidget = (widget, newData) => {
 							if (thisYear === rowYear) data.currentYearMeasuredHrs += rowValue;
 					}}),
           stdHrsCmTable.cursor({limit: 1, each: row => {
-						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+						const timestamp = row.get('timestamp').getJsDate();
 						const rowValue = +row.get('value');
 							cm.std.firstMonth.month = timestamp.getMonth();
 							cm.std.firstYear.year = timestamp.getFullYear();
@@ -1006,7 +1005,7 @@ const needToRedrawWidget = (widget, newData) => {
 							data.currentMonthMeasuredHrs += rowValue;
 					}}),
           optHrsCmTable.cursor({limit: 1, each: row => {
-						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+						const timestamp = row.get('timestamp').getJsDate();
 						const rowValue = +row.get('value');
 							cm.opt.firstMonth.month = timestamp.getMonth();
 							cm.opt.firstYear.year = timestamp.getFullYear();
@@ -1027,7 +1026,7 @@ const needToRedrawWidget = (widget, newData) => {
 				return historyTable.cursor({
 					limit: 5000000,
 					each: function(row, index) {
-						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+						const timestamp = row.get('timestamp').getJsDate();
 						const rowValue = +row.get('value');
 						const rowMonth = timestamp.getMonth();
 						const rowYear = timestamp.getFullYear();
@@ -1067,7 +1066,7 @@ const needToRedrawWidget = (widget, newData) => {
 					baselineTable.cursor({
 						limit: 5000000,
 						each: function(row, index) {
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+							const timestamp = row.get('timestamp').getJsDate();
 							const rowValue = +row.get('value');
 							const rowMonth = timestamp.getMonth();
 							const rowYear = timestamp.getFullYear();
@@ -1080,7 +1079,7 @@ const needToRedrawWidget = (widget, newData) => {
 					measuredTable.cursor({
 						limit: 5000000,
 						each: function(row, index) {
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+							const timestamp = row.get('timestamp').getJsDate();
 							const rowValue = +row.get('value');
 							const rowMonth = timestamp.getMonth();
 							const rowYear = timestamp.getFullYear();
@@ -1093,7 +1092,7 @@ const needToRedrawWidget = (widget, newData) => {
 					measuredTableCurrentMonth.cursor({
 						limit: 5000000,
 						each: function(row, index) {
-							const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+							const timestamp = row.get('timestamp').getJsDate();
 							const rowValue = +row.get('value');
 							const rowMonth = timestamp.getMonth();
 							const rowYear = timestamp.getFullYear();
@@ -1119,7 +1118,7 @@ const needToRedrawWidget = (widget, newData) => {
 							baselineKwh.cursor({
 								limit: 5000000,
 								each: function(row, index) {
-									const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+									const timestamp = row.get('timestamp').getJsDate();
 									const rowValue = +row.get('value');
 									const rowMonth = timestamp.getMonth();
 									const rowYear = timestamp.getFullYear();
@@ -1132,7 +1131,7 @@ const needToRedrawWidget = (widget, newData) => {
 							projectedKwh.cursor({
 								limit: 5000000,
 								each: function(row, index) {
-									const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+									const timestamp = row.get('timestamp').getJsDate();
 									const rowValue = +row.get('value');
 									const rowMonth = timestamp.getMonth();
 									const rowYear = timestamp.getFullYear();
@@ -1145,7 +1144,7 @@ const needToRedrawWidget = (widget, newData) => {
 							measuredKwh.cursor({
 								limit: 5000000,
 								each: function(row, index) {
-									const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+									const timestamp = row.get('timestamp').getJsDate();
 									const rowValue = +row.get('value');
 									const rowMonth = timestamp.getMonth();
 									const rowYear = timestamp.getFullYear();
@@ -1160,7 +1159,7 @@ const needToRedrawWidget = (widget, newData) => {
 							currentMonthMeasuredKwh.cursor({
 								limit: 5000000,
 								each: function(row, index) {
-									const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+									const timestamp = row.get('timestamp').getJsDate();
 									const rowValue = +row.get('value');
 									const rowMonth = timestamp.getMonth();
 									const rowYear = timestamp.getFullYear();

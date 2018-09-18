@@ -2,7 +2,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	"use strict";
 
 	////////// Hard Coded Defs //////////
-	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 	function makeDropdown(arrOfOptions = [], funcToRunOnSelection = valOfSelection => console.log('selected: ' + valOfSelection), elementToAppendTo = d3.select('svg'), x = 5, y = 50, leftAligned = true, minDropdownWidth = 125, horizontalPadding = 5, verticalPadding = 5, strokeColor = 'black', backgroundFill = 'white', hoveredFill = '#d5d6d4', font = '10.0pt Nirmala UI', textColor = 'black', defaultSelection, funcToRunOnOpen, funcToRunOnClose, arrOfArgsToPassInToFuncsAfterVal, dropdownBorderRadius = 5) {
 		const arrowWidth = getTextWidth('8', font) / 1.5;
@@ -575,7 +574,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			return table.cursor({
 				limit: 70000,
 				each: function(row, idx) {
-					const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+					const timestamp = row.get('timestamp').getJsDate();
 					const rowMonthIndex = timestamp.getMonth();
 					const rowMonth = months[rowMonthIndex];
 					const rowYear = timestamp.getFullYear();

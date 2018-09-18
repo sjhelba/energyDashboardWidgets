@@ -1,4 +1,4 @@
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'moment', 'baja!'], function (Widget, subscriberMixIn, d3, moment, baja) {
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'moment', 'baja!', 'nmodule/COREx/rc/jsClasses/JsUtils'], function (Widget, subscriberMixIn, d3, moment, baja, JsUtils) {
   "use strict";
 
   ////////// Hard Coded Defs //////////
@@ -127,7 +127,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
     return dropdownGroup;
   }
 	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
   const today = new Date();
   const currentMonth = months[today.getMonth()];
   const currentYear = today.getFullYear();
@@ -471,7 +470,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
           return historyTable.cursor({
             limit: 300,  // default is 10
             each: function (row, idx) {
-              const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+              const timestamp = row.get('timestamp').getJsDate();
               const rowMonthIndex = timestamp.getMonth();
               const rowValue = +row.get('value')
               data.monthlyBaselineKwh[months[rowMonthIndex]] += rowValue;
@@ -493,7 +492,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
           return historyTable.cursor({
             limit: 70000,  // default is 10
             each: function (row, idx) {
-              const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+              const timestamp = row.get('timestamp').getJsDate();
               const rowYear = timestamp.getFullYear();
               const rowMonth = months[timestamp.getMonth()];
               let rowValue = +row.get('value')

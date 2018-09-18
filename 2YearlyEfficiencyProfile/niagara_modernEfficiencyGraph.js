@@ -42,7 +42,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		num = +num;
 		return num * 1.33333333333;
 	};
-	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 	const getTextWidth = (text, font) => {
 		const canvas = document.createElement('canvas');
 		const context = canvas.getContext('2d');
@@ -319,7 +318,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				return measuredTable.cursor({
 					limit: 700000,  // default is 10
 					each: function (row, idx) {
-						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+						const timestamp = row.get('timestamp').getJsDate();
 						const rowYear = timestamp.getFullYear();
 						const rowMonthIndex = timestamp.getMonth();
 						const rowValue = row.get('value');
@@ -354,7 +353,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				return baselineTrendTable.cursor({
 					limit: 700000,  // default is 10
 					each: function (row, idx) {
-						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+						const timestamp = row.get('timestamp').getJsDate();
 						const rowMonthIndex = timestamp.getMonth();
 						const rowValue = row.get('value');
 							data.last12DatesSeperated.forEach((date, index) => {
@@ -371,7 +370,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				return projectedTrendTable.cursor({
 					limit: 700000,  // default is 10
 					each: function (row, idx) {
-						const timestamp = getJSDateFromTimestamp(row.get('timestamp'));
+						const timestamp = row.get('timestamp').getJsDate();
 						const rowMonthIndex = timestamp.getMonth();
 						const rowValue = row.get('value');
 							data.last12DatesSeperated.forEach((date, index) => {

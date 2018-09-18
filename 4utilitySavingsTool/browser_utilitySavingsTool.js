@@ -222,7 +222,6 @@ const needToRedrawWidget = (widget, newData) => {
 const small = { width: 880, height: 440 };
 const medium = { width: 1200, height: 700 };
 const large = { width: 1600, height: 850 };
-const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 const getTextWidth = (text, font) => {
 	const canvas = document.createElement('canvas');
 	const context = canvas.getContext('2d');
