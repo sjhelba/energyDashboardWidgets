@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/sjhelba/energyDashboardWidgets#readme",
   "devDependencies": {
-    "eslint": "^4.19.1",
+    "eslint": "^8.39.0",
     "eslint-plugin-react": "^7.7.0"
   }
 }
